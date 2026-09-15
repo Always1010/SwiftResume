@@ -6,6 +6,7 @@ import type {
   ResumeDocument,
   ResumeSection,
 } from "../model/resume";
+import type { PreviewZoom } from "../settings/appSettings";
 
 function SectionHeading({ children }: { children: string }) {
   return <div className="resume-section-heading"><h2>{children}</h2><span /></div>;
@@ -84,10 +85,11 @@ function ResumeSectionView({ section }: { section: ResumeSection }) {
 
 interface ResumePreviewProps {
   resume: ResumeDocument;
+  zoom: PreviewZoom;
   onOverflowChange: (overflow: boolean) => void;
 }
 
-export function ResumePreview({ resume, onOverflowChange }: ResumePreviewProps) {
+export function ResumePreview({ resume, zoom, onOverflowChange }: ResumePreviewProps) {
   const pageRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -102,31 +104,33 @@ export function ResumePreview({ resume, onOverflowChange }: ResumePreviewProps) 
 
   return (
     <div className="preview-scroller">
-      <div ref={pageRef} className={`resume-page density-${resume.theme.density}`} style={{ "--resume-accent": resume.theme.accent } as CSSProperties}>
-        <header className="resume-header">
-          <div className="identity">
-            <h1>{resume.profile.name || "姓名"}</h1>
-            {resume.profile.headline && <p className="headline">{resume.profile.headline}</p>}
-            <div className="contact-row">
-              {resume.profile.ageGender && <span>{resume.profile.ageGender}</span>}
-              {resume.profile.location && <span>{resume.profile.location}</span>}
+      <div className="preview-zoom-stage" style={{ "--preview-zoom": zoom / 100 } as CSSProperties}>
+        <div ref={pageRef} className={`resume-page density-${resume.theme.density}`} style={{ "--resume-accent": resume.theme.accent } as CSSProperties}>
+          <header className="resume-header">
+            <div className="identity">
+              <h1>{resume.profile.name || "姓名"}</h1>
+              {resume.profile.headline && <p className="headline">{resume.profile.headline}</p>}
+              <div className="contact-row">
+                {resume.profile.ageGender && <span>{resume.profile.ageGender}</span>}
+                {resume.profile.location && <span>{resume.profile.location}</span>}
+              </div>
+              <div className="contact-row">
+                {resume.profile.phone && <span>手机 {resume.profile.phone}</span>}
+                {resume.profile.email && <span>邮箱 {resume.profile.email}</span>}
+              </div>
             </div>
-            <div className="contact-row">
-              {resume.profile.phone && <span>手机 {resume.profile.phone}</span>}
-              {resume.profile.email && <span>邮箱 {resume.profile.email}</span>}
-            </div>
-          </div>
-          <div className="resume-photo">{resume.profile.photo ? <img src={resume.profile.photo} alt="个人照片" /> : <span>PHOTO</span>}</div>
-        </header>
-        {resume.profile.details.some((item) => item.label || item.value) && (
-          <section className="resume-section profile-details">
-            <SectionHeading>基本信息</SectionHeading>
-            <div className="detail-grid">{resume.profile.details.map((detail) => (
-              <div key={detail.id}><span>{detail.label}：</span><strong>{detail.value}</strong></div>
-            ))}</div>
-          </section>
-        )}
-        {resume.sections.map((section) => <ResumeSectionView section={section} key={section.id} />)}
+            <div className="resume-photo">{resume.profile.photo ? <img src={resume.profile.photo} alt="个人照片" /> : <span>PHOTO</span>}</div>
+          </header>
+          {resume.profile.details.some((item) => item.label || item.value) && (
+            <section className="resume-section profile-details">
+              <SectionHeading>基本信息</SectionHeading>
+              <div className="detail-grid">{resume.profile.details.map((detail) => (
+                <div key={detail.id}><span>{detail.label}：</span><strong>{detail.value}</strong></div>
+              ))}</div>
+            </section>
+          )}
+          {resume.sections.map((section) => <ResumeSectionView section={section} key={section.id} />)}
+        </div>
       </div>
     </div>
   );

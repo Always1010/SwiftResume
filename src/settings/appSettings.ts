@@ -1,0 +1,77 @@
+export type ExportEngine = "typst" | "browser";
+export type PreviewZoom = 70 | 80 | 90 | 100;
+export type SyncDelay = 0 | 100 | 300;
+export type SaveDelay = 300 | 500 | 1000;
+
+export interface AppSettings {
+  version: 1;
+  liveSync: boolean;
+  syncDelayMs: SyncDelay;
+  saveDelayMs: SaveDelay;
+  exportEngine: ExportEngine;
+  showOverflowWarning: boolean;
+  previewZoom: PreviewZoom;
+}
+
+export const DEFAULT_SETTINGS: AppSettings = {
+  version: 1,
+  liveSync: true,
+  syncDelayMs: 0,
+  saveDelayMs: 500,
+  exportEngine: "typst",
+  showOverflowWarning: true,
+  previewZoom: 100,
+};
+
+const STORAGE_KEY = "swift-resume:settings";
+
+const allowedSyncDelays = new Set<SyncDelay>([0, 100, 300]);
+const allowedSaveDelays = new Set<SaveDelay>([300, 500, 1000]);
+const allowedZooms = new Set<PreviewZoom>([70, 80, 90, 100]);
+
+export function normalizeSettings(value: unknown): AppSettings {
+  if (!value || typeof value !== "object") return DEFAULT_SETTINGS;
+  const candidate = value as Partial<AppSettings>;
+  return {
+    version: 1,
+    liveSync: typeof candidate.liveSync === "boolean" ? candidate.liveSync : DEFAULT_SETTINGS.liveSync,
+    syncDelayMs: allowedSyncDelays.has(candidate.syncDelayMs as SyncDelay)
+      ? candidate.syncDelayMs as SyncDelay
+      : DEFAULT_SETTINGS.syncDelayMs,
+    saveDelayMs: allowedSaveDelays.has(candidate.saveDelayMs as SaveDelay)
+      ? candidate.saveDelayMs as SaveDelay
+      : DEFAULT_SETTINGS.saveDelayMs,
+    exportEngine: candidate.exportEngine === "browser" ? "browser" : "typst",
+    showOverflowWarning: typeof candidate.showOverflowWarning === "boolean"
+      ? candidate.showOverflowWarning
+      : DEFAULT_SETTINGS.showOverflowWarning,
+    previewZoom: allowedZooms.has(candidate.previewZoom as PreviewZoom)
+      ? candidate.previewZoom as PreviewZoom
+      : DEFAULT_SETTINGS.previewZoom,
+  };
+}
+
+export function loadSettings(): AppSettings {
+  try {
+    return normalizeSettings(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null"));
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
+export function saveSettings(settings: AppSettings) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+}
+
+export function subscribeToSettings(onChange: (settings: AppSettings) => void) {
+  const listener = (event: StorageEvent) => {
+    if (event.key !== STORAGE_KEY || !event.newValue) return;
+    try {
+      onChange(normalizeSettings(JSON.parse(event.newValue)));
+    } catch {
+      // Ignore malformed changes from another extension page.
+    }
+  };
+  window.addEventListener("storage", listener);
+  return () => window.removeEventListener("storage", listener);
+}
