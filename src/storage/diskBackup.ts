@@ -1,4 +1,4 @@
-import { isResumeDocument, type ResumeDocument } from "../model/resume";
+import { normalizeResumeDocument, type ResumeDocument } from "../model/resume";
 import type { ResumeLibrary } from "./resumeStorage";
 
 declare global {
@@ -206,7 +206,8 @@ export async function backupResumeToDirectory(
   if (await queryBackupPermission(directory) !== "granted") throw new DOMException("本地备份目录需要重新授权", "NotAllowedError");
   const resumesDirectory = await directory.getDirectoryHandle("resumes", { create: true });
   const existing = await readJson(resumesDirectory, `${resumeId}.swiftresume.json`).catch(() => null);
-  if (isResumeDocument(existing) && Date.parse(existing.updatedAt) > Date.parse(resume.updatedAt)) return;
+  const existingResume = normalizeResumeDocument(existing);
+  if (existingResume && Date.parse(existingResume.updatedAt) > Date.parse(resume.updatedAt)) return;
 
   await writeJson(resumesDirectory, `${resumeId}.swiftresume.json`, resume);
   await writeJson(directory, "index.swiftresume.json", library);
@@ -232,7 +233,8 @@ export async function readDiskBackup(directory: FileSystemDirectoryHandle): Prom
   for (const summary of index.resumes) {
     if (!summary || typeof summary.id !== "string") continue;
     const value = await readJson(resumesDirectory, `${summary.id}.swiftresume.json`).catch(() => null);
-    if (isResumeDocument(value)) documents.push({ id: summary.id, resume: value });
+    const resume = normalizeResumeDocument(value);
+    if (resume) documents.push({ id: summary.id, resume });
   }
   if (!documents.length) throw new Error("备份索引存在，但没有找到可恢复的简历文件");
   const ids = new Set(documents.map((item) => item.id));

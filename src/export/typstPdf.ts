@@ -3,6 +3,7 @@ import { CompileFormatEnum } from "@myriaddreamin/typst.ts/compiler";
 import * as compilerWrapper from "@myriaddreamin/typst-ts-web-compiler";
 import compilerWasmUrl from "@myriaddreamin/typst-ts-web-compiler/wasm?url";
 import type { ResumeDocument, ResumeSection } from "../model/resume";
+import { richTextToPlainText, sanitizeRichText } from "../model/richText";
 
 const asString = (value: string) => JSON.stringify(value);
 const extensionCompilerWrapper = {
@@ -55,6 +56,58 @@ function bullets(items: string[]) {
   return `#grid(columns: (8pt, 1fr), row-gutter: 2.5pt, ${cells.join(",\n")})\n`;
 }
 
+function richTextSource(html: string): string {
+  if (typeof DOMParser === "undefined") {
+    return richTextToPlainText(html)
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => /^[•*-]\s+/.test(line)
+        ? bullets([line.replace(/^[•*-]\s+/, "")])
+        : `#text(${asString(line)}) #linebreak()\n`)
+      .join("");
+  }
+
+  const document = new DOMParser().parseFromString(sanitizeRichText(html), "text/html");
+  const inline = (node: Node): string => {
+    if (node.nodeType === 3) return node.textContent ? `#text(${asString(node.textContent)})` : "";
+    if (!(node instanceof Element)) return "";
+    const children = Array.from(node.childNodes).map(inline).join("");
+    switch (node.tagName) {
+      case "B":
+      case "STRONG":
+        return `#strong[${children}]`;
+      case "EM":
+      case "I":
+        return `#emph[${children}]`;
+      case "U":
+        return `#underline[${children}]`;
+      case "A": {
+        const href = node.getAttribute("href");
+        return href ? `#link(${asString(href)})[${children}]` : children;
+      }
+      case "BR":
+        return "#linebreak()";
+      default:
+        return children;
+    }
+  };
+  const block = (node: Node): string => {
+    if (node instanceof Element && (node.tagName === "UL" || node.tagName === "OL")) {
+      const items = Array.from(node.children)
+        .filter((child) => child.tagName === "LI")
+        .map((child) => `[${Array.from(child.childNodes).map(inline).join("")}]`);
+      return items.length ? `#${node.tagName === "OL" ? "enum" : "list"}(${items.join(", ")})\n` : "";
+    }
+    const source = inline(node);
+    if (!source.trim()) return "";
+    return node instanceof Element && (node.tagName === "P" || node.tagName === "DIV")
+      ? `${source} #linebreak()\n`
+      : source;
+  };
+  return Array.from(document.body.childNodes).map(block).join("");
+}
+
 function sectionSource(section: ResumeSection) {
   if (!section.enabled) return "";
   let body = "";
@@ -75,7 +128,19 @@ function sectionSource(section: ResumeSection) {
       body = section.items.map((item) => topLine(`${item.name}${item.detail ? ` · ${item.detail}` : ""}`, item.date)).join("#v(2pt)\n");
       break;
     case "custom":
-      body = section.items.map((item) => `${topLine(item.title, item.date, item.subtitle)}${item.description ? `#text(${asString(item.description)}) #linebreak()\n` : ""}${bullets(item.bullets)}`).join("#v(6pt)\n");
+      if (section.editorMode === "richtext") {
+        body = richTextSource(section.richText);
+      } else {
+        body = section.nodes.filter((node) => node.enabled).map((node) => {
+          if (node.type === "title") return topLine(node.title, node.date, node.subtitle);
+          if (node.type === "paragraph") return node.text ? `#text(${asString(node.text)}) #linebreak()\n` : "";
+          if (node.type === "bullets") return bullets(node.items.map((item) => item.text));
+          const pairs = node.pairs.filter((pair) => pair.label || pair.value);
+          if (!pairs.length) return "";
+          const cells = pairs.map((pair) => `[#text(fill: rgb("#7a8490"), ${asString(`${pair.label}${pair.label ? "：" : ""}`)}) #text(weight: "medium", ${asString(pair.value)})]`);
+          return `#grid(columns: (1fr, 1fr), column-gutter: 12pt, row-gutter: 3pt, ${cells.join(",\n")})\n`;
+        }).join("#v(3pt)\n");
+      }
       break;
   }
   return `${heading(section.title)}${body}`;

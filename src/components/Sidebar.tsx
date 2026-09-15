@@ -4,6 +4,7 @@ import {
   duplicateSection,
   moveSection,
   reorderSection,
+  type CustomEditorMode,
   type ResumeDocument,
   type ResumeSection,
   type SectionType,
@@ -18,6 +19,18 @@ const sectionLabels: Record<SectionType, string> = {
   custom: "自定义板块",
 };
 
+const customModeLabels: Record<CustomEditorMode, string> = {
+  builder: "结构搭建",
+  document: "自由文档",
+  richtext: "富文本",
+};
+
+const customModeDescriptions: Record<CustomEditorMode, string> = {
+  builder: "逐块配置，精确控制布局",
+  document: "像文档一样直接编辑（推荐）",
+  richtext: "自由输入或粘贴长文本",
+};
+
 interface SidebarProps {
   resume: ResumeDocument;
   selectedId: string;
@@ -27,10 +40,11 @@ interface SidebarProps {
 
 export function Sidebar({ resume, selectedId, onSelect, onSectionsChange }: SidebarProps) {
   const [newType, setNewType] = useState<SectionType>("projects");
+  const [newCustomMode, setNewCustomMode] = useState<CustomEditorMode>("document");
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   const addSection = () => {
-    const section = createSection(newType);
+    const section = createSection(newType, newCustomMode);
     onSectionsChange([...resume.sections, section]);
     onSelect(section.id);
   };
@@ -77,7 +91,7 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange }: Side
             <span className="drag-handle" title="拖动排序">⋮⋮</span>
             <span className="module-copy">
               <strong>{section.title || sectionLabels[section.type]}</strong>
-              <small>{sectionLabels[section.type]}{!section.enabled && " · 已隐藏"}</small>
+              <small>{section.type === "custom" ? customModeLabels[section.editorMode] : sectionLabels[section.type]}{!section.enabled && " · 已隐藏"}</small>
             </span>
             <div className="module-actions">
               <button
@@ -142,7 +156,7 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange }: Side
       </div>
 
       <div className="add-module">
-        <span className="add-module-label">添加标准模块</span>
+        <span className="add-module-label">添加模块</span>
         <select value={newType} onChange={(event) => setNewType(event.target.value as SectionType)}>
           {Object.entries(sectionLabels).map(([value, label]) => (
             <option key={value} value={value}>
@@ -150,8 +164,24 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange }: Side
             </option>
           ))}
         </select>
+        {newType === "custom" && (
+          <div className="custom-mode-options" aria-label="选择自定义模块编辑方式">
+            {(Object.keys(customModeLabels) as CustomEditorMode[]).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                className={newCustomMode === mode ? "selected" : ""}
+                aria-pressed={newCustomMode === mode}
+                onClick={() => setNewCustomMode(mode)}
+              >
+                <strong>{customModeLabels[mode]}{mode === "document" && <span>推荐</span>}</strong>
+                <small>{customModeDescriptions[mode]}</small>
+              </button>
+            ))}
+          </div>
+        )}
         <button type="button" className="primary-button" onClick={addSection}>
-          ＋ 添加模块
+          ＋ 添加{newType === "custom" ? customModeLabels[newCustomMode] : sectionLabels[newType]}
         </button>
       </div>
     </aside>

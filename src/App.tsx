@@ -4,7 +4,7 @@ import { ResumePreview } from "./components/ResumePreview";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { exportTypstPdf } from "./export/typstPdf";
-import { createBlankResume, createDefaultResume, duplicateResume, resumeReducer, type Density, type ResumeDocument, type ResumeSection } from "./model/resume";
+import { createBlankResume, createDefaultResume, duplicateResume, normalizeResumeDocument, resumeReducer, type Density, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
 import {
   activateResume,
@@ -268,7 +268,8 @@ export function App() {
   };
   const handleOverflow = useCallback((value: boolean) => setOverflow(value), []);
   const applyRemoteResume = useCallback((value: ResumeDocument) => {
-    dispatch({ type: "replace", value });
+    const normalized = normalizeResumeDocument(value);
+    if (normalized) dispatch({ type: "replace", value: normalized });
   }, []);
   const { supported: syncSupported } = useResumeSync({
     resumeId: activeResumeId,
