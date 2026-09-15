@@ -16,13 +16,18 @@ describe("app settings", () => {
       exportEngine: "browser",
       showOverflowWarning: false,
       previewZoom: 80,
+      previewOpen: false,
     });
-    expect(settings).toMatchObject({ liveSync: false, diskBackupEnabled: false, syncDelayMs: 300, exportEngine: "browser", previewZoom: 80 });
+    expect(settings).toMatchObject({ liveSync: false, diskBackupEnabled: false, syncDelayMs: 300, exportEngine: "browser", previewZoom: 80, previewOpen: false });
   });
 
   it("falls back for unsupported values", () => {
     const settings = normalizeSettings({ syncDelayMs: 999, previewZoom: 20 });
     expect(settings.syncDelayMs).toBe(DEFAULT_SETTINGS.syncDelayMs);
     expect(settings.previewZoom).toBe(DEFAULT_SETTINGS.previewZoom);
+  });
+
+  it("keeps the preview open for settings saved before preview persistence", () => {
+    expect(normalizeSettings({ previewZoom: 80 }).previewOpen).toBe(true);
   });
 });
