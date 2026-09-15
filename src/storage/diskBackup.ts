@@ -23,6 +23,7 @@ const DATABASE = "swift-resume";
 const STORE = "documents";
 const DIRECTORY_HANDLE_KEY = "backup-directory-handle";
 const SNAPSHOT_INTERVAL_MS = 10 * 60 * 1000;
+export const MAX_HISTORY_SNAPSHOTS = 20;
 const snapshotKey = (resumeId: string) => `swift-resume:last-disk-snapshot:${resumeId}`;
 
 export interface SnapshotState {
@@ -162,6 +163,27 @@ export function shouldCreateSnapshot(
   return previous === null || now - previous.savedAt >= SNAPSHOT_INTERVAL_MS;
 }
 
+export function historySnapshotsToDelete(fileNames: string[], limit = MAX_HISTORY_SNAPSHOTS): string[] {
+  return fileNames
+    .filter((name) => name.endsWith(".swiftresume.json"))
+    .sort((left, right) => right.localeCompare(left))
+    .slice(limit);
+}
+
+async function pruneHistorySnapshots(directory: FileSystemDirectoryHandle, resumeId: string) {
+  const historyDirectory = await directory.getDirectoryHandle("history").catch(() => null);
+  if (!historyDirectory) return;
+  const resumeHistory = await historyDirectory.getDirectoryHandle(resumeId).catch(() => null);
+  if (!resumeHistory) return;
+  const fileNames: string[] = [];
+  for await (const [name, handle] of resumeHistory.entries()) {
+    if (handle.kind === "file") fileNames.push(name);
+  }
+  for (const name of historySnapshotsToDelete(fileNames)) {
+    await resumeHistory.removeEntry(name);
+  }
+}
+
 function loadSnapshotState(resumeId: string): SnapshotState | null {
   const stored = localStorage.getItem(snapshotKey(resumeId));
   if (!stored) return null;
@@ -212,6 +234,7 @@ export async function backupResumeToDirectory(
   await writeJson(resumesDirectory, `${resumeId}.swiftresume.json`, resume);
   await writeJson(directory, "index.swiftresume.json", library);
   await backupProfilePhoto(directory, resumeId, resume);
+  await pruneHistorySnapshots(directory, resumeId);
 
   const now = Date.now();
   const previous = loadSnapshotState(resumeId);
@@ -221,6 +244,7 @@ export async function backupResumeToDirectory(
   const timestamp = new Date(now).toISOString().replaceAll(":", "-");
   await writeJson(resumeHistory, `${timestamp}.swiftresume.json`, resume);
   localStorage.setItem(snapshotKey(resumeId), JSON.stringify({ savedAt: now, resumeUpdatedAt: resume.updatedAt } satisfies SnapshotState));
+  await pruneHistorySnapshots(directory, resumeId);
 }
 
 export async function readDiskBackup(directory: FileSystemDirectoryHandle): Promise<DiskBackupWorkspace> {

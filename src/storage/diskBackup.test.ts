@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { profilePhotoAsset, shouldCreateSnapshot } from "./diskBackup";
+import { historySnapshotsToDelete, profilePhotoAsset, shouldCreateSnapshot } from "./diskBackup";
 
 describe("disk backup snapshots", () => {
   it("creates the first snapshot immediately", () => {
@@ -18,5 +18,12 @@ describe("disk backup snapshots", () => {
     expect(asset?.extension).toBe("png");
     expect(asset?.mimeType).toBe("image/png");
     expect(new TextDecoder().decode(asset?.bytes)).toBe("hello");
+  });
+
+  it("keeps only the twenty newest history snapshots", () => {
+    const names = Array.from({ length: 23 }, (_, index) =>
+      `2026-09-15T10-${String(index).padStart(2, "0")}-00.000Z.swiftresume.json`,
+    );
+    expect(historySnapshotsToDelete(names)).toEqual(names.slice(0, 3).reverse());
   });
 });
