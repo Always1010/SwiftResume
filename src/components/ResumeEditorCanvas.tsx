@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type KeyboardEvent, type MouseEvent } from "react";
+import { useEffect, type CSSProperties, type KeyboardEvent, type MouseEvent } from "react";
 import { getDensityLayout, type ResumeDocument, type ResumeProfile, type ResumeSection } from "../model/resume";
 import { EditorPanel } from "./EditorPanel";
 import { ResumeProfileView, ResumeSectionView } from "./ResumePreview";
@@ -6,43 +6,34 @@ import { ResumeProfileView, ResumeSectionView } from "./ResumePreview";
 interface ResumeEditorCanvasProps {
   resume: ResumeDocument;
   selectedId: string;
-  onSelect: (id: string) => void;
+  editingId: string | null;
+  onEdit: (id: string) => void;
+  onCloseEditor: () => void;
   onProfileChange: (profile: ResumeProfile) => void;
   onSectionChange: (section: ResumeSection) => void;
   onDeleteSection: (sectionId: string) => void;
-  onCommit: () => void;
 }
 
 export function ResumeEditorCanvas({
   resume,
   selectedId,
-  onSelect,
+  editingId,
+  onEdit,
+  onCloseEditor,
   onProfileChange,
   onSectionChange,
   onDeleteSection,
-  onCommit,
 }: ResumeEditorCanvasProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
-
   useEffect(() => {
     if (!editingId || editingId === "profile") return;
     const editingSection = resume.sections.find((section) => section.id === editingId);
     if (editingSection?.enabled) return;
-    if (editingSection) onCommit();
-    setEditingId(null);
-  }, [editingId, onCommit, resume.sections]);
-
-  const closeEditor = () => {
-    if (!editingId) return;
-    onCommit();
-    setEditingId(null);
-  };
+    onCloseEditor();
+  }, [editingId, onCloseEditor, resume.sections]);
 
   const editBlock = (id: string) => {
     if (editingId === id) return;
-    if (editingId) onCommit();
-    onSelect(id);
-    setEditingId(id);
+    onEdit(id);
   };
 
   const handleViewKeyDown = (event: KeyboardEvent<HTMLElement>, id: string) => {
@@ -65,7 +56,7 @@ export function ResumeEditorCanvas({
     <div className="inline-editor-shell" onClick={(event) => event.stopPropagation()}>
       <div className="inline-editor-toolbar">
         <span>正在编辑 · 修改会自动保存</span>
-        <button type="button" className="primary-button" onClick={closeEditor}>完成编辑</button>
+        <button type="button" className="primary-button" onClick={onCloseEditor}>完成编辑</button>
       </div>
       <EditorPanel
         resume={resume}
@@ -79,7 +70,7 @@ export function ResumeEditorCanvas({
   );
 
   const handleBoundaryClick = (event: MouseEvent<HTMLElement>) => {
-    if (event.target === event.currentTarget) closeEditor();
+    if (event.target === event.currentTarget) onCloseEditor();
   };
 
   return (

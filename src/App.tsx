@@ -37,6 +37,7 @@ export function App() {
   const [resume, dispatch] = useReducer(resumeReducer, undefined, createDefaultResume);
   const [library, setLibrary] = useState<ResumeLibrary | null>(null);
   const [selectedId, setSelectedId] = useState("profile");
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
   const [pageCount, setPageCount] = useState(1);
@@ -150,8 +151,27 @@ export function App() {
       .then(() => setSaveState("saved"))
       .catch(() => setSaveState("error"));
   };
-  const locateResumeBlock = (id: string) => {
+  const closeInlineEditor = () => {
+    if (!editingId) return;
+    commitInlineEdit();
+    setEditingId(null);
+  };
+  const editResumeBlock = (id: string) => {
+    if (editingId === id) {
+      setSelectedId(id);
+      return;
+    }
+    if (editingId) commitInlineEdit();
     setSelectedId(id);
+    setEditingId(id);
+  };
+  const locateResumeBlock = (id: string) => {
+    const targetVisible = id === "profile" || resume.sections.some((section) => section.id === id && section.enabled);
+    if (targetVisible) editResumeBlock(id);
+    else {
+      closeInlineEditor();
+      setSelectedId(id);
+    }
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         document.getElementById(`resume-block-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -171,6 +191,7 @@ export function App() {
       setLibrary(nextLibrary);
       dispatch({ type: "replace", value: target });
       setSelectedId("profile");
+      setEditingId(null);
       setSaveState("saved");
     } catch (error) {
       setSaveState("error");
@@ -191,6 +212,7 @@ export function App() {
     setLibrary(nextLibrary);
     dispatch({ type: "replace", value: document });
     setSelectedId("profile");
+    setEditingId(null);
     setSaveState("saved");
   };
   const createResume = () => {
@@ -219,6 +241,7 @@ export function App() {
     setLibrary(nextLibrary);
     dispatch({ type: "replace", value: target });
     setSelectedId("profile");
+    setEditingId(null);
   };
   const importFile = async (file: File | undefined) => {
     if (!file) return;
@@ -421,11 +444,12 @@ export function App() {
           key={activeResumeId}
           resume={resume}
           selectedId={selectedId}
-          onSelect={setSelectedId}
+          editingId={editingId}
+          onEdit={editResumeBlock}
+          onCloseEditor={closeInlineEditor}
           onProfileChange={(value) => dispatch({ type: "update-profile", value })}
           onSectionChange={updateSection}
           onDeleteSection={removeSection}
-          onCommit={commitInlineEdit}
         />
         {settings.previewOpen ? (
           <section className="preview-panel">
