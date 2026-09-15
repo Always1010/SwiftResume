@@ -1,4 +1,4 @@
-import { createDefaultResume, isResumeDocument, type ResumeDocument } from "../model/resume";
+import { createDefaultResume, normalizeResumeDocument, type ResumeDocument } from "../model/resume";
 
 const DATABASE = "swift-resume";
 const STORE = "documents";
@@ -78,17 +78,18 @@ export async function loadResumeWorkspace(): Promise<ResumeWorkspace> {
         ?? storedLibrary.resumes[0];
       if (preferred) {
         const storedResume = await getValue<unknown>(database, resumeKey(preferred.id));
-        if (isResumeDocument(storedResume)) {
+        const resume = normalizeResumeDocument(storedResume);
+        if (resume) {
           const library = preferred.id === storedLibrary.activeResumeId
             ? storedLibrary
             : { ...storedLibrary, activeResumeId: preferred.id };
-          return { library, resume: storedResume };
+          return { library, resume };
         }
       }
     }
 
     const legacy = await getValue<unknown>(database, LEGACY_DOCUMENT_KEY);
-    const resume = isResumeDocument(legacy) ? legacy : createDefaultResume();
+    const resume = normalizeResumeDocument(legacy) ?? createDefaultResume();
     const id = makeId();
     const library: ResumeLibrary = {
       version: 1,
@@ -106,7 +107,7 @@ export async function loadResumeById(resumeId: string): Promise<ResumeDocument |
   const database = await openDatabase();
   try {
     const value = await getValue<unknown>(database, resumeKey(resumeId));
-    return isResumeDocument(value) ? value : null;
+    return normalizeResumeDocument(value);
   } finally {
     database.close();
   }
@@ -167,8 +168,9 @@ export function downloadResume(resume: ResumeDocument) {
 
 export async function parseResumeFile(file: File): Promise<ResumeDocument> {
   const value: unknown = JSON.parse(await file.text());
-  if (!isResumeDocument(value)) {
+  const resume = normalizeResumeDocument(value);
+  if (!resume) {
     throw new Error("文件不是有效的 SwiftResume 简历备份");
   }
-  return value;
+  return resume;
 }

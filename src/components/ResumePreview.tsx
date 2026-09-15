@@ -1,11 +1,13 @@
 import { useLayoutEffect, useRef, type CSSProperties } from "react";
 import type {
+  CustomContentNode,
   CustomSection,
   ExperienceSection,
   ProjectsSection,
   ResumeDocument,
   ResumeSection,
 } from "../model/resume";
+import { sanitizeRichText } from "../model/richText";
 import type { PreviewZoom } from "../settings/appSettings";
 
 function SectionHeading({ children }: { children: string }) {
@@ -46,17 +48,32 @@ function Experience({ section }: { section: ExperienceSection }) {
   ))}</>;
 }
 
-function Custom({ section }: { section: CustomSection }) {
-  return <>{section.items.map((item) => (
-    <article className="resume-entry" key={item.id}>
-      <div className="entry-topline">
-        <div><strong>{item.title}</strong>{item.subtitle && <span className="entry-role">{item.subtitle}</span>}</div>
-        <time>{item.date}</time>
+function CustomNodeView({ node }: { node: CustomContentNode }) {
+  if (!node.enabled) return null;
+  if (node.type === "title") {
+    return (
+      <div className="entry-topline custom-title-row">
+        <div><strong>{node.title}</strong>{node.subtitle && <span className="entry-role">{node.subtitle}</span>}</div>
+        <time>{node.date}</time>
       </div>
-      {item.description && <p>{item.description}</p>}
-      <BulletList bullets={item.bullets} />
-    </article>
-  ))}</>;
+    );
+  }
+  if (node.type === "paragraph") return node.text ? <p className="custom-paragraph">{node.text}</p> : null;
+  if (node.type === "bullets") return <BulletList bullets={node.items.map((item) => item.text)} />;
+  return (
+    <div className="custom-key-value-preview">
+      {node.pairs.filter((pair) => pair.label || pair.value).map((pair) => (
+        <div key={pair.id}><span>{pair.label}{pair.label && "："}</span><strong>{pair.value}</strong></div>
+      ))}
+    </div>
+  );
+}
+
+function Custom({ section }: { section: CustomSection }) {
+  if (section.editorMode === "richtext") {
+    return <div className="resume-rich-text" dangerouslySetInnerHTML={{ __html: sanitizeRichText(section.richText) }} />;
+  }
+  return <article className="resume-entry custom-content">{section.nodes.map((node) => <CustomNodeView node={node} key={node.id} />)}</article>;
 }
 
 function ResumeSectionView({ section }: { section: ResumeSection }) {

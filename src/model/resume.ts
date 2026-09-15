@@ -79,9 +79,56 @@ export interface AwardsSection extends SectionBase {
   items: Array<{ id: string; name: string; date: string; detail: string }>;
 }
 
+export type CustomEditorMode = "builder" | "document" | "richtext";
+export type CustomNodeType = "title" | "paragraph" | "bullets" | "keyValues";
+
+interface CustomNodeBase {
+  id: string;
+  type: CustomNodeType;
+  enabled: boolean;
+}
+
+export interface CustomTitleNode extends CustomNodeBase {
+  type: "title";
+  title: string;
+  subtitle: string;
+  date: string;
+}
+
+export interface CustomParagraphNode extends CustomNodeBase {
+  type: "paragraph";
+  text: string;
+}
+
+export interface CustomBulletsNode extends CustomNodeBase {
+  type: "bullets";
+  items: Array<{ id: string; text: string }>;
+}
+
+export interface CustomKeyValuesNode extends CustomNodeBase {
+  type: "keyValues";
+  pairs: Array<{ id: string; label: string; value: string }>;
+}
+
+export type CustomContentNode =
+  | CustomTitleNode
+  | CustomParagraphNode
+  | CustomBulletsNode
+  | CustomKeyValuesNode;
+
 export interface CustomSection extends SectionBase {
   type: "custom";
-  items: Array<{
+  editorMode: CustomEditorMode;
+  nodes: CustomContentNode[];
+  richText: string;
+}
+
+interface LegacyCustomSection extends SectionBase {
+  type: "custom";
+  editorMode?: CustomEditorMode;
+  nodes?: CustomContentNode[];
+  richText?: string;
+  items?: Array<{
     id: string;
     title: string;
     subtitle: string;
@@ -231,7 +278,33 @@ export function duplicateResume(resume: ResumeDocument): ResumeDocument {
   return copy;
 }
 
-export function createSection(type: SectionType): ResumeSection {
+export function createCustomNode(type: CustomNodeType): CustomContentNode {
+  const id = makeId();
+  switch (type) {
+    case "title":
+      return { id, type: "title", enabled: true, title: "", subtitle: "", date: "" };
+    case "paragraph":
+      return { id, type: "paragraph", enabled: true, text: "" };
+    case "bullets":
+      return { id, type: "bullets", enabled: true, items: [{ id: makeId(), text: "" }] };
+    case "keyValues":
+      return { id, type: "keyValues", enabled: true, pairs: [{ id: makeId(), label: "", value: "" }] };
+  }
+}
+
+export function duplicateCustomNode(node: CustomContentNode): CustomContentNode {
+  const copy = structuredClone(node);
+  copy.id = makeId();
+  if (copy.type === "bullets") {
+    copy.items = copy.items.map((item) => ({ ...item, id: makeId() }));
+  }
+  if (copy.type === "keyValues") {
+    copy.pairs = copy.pairs.map((pair) => ({ ...pair, id: makeId() }));
+  }
+  return copy;
+}
+
+export function createSection(type: SectionType, customEditorMode: CustomEditorMode = "document"): ResumeSection {
   const id = makeId();
   switch (type) {
     case "education":
@@ -276,9 +349,9 @@ export function createSection(type: SectionType): ResumeSection {
         type,
         title: "自定义板块",
         enabled: true,
-        items: [
-          { id: makeId(), title: "", subtitle: "", date: "", description: "", bullets: [""] },
-        ],
+        editorMode: customEditorMode,
+        nodes: customEditorMode === "richtext" ? [] : [createCustomNode(customEditorMode === "builder" ? "title" : "paragraph")],
+        richText: customEditorMode === "richtext" ? "<p><br></p>" : "",
       };
   }
 }
@@ -287,7 +360,11 @@ export function duplicateSection(section: ResumeSection): ResumeSection {
   const copy = structuredClone(section);
   copy.id = makeId();
   copy.title = `${copy.title}副本`;
-  copy.items = copy.items.map((item) => ({ ...item, id: makeId() })) as typeof copy.items;
+  if (copy.type === "custom") {
+    copy.nodes = copy.nodes.map(duplicateCustomNode);
+  } else {
+    copy.items = copy.items.map((item) => ({ ...item, id: makeId() })) as typeof copy.items;
+  }
   return copy;
 }
 
@@ -343,4 +420,64 @@ export function isResumeDocument(value: unknown): value is ResumeDocument {
     Boolean(candidate.theme) &&
     Array.isArray(candidate.sections)
   );
+}
+
+function migrateLegacyCustomSection(section: LegacyCustomSection): CustomSection {
+  const mode = section.editorMode === "builder" || section.editorMode === "document" || section.editorMode === "richtext"
+    ? section.editorMode
+    : "builder";
+  if (Array.isArray(section.nodes)) {
+    return {
+      ...section,
+      editorMode: mode,
+      nodes: section.nodes,
+      richText: typeof section.richText === "string" ? section.richText : "",
+    };
+  }
+
+  const nodes: CustomContentNode[] = [];
+  for (const item of section.items ?? []) {
+    if (item.title || item.subtitle || item.date) {
+      nodes.push({
+        id: makeId(),
+        type: "title",
+        enabled: true,
+        title: item.title,
+        subtitle: item.subtitle,
+        date: item.date,
+      });
+    }
+    if (item.description) {
+      nodes.push({ id: makeId(), type: "paragraph", enabled: true, text: item.description });
+    }
+    const visibleBullets = item.bullets.filter((bullet) => bullet.trim());
+    if (visibleBullets.length) {
+      nodes.push({
+        id: makeId(),
+        type: "bullets",
+        enabled: true,
+        items: visibleBullets.map((text) => ({ id: makeId(), text })),
+      });
+    }
+  }
+  return {
+    id: section.id,
+    type: "custom",
+    title: section.title,
+    enabled: section.enabled,
+    editorMode: mode,
+    nodes: nodes.length ? nodes : [createCustomNode("paragraph")],
+    richText: typeof section.richText === "string" ? section.richText : "",
+  };
+}
+
+export function normalizeResumeDocument(value: unknown): ResumeDocument | null {
+  if (!isResumeDocument(value)) return null;
+  const resume = structuredClone(value);
+  resume.sections = resume.sections.map((section) =>
+    section.type === "custom"
+      ? migrateLegacyCustomSection(section as CustomSection | LegacyCustomSection)
+      : section,
+  );
+  return resume;
 }
