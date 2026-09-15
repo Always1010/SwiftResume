@@ -318,6 +318,14 @@ export function App() {
           <span className={`sync-status ${settings.liveSync && syncSupported ? "active" : ""}`} title={syncSupported ? "多个 SwiftResume 页面实时同步" : "当前浏览器不支持多页面同步"}>
             <span />{settings.liveSync && syncSupported ? "多页同步" : "同步关闭"}
           </span>
+          <button
+            type="button"
+            className={`secondary-button preview-toggle ${previewOpen ? "active" : ""}`}
+            aria-pressed={previewOpen}
+            onClick={() => setPreviewOpen((value) => !value)}
+          >
+            {previewOpen ? "关闭预览" : "开启预览"}
+          </button>
           <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置</button>
           <button type="button" className="secondary-button" onClick={() => downloadResume(resume)}>备份 JSON</button>
           <button type="button" className="secondary-button" onClick={() => importRef.current?.click()}>导入</button>
