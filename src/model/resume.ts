@@ -119,7 +119,7 @@ export interface ContentSection extends SectionBase {
 export type ResumeSection = EducationSection | ContentSection;
 
 export interface ResumeDocument {
-  schemaVersion: 2;
+  schemaVersion: 3;
   title: string;
   profile: ResumeProfile;
   theme: { accent: string; density: Density; templateId: ResumeTemplateId };
@@ -187,7 +187,7 @@ export function createContentEntry(): ContentEntry {
 
 export function createDefaultResume(): ResumeDocument {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     title: "我的中文简历",
     updatedAt: new Date().toISOString(),
     theme: { accent: "#596d82", density: DEFAULT_DENSITY, templateId: DEFAULT_RESUME_TEMPLATE },
@@ -317,7 +317,7 @@ export function resumeReducer(state: ResumeDocument, action: ResumeAction): Resu
 export function isResumeDocument(value: unknown): value is ResumeDocument {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<ResumeDocument>;
-  return candidate.schemaVersion === 2 && typeof candidate.title === "string" && Boolean(candidate.profile) && Boolean(candidate.theme) && Array.isArray(candidate.sections);
+  return candidate.schemaVersion === 3 && typeof candidate.title === "string" && Boolean(candidate.profile) && Boolean(candidate.theme) && Array.isArray(candidate.sections);
 }
 
 export function normalizeResumeDocument(value: unknown): ResumeDocument | null {

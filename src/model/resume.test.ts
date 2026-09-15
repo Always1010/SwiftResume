@@ -16,10 +16,10 @@ import {
 } from "./resume";
 
 describe("resume model", () => {
-  it("creates a schema v2 resume with structured headings and rich-text bodies", () => {
+  it("creates a schema v3 resume with three semantic component types", () => {
     const resume = createDefaultResume();
     expect(isResumeDocument(resume)).toBe(true);
-    expect(resume.schemaVersion).toBe(2);
+    expect(resume.schemaVersion).toBe(3);
     expect(resume.theme.templateId).toBe("classic");
     const projects = resume.sections.find((section) => section.title === "项目经历");
     expect(projects?.type).toBe("content");
@@ -94,8 +94,8 @@ describe("resume model", () => {
     expect(reordered[2].id).toBe(sections[0].id);
   });
 
-  it("rejects obsolete schema v1 documents instead of migrating them", () => {
-    const obsolete = { ...createDefaultResume(), schemaVersion: 1 };
+  it("rejects obsolete schema v2 documents instead of migrating them", () => {
+    const obsolete = { ...createDefaultResume(), schemaVersion: 2 };
     expect(normalizeResumeDocument(obsolete)).toBeNull();
   });
 
