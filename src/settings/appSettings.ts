@@ -6,6 +6,7 @@ export type SaveDelay = 300 | 500 | 1000;
 export interface AppSettings {
   version: 1;
   liveSync: boolean;
+  diskBackupEnabled: boolean;
   syncDelayMs: SyncDelay;
   saveDelayMs: SaveDelay;
   exportEngine: ExportEngine;
@@ -16,6 +17,7 @@ export interface AppSettings {
 export const DEFAULT_SETTINGS: AppSettings = {
   version: 1,
   liveSync: true,
+  diskBackupEnabled: true,
   syncDelayMs: 0,
   saveDelayMs: 500,
   exportEngine: "typst",
@@ -35,6 +37,9 @@ export function normalizeSettings(value: unknown): AppSettings {
   return {
     version: 1,
     liveSync: typeof candidate.liveSync === "boolean" ? candidate.liveSync : DEFAULT_SETTINGS.liveSync,
+    diskBackupEnabled: typeof candidate.diskBackupEnabled === "boolean"
+      ? candidate.diskBackupEnabled
+      : DEFAULT_SETTINGS.diskBackupEnabled,
     syncDelayMs: allowedSyncDelays.has(candidate.syncDelayMs as SyncDelay)
       ? candidate.syncDelayMs as SyncDelay
       : DEFAULT_SETTINGS.syncDelayMs,

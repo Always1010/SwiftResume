@@ -5,12 +5,20 @@ import type {
   SaveDelay,
   SyncDelay,
 } from "../settings/appSettings";
+import type { DiskBackupStatus } from "../storage/diskBackup";
 
 interface SettingsPanelProps {
   settings: AppSettings;
   syncSupported: boolean;
+  backupSupported: boolean;
+  backupStatus: DiskBackupStatus;
+  backupDirectoryName: string;
   onChange: (settings: AppSettings) => void;
   onClose: () => void;
+  onChooseBackupDirectory: () => void;
+  onAuthorizeBackupDirectory: () => void;
+  onBackupNow: () => void;
+  onRestoreBackup: () => void;
 }
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
@@ -28,7 +36,28 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (che
   );
 }
 
-export function SettingsPanel({ settings, syncSupported, onChange, onClose }: SettingsPanelProps) {
+const backupStatusLabels: Record<DiskBackupStatus, string> = {
+  unsupported: "当前浏览器不支持直接写入本地目录。",
+  "not-configured": "尚未选择备份目录。",
+  "permission-required": "目录已记录，需要重新授予读写权限。",
+  ready: "浏览器缓存和磁盘备份均可正常使用。",
+  saving: "正在写入磁盘备份……",
+  error: "最近一次磁盘备份失败，请重新选择目录或授权。",
+};
+
+export function SettingsPanel({
+  settings,
+  syncSupported,
+  backupSupported,
+  backupStatus,
+  backupDirectoryName,
+  onChange,
+  onClose,
+  onChooseBackupDirectory,
+  onAuthorizeBackupDirectory,
+  onBackupNow,
+  onRestoreBackup,
+}: SettingsPanelProps) {
   const update = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
     onChange({ ...settings, [key]: value });
 
@@ -95,6 +124,28 @@ export function SettingsPanel({ settings, syncSupported, onChange, onClose }: Se
                 <option value={100}>100%</option>
               </select>
             </label>
+          </div>
+
+          <div className="settings-group">
+            <div className="settings-group-title"><span>04</span><div><h3>本地磁盘备份</h3><p>将浏览器内的简历自动镜像到你授权的本地目录。</p></div></div>
+            <div className={`setting-row ${!backupSupported ? "setting-disabled" : ""}`}>
+              <div><strong>自动磁盘备份</strong><p>{backupStatusLabels[backupStatus]}</p></div>
+              <Toggle label="自动磁盘备份" checked={settings.diskBackupEnabled && backupSupported} onChange={(value) => update("diskBackupEnabled", value)} />
+            </div>
+            <div className="setting-row backup-directory-row">
+              <div><strong>备份目录</strong><p>{backupDirectoryName || "选择 D 盘、移动磁盘或其他可访问目录。"}</p></div>
+              <div className="setting-actions">
+                {backupStatus === "permission-required" && <button type="button" className="secondary-button" onClick={onAuthorizeBackupDirectory}>重新授权</button>}
+                <button type="button" className="secondary-button" disabled={!backupSupported} onClick={onChooseBackupDirectory}>{backupDirectoryName ? "更换目录" : "选择目录"}</button>
+              </div>
+            </div>
+            <div className="setting-row">
+              <div><strong>备份与恢复</strong><p>立即备份会保存全部简历；恢复会使用目录中的索引替换浏览器简历库。</p></div>
+              <div className="setting-actions">
+                <button type="button" className="secondary-button" disabled={!backupDirectoryName} onClick={onRestoreBackup}>从目录恢复</button>
+                <button type="button" className="primary-button" disabled={!backupDirectoryName || backupStatus === "permission-required"} onClick={onBackupNow}>立即备份</button>
+              </div>
+            </div>
           </div>
         </div>
 
