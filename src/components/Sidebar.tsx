@@ -35,9 +35,10 @@ interface SidebarProps {
   selectedId: string;
   onSelect: (id: string) => void;
   onSectionsChange: (sections: ResumeSection[]) => void;
+  onDeleteSection: (sectionId: string) => void;
 }
 
-export function Sidebar({ resume, selectedId, onSelect, onSectionsChange }: SidebarProps) {
+export function Sidebar({ resume, selectedId, onSelect, onSectionsChange, onDeleteSection }: SidebarProps) {
   const [newTitle, setNewTitle] = useState("");
   const [newCustomMode, setNewCustomMode] = useState<CustomEditorMode>("document");
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -126,6 +127,18 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange }: Side
                 }}
               >
                 ⧉
+              </button>
+              <button
+                type="button"
+                className="icon-button danger-text"
+                title="删除模块"
+                aria-label={`删除${section.title || sectionLabels[section.type]}模块`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDeleteSection(section.id);
+                }}
+              >
+                ×
               </button>
             </div>
           </div>
