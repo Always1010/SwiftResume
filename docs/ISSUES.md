@@ -119,3 +119,13 @@
 - 解决方案：整页画布只渲染已启用模块；隐藏操作仍保留在侧栏，若正在编辑的模块被隐藏，则保存内容并结束该模块的编辑状态。
 - 验证方式：补充整页画布隐藏模块回归测试，并执行完整单元测试和正式构建。
 - 相关文件：`src/components/ResumeEditorCanvas.tsx`、`src/components/ResumeEditorCanvas.test.tsx`、`src/styles.css`
+
+## SR-013：经历首行与自由正文被割裂为互斥编辑模式
+
+- 日期：2026-09-16
+- 状态：已解决
+- 现象或修改背景：项目模块能稳定显示名称、职责和日期，但正文标签及结构写死；组件搭建无法在同一段内自由加粗；自由文档和富文本又无法稳定表达右对齐日期。用户必须在三种各有缺口的模式中选择，仍不能自然完成常见简历条目。
+- 原因分析：数据模型按编辑器技术形态拆分，而不是按简历内容语义建模；标题日期行和自由正文分别归属不同模型，并在编辑、预览及 PDF 中维护了多条渲染路径。
+- 解决方案：升级为不兼容的 schema v2，删除三模式及 BlockNote 实现；项目、工作和自定义模块统一为可重复的内容条目，每条由可选标题、补充信息、日期和 Tiptap JSON 正文组成。首行全部留空时只渲染正文，预览与 Typst 直接消费同一数据语义。
+- 验证方式：补充模型、预览和 Typst 测试，执行完整单元测试与正式构建，并在浏览器验证标题日期对齐、纯正文模块、局部加粗及列表编辑。
+- 相关文件：`src/model/resume.ts`、`src/model/contentRichText.ts`、`src/components/EditorPanel.tsx`、`src/components/Sidebar.tsx`、`src/components/ResumePreview.tsx`、`src/components/customEditors/ContentBodyEditor.tsx`、`src/export/typstPdf.ts`、`src/editorModes.css`

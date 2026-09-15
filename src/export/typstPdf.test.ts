@@ -8,6 +8,8 @@ describe("Typst source generator", () => {
     const source = createTypstSource(resume);
     expect(source).toContain("教育背景");
     expect(source).toContain("轻量级 HTTP 服务器");
+    expect(source).toContain("开发工具：");
+    expect(source).toContain("#list(");
     expect(source).toContain(resume.theme.accent);
   });
 
@@ -38,56 +40,42 @@ describe("Typst source generator", () => {
     expect(createTypstSource(resume)).toContain('image("/profile-photo.png"');
   });
 
-  it("renders builder, document and rich-text custom modules independently", () => {
+  it("exports optional headings and rich text marks from neutral custom modules", () => {
     const resume = createDefaultResume();
     resume.sections.push({
-      id: "structured",
+      id: "custom",
       type: "custom",
-      title: "开源经历",
+      title: "个人优势",
       enabled: true,
-      editorMode: "builder",
-      richText: "",
-      documentBlocks: [],
-      hiddenDocumentBlockIds: [],
-      nodes: [
-        { id: "title", type: "title", enabled: true, title: "SwiftResume", subtitle: "维护者", date: "2026", styles: { title: { fontSize: 14, fontWeight: 700, color: "#123456" } } },
-        { id: "hidden", type: "paragraph", enabled: false, text: "不应导出" },
+      entries: [
+        {
+          id: "body-only",
+          title: "",
+          subtitle: "",
+          date: "",
+          body: {
+            type: "doc",
+            content: [{ type: "paragraph", content: [{ type: "text", text: "持续交付", marks: [{ type: "bold" }] }] }],
+          },
+        },
+        {
+          id: "with-heading",
+          title: "开源项目",
+          subtitle: "维护者",
+          date: "2026",
+          body: {
+            type: "doc",
+            content: [{ type: "bulletList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "稳定维护" }] }] }] }],
+          },
+        },
       ],
-    });
-    resume.sections.push({
-      id: "document",
-      type: "custom",
-      title: "自由文档",
-      enabled: true,
-      editorMode: "document",
-      richText: "",
-      nodes: [],
-      documentBlocks: [
-        { id: "visible-block", type: "heading", props: { level: 2, textAlignment: "center" }, content: [{ type: "text", text: "块编辑内容", styles: { bold: true, fontSize: "14pt" } }] },
-        { id: "hidden-block", type: "paragraph", content: "隐藏块" },
-      ],
-      hiddenDocumentBlockIds: ["hidden-block"],
-    });
-    resume.sections.push({
-      id: "richtext",
-      type: "custom",
-      title: "个人总结",
-      enabled: true,
-      editorMode: "richtext",
-      nodes: [],
-      documentBlocks: [],
-      hiddenDocumentBlockIds: [],
-      richText: '<h2><span style="font-size: 14pt; font-weight: 700">专注交付</span></h2><ul><li>持续改进</li></ul>',
     });
     const source = createTypstSource(resume);
-    expect(source).toContain("SwiftResume");
-    expect(source).toContain("块编辑内容");
-    expect(source).toContain("专注交付");
-    expect(source).toContain("持续改进");
-    expect(source).toContain("size: 14pt");
-    expect(source).toContain("#align(center)");
-    expect(source).toContain('rgb("#123456")');
-    expect(source).not.toContain("不应导出");
-    expect(source).not.toContain("隐藏块");
+    expect(source).toContain("个人优势");
+    expect(source).toContain("#strong[#text(\"持续交付\")]");
+    expect(source).toContain("开源项目");
+    expect(source).toContain("维护者");
+    expect(source).toContain("2026");
+    expect(source).toContain("稳定维护");
   });
 });
