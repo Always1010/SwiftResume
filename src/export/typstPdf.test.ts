@@ -7,9 +7,10 @@ describe("Typst source generator", () => {
     const resume = createDefaultResume();
     const source = createTypstSource(resume);
     expect(source).toContain("教育背景");
-    expect(source).toContain("轻量级 HTTP 服务器");
+    expect(source).toContain("高并发订单处理平台");
     expect(source).toContain("开发工具：");
     expect(source).toContain("#list(");
+    expect(source).toContain('image("/profile-photo.png"');
     expect(source).toContain(resume.theme.accent);
     expect(source).not.toContain("基本信息");
   });
