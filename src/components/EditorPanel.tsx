@@ -29,6 +29,7 @@ interface EditorPanelProps {
   onProfileChange: (profile: ResumeProfile) => void;
   onSectionChange: (section: ResumeSection) => void;
   onDeleteSection: (sectionId: string) => void;
+  embedded?: boolean;
 }
 
 interface FieldProps {
@@ -502,16 +503,17 @@ function CustomEditor({ section, onChange }: { section: CustomSection; onChange:
   return <CustomStructuredEditor section={section} onChange={onChange} />;
 }
 
-export function EditorPanel({ resume, selectedId, onProfileChange, onSectionChange, onDeleteSection }: EditorPanelProps) {
+export function EditorPanel({ resume, selectedId, onProfileChange, onSectionChange, onDeleteSection, embedded = false }: EditorPanelProps) {
+  const className = embedded ? "editor inline-module-editor" : "editor panel";
   if (selectedId === "profile") {
-    return <section className="editor panel"><ProfileEditor profile={resume.profile} onChange={onProfileChange} /></section>;
+    return <section className={className}><ProfileEditor profile={resume.profile} onChange={onProfileChange} /></section>;
   }
 
   const section = resume.sections.find((item) => item.id === selectedId);
   if (!section) return null;
 
   return (
-    <section className="editor panel">
+    <section className={className}>
       <div className="editor-title">
         <div>
           <span className="eyebrow">{section.type}</span>

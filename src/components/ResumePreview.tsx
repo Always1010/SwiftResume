@@ -141,6 +141,52 @@ function sectionItems(section: ResumeSection): PreviewFlowItem[] {
   }));
 }
 
+export function ResumeProfileView({ resume }: { resume: ResumeDocument }) {
+  const details = resume.profile.details.filter((item) => item.label || item.value);
+  return (
+    <>
+      <header className="resume-header">
+        <div className="identity">
+          <h1>{resume.profile.name || "姓名"}</h1>
+          {resume.profile.headline && <p className="headline">{resume.profile.headline}</p>}
+          <div className="contact-row">
+            {resume.profile.ageGender && <span>{resume.profile.ageGender}</span>}
+            {resume.profile.location && <span>{resume.profile.location}</span>}
+          </div>
+          <div className="contact-row">
+            {resume.profile.phone && <span>手机 {resume.profile.phone}</span>}
+            {resume.profile.email && <span>邮箱 {resume.profile.email}</span>}
+          </div>
+        </div>
+        <div className="resume-photo">{resume.profile.photo ? <img src={resume.profile.photo} alt="个人照片" /> : <span>PHOTO</span>}</div>
+      </header>
+      {details.length > 0 && (
+        <section className="resume-flow-section">
+          <SectionHeading>基本信息</SectionHeading>
+          <div className="detail-grid">{details.map((detail) => (
+            <div key={detail.id}><span>{detail.label}：</span><strong>{detail.value}</strong></div>
+          ))}</div>
+        </section>
+      )}
+    </>
+  );
+}
+
+export function ResumeSectionView({ section }: { section: ResumeSection }) {
+  const items = sectionItems(section);
+  return (
+    <>
+      <SectionHeading>{section.title}</SectionHeading>
+      {items.map((item, index) => (
+        <div key={item.id} className={index === 0 ? "resume-flow-entry first" : "resume-flow-entry"}>
+          {item.content}
+        </div>
+      ))}
+      {!items.length && <p className="resume-empty-module">点击这里填写内容</p>}
+    </>
+  );
+}
+
 function buildFlowItems(resume: ResumeDocument): PreviewFlowItem[] {
   const items: PreviewFlowItem[] = [{
     id: "resume-header",
