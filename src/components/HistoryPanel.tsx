@@ -121,7 +121,7 @@ export function HistoryPanel({
           </aside>
 
           <section className="history-preview" aria-label="历史简历预览">
-            {selected ? <ResumePreview resume={selected.resume} zoom={70} onOverflowChange={() => undefined} /> : <div className="history-empty">选择一个历史版本以预览。</div>}
+            {selected ? <ResumePreview resume={selected.resume} zoom={70} /> : <div className="history-empty">选择一个历史版本以预览。</div>}
           </section>
         </div>
 

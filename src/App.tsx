@@ -40,7 +40,7 @@ export function App() {
   const [selectedId, setSelectedId] = useState("profile");
   const [ready, setReady] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
-  const [overflow, setOverflow] = useState(false);
+  const [pageCount, setPageCount] = useState(1);
   const [exporting, setExporting] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -326,7 +326,7 @@ export function App() {
     setSaveState("saved");
     setHistoryOpen(false);
   };
-  const handleOverflow = useCallback((value: boolean) => setOverflow(value), []);
+  const handlePageCount = useCallback((value: number) => setPageCount(value), []);
   const applyRemoteResume = useCallback((value: ResumeDocument) => {
     const normalized = normalizeResumeDocument(value);
     if (normalized) dispatch({ type: "replace", value: normalized });
@@ -379,14 +379,6 @@ export function App() {
           <span className={`sync-status ${settings.liveSync && syncSupported ? "active" : ""}`} title={syncSupported ? "多个 SwiftResume 页面实时同步" : "当前浏览器不支持多页面同步"}>
             <span />{settings.liveSync && syncSupported ? "多页同步" : "同步关闭"}
           </span>
-          <button
-            type="button"
-            className={`secondary-button preview-toggle ${previewOpen ? "active" : ""}`}
-            aria-pressed={previewOpen}
-            onClick={() => setPreviewOpen((value) => !value)}
-          >
-            {previewOpen ? "关闭预览" : "开启预览"}
-          </button>
           <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置</button>
           <button type="button" className="secondary-button" onClick={() => downloadResume(resume)}>备份 JSON</button>
           <button type="button" className="secondary-button" onClick={() => importRef.current?.click()}>导入</button>
@@ -400,14 +392,16 @@ export function App() {
         {previewOpen ? (
           <section className="preview-panel">
             <div className="preview-toolbar">
-              <div><strong>A4 实时预览</strong>{settings.showOverflowWarning && <span className={overflow ? "overflow-warning" : "page-ok"}>{overflow ? "内容已超出一页" : "一页内"}</span>}</div>
+              <div className="preview-toolbar-leading">
+                <button type="button" className="preview-collapse-button" onClick={() => setPreviewOpen(false)}><span aria-hidden="true">→</span> 收起预览</button>
+                {settings.showOverflowWarning && <span className="page-count-badge">共 {pageCount} 页</span>}
+              </div>
               <div className="density-switch" aria-label="排版密度">{(Object.keys(densityLabels) as Density[]).map((density) => (
                 <button type="button" key={density} className={resume.theme.density === density ? "active" : ""} onClick={() => dispatch({ type: "update-theme", value: { density } })}>{densityLabels[density]}</button>
               ))}</div>
               <label className="accent-picker" title="强调色"><span>配色</span><input type="color" value={resume.theme.accent} onChange={(event) => dispatch({ type: "update-theme", value: { accent: event.target.value } })} /></label>
-              <button type="button" className="preview-close-button" aria-label="关闭简历预览" title="关闭预览" onClick={() => setPreviewOpen(false)}>×</button>
             </div>
-            <ResumePreview resume={resume} zoom={settings.previewZoom} onOverflowChange={handleOverflow} />
+            <ResumePreview resume={resume} zoom={settings.previewZoom} onPageCountChange={handlePageCount} />
           </section>
         ) : (
           <aside className="preview-collapsed" aria-label="简历预览已关闭">

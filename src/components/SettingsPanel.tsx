@@ -114,8 +114,8 @@ export function SettingsPanel({
           <div className="settings-group">
             <div className="settings-group-title"><span>03</span><div><h3>编辑预览</h3><p>只影响工作台显示，不改变 PDF 页面尺寸。</p></div></div>
             <div className="setting-row">
-              <div><strong>一页溢出提示</strong><p>内容超过当前 A4 页面时显示醒目提醒。</p></div>
-              <Toggle label="一页溢出提示" checked={settings.showOverflowWarning} onChange={(value) => update("showOverflowWarning", value)} />
+              <div><strong>预览页数</strong><p>在预览工具栏中显示当前简历的实际 A4 页数。</p></div>
+              <Toggle label="预览页数" checked={settings.showOverflowWarning} onChange={(value) => update("showOverflowWarning", value)} />
             </div>
             <label className="setting-row">
               <div><strong>预览缩放</strong><p>在较小屏幕上缩小页面，减少横向滚动。</p></div>
