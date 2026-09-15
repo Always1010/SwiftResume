@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { EditorPanel } from "./components/EditorPanel";
 import { BackupSetupPrompt } from "./components/BackupSetupPrompt";
 import { HistoryPanel } from "./components/HistoryPanel";
+import { ResumeEditorCanvas } from "./components/ResumeEditorCanvas";
 import { ResumePreview } from "./components/ResumePreview";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
@@ -143,6 +143,20 @@ export function App() {
     libraryRef.current = nextLibrary;
     setLibrary(nextLibrary);
     return nextLibrary;
+  };
+  const commitInlineEdit = () => {
+    setSaveState("saving");
+    void persistCurrentResume()
+      .then(() => setSaveState("saved"))
+      .catch(() => setSaveState("error"));
+  };
+  const locateResumeBlock = (id: string) => {
+    setSelectedId(id);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        document.getElementById(`resume-block-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
   };
   const switchResume = async (resumeId: string) => {
     if (resumeId === activeResumeId) return;
@@ -402,8 +416,17 @@ export function App() {
         </div>
       </header>
       <div className={`workspace ${settings.previewOpen ? "" : "preview-hidden"}`}>
-        <Sidebar resume={resume} selectedId={selectedId} onSelect={setSelectedId} onSectionsChange={setSections} onDeleteSection={removeSection} />
-        <EditorPanel resume={resume} selectedId={selectedId} onProfileChange={(value) => dispatch({ type: "update-profile", value })} onSectionChange={updateSection} onDeleteSection={removeSection} />
+        <Sidebar resume={resume} selectedId={selectedId} onSelect={locateResumeBlock} onSectionsChange={setSections} onDeleteSection={removeSection} />
+        <ResumeEditorCanvas
+          key={activeResumeId}
+          resume={resume}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onProfileChange={(value) => dispatch({ type: "update-profile", value })}
+          onSectionChange={updateSection}
+          onDeleteSection={removeSection}
+          onCommit={commitInlineEdit}
+        />
         {settings.previewOpen ? (
           <section className="preview-panel">
             <div className="preview-toolbar">
