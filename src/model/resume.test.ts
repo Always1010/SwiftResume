@@ -105,7 +105,7 @@ describe("resume model", () => {
     expect(normalizeResumeDocument(resume)?.theme.templateId).toBe("classic");
     resume.theme.templateId = "unknown";
     expect(normalizeResumeDocument(resume)?.theme.templateId).toBe("classic");
-    expect(RESUME_TEMPLATE_IDS).toHaveLength(9);
+    expect(RESUME_TEMPLATE_IDS).toHaveLength(29);
   });
 
   it("normalizes density values and interpolates layout continuously", () => {

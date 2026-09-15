@@ -4,7 +4,11 @@ export const MIN_DENSITY = 0;
 export const DEFAULT_DENSITY = 50;
 export const MAX_DENSITY = 100;
 
-export const RESUME_TEMPLATE_IDS = ["classic", "minimal", "executive", "sidebar", "accent", "timeline", "academic", "developer", "compact"] as const;
+export const RESUME_TEMPLATE_IDS = [
+  "classic", "minimal", "executive", "sidebar", "accent", "timeline", "academic", "developer", "compact",
+  "newspaper", "swiss", "magazine", "blueprint", "japanese", "archive", "nordic", "bauhaus", "index",
+  "monochrome", "gradient", "terminal", "ledger", "diplomat", "studio", "ribbon", "capsule", "split", "metro", "folio",
+] as const;
 export type ResumeTemplateId = typeof RESUME_TEMPLATE_IDS[number];
 export const DEFAULT_RESUME_TEMPLATE: ResumeTemplateId = "classic";
 

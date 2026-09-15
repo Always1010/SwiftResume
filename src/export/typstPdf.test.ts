@@ -14,7 +14,7 @@ describe("Typst source generator", () => {
     expect(source).not.toContain("基本信息");
   });
 
-  it("generates a distinct source marker and layout for all nine templates", () => {
+  it("generates a distinct source marker and layout for all twenty-nine templates", () => {
     const sources = RESUME_TEMPLATE_IDS.map((templateId) => {
       const resume = createDefaultResume();
       resume.theme.templateId = templateId;
