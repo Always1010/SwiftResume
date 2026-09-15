@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { EditorPanel } from "./components/EditorPanel";
+import { BackupSetupPrompt } from "./components/BackupSetupPrompt";
 import { HistoryPanel } from "./components/HistoryPanel";
 import { ResumePreview } from "./components/ResumePreview";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -47,6 +48,7 @@ export function App() {
   const [previewOpen, setPreviewOpen] = useState(true);
   const [backupDirectory, setBackupDirectory] = useState<FileSystemDirectoryHandle | null>(null);
   const [backupStatus, setBackupStatus] = useState<DiskBackupStatus>(() => isDiskBackupSupported() ? "not-configured" : "unsupported");
+  const [backupPromptOpen, setBackupPromptOpen] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<ResumeLibrary | null>(null);
   libraryRef.current = library;
@@ -69,12 +71,23 @@ export function App() {
     if (!isDiskBackupSupported()) return;
     let active = true;
     loadBackupDirectory().then(async (handle) => {
-      if (!active || !handle) return;
+      if (!active) return;
+      if (!handle) {
+        setBackupStatus("not-configured");
+        if (settings.diskBackupEnabled) setBackupPromptOpen(true);
+        return;
+      }
       setBackupDirectory(handle);
-      setBackupStatus(await queryBackupPermission(handle) === "granted" ? "ready" : "permission-required");
-    }).catch(() => active && setBackupStatus("error"));
+      const status = await queryBackupPermission(handle) === "granted" ? "ready" : "permission-required";
+      setBackupStatus(status);
+      if (status === "permission-required" && settings.diskBackupEnabled) setBackupPromptOpen(true);
+    }).catch(() => {
+      if (!active) return;
+      setBackupStatus("error");
+      if (settings.diskBackupEnabled) setBackupPromptOpen(true);
+    });
     return () => { active = false; };
-  }, []);
+  }, [settings.diskBackupEnabled]);
 
   useEffect(() => {
     saveSettings(settings);
@@ -104,7 +117,11 @@ export function App() {
       setBackupStatus("saving");
       backupResumeToDirectory(backupDirectory, activeResumeId, resume, nextLibrary)
         .then(() => setBackupStatus("ready"))
-        .catch((error: unknown) => setBackupStatus(error instanceof DOMException && error.name === "NotAllowedError" ? "permission-required" : "error"));
+        .catch((error: unknown) => {
+          const status = error instanceof DOMException && error.name === "NotAllowedError" ? "permission-required" : "error";
+          setBackupStatus(status);
+          setBackupPromptOpen(true);
+        });
     }, 1500);
     return () => window.clearTimeout(timer);
   }, [activeResumeId, backupDirectory, ready, resume, settings.diskBackupEnabled]);
@@ -211,6 +228,7 @@ export function App() {
       setBackupStatus("saving");
       await backupAllResumes(directory, true);
       setBackupStatus("ready");
+      setBackupPromptOpen(false);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       setBackupStatus(error instanceof DOMException && error.name === "NotAllowedError" ? "permission-required" : "error");
@@ -227,6 +245,7 @@ export function App() {
       setBackupStatus("saving");
       await backupAllResumes(backupDirectory);
       setBackupStatus("ready");
+      setBackupPromptOpen(false);
     } catch (error) {
       setBackupStatus("error");
       window.alert(error instanceof Error ? error.message : "授权备份目录失败");
@@ -418,6 +437,13 @@ export function App() {
         onCreateSnapshot={createHistorySnapshot}
         onRestoreAsNew={restoreHistoryAsNew}
         onReplaceResume={replaceResumeFromHistory}
+      />}
+      {backupPromptOpen && backupStatus !== "unsupported" && <BackupSetupPrompt
+        status={backupStatus}
+        directoryName={backupDirectory?.name ?? ""}
+        onChooseDirectory={() => void selectBackupDirectory()}
+        onAuthorizeDirectory={() => void authorizeBackupDirectory()}
+        onLater={() => setBackupPromptOpen(false)}
       />}
     </div>
   );

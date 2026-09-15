@@ -254,6 +254,14 @@ button { cursor: pointer; }
 .history-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 64px; padding: 12px 24px; border-top: 1px solid var(--border); background: white; }
 .history-footer > span { color: var(--muted); font-size: 10px; }
 
+.backup-prompt-backdrop { position: fixed; z-index: 140; inset: 0; display: grid; place-items: center; padding: 28px; background: rgba(17, 29, 22, .56); backdrop-filter: blur(5px); }
+.backup-prompt { width: min(520px, 100%); border: 1px solid rgba(255, 255, 255, .58); border-radius: 18px; padding: 28px 30px 24px; background: white; box-shadow: 0 28px 85px rgba(15, 34, 23, .3); text-align: center; }
+.backup-prompt-icon { display: grid; width: 48px; height: 48px; margin: 0 auto 13px; place-items: center; border-radius: 14px; color: var(--green); background: #e5f2e9; font-size: 24px; font-weight: 800; }
+.backup-prompt h2 { margin: 7px 0 10px; font-size: 22px; }
+.backup-prompt p { margin: 0 auto; color: #5f6d64; font-size: 12px; line-height: 1.75; }
+.backup-prompt-actions { display: flex; justify-content: center; gap: 9px; margin: 22px 0 12px; }
+.backup-prompt small { color: #8a958e; font-size: 9px; }
+
 .resume-page { --section-space: 14px; --entry-space: 10px; --body-line: 1.42; width: 210mm; height: 297mm; min-height: 297mm; margin: 0 auto; overflow: hidden; padding: 11mm 12.5mm 10mm; color: #303030; background: white; box-shadow: 0 8px 30px rgba(42, 55, 46, .16); font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif; font-size: 11.5px; line-height: var(--body-line); }
 .resume-page.density-comfortable { --section-space: 17px; --entry-space: 13px; --body-line: 1.52; }
 .resume-page.density-compact { --section-space: 10px; --entry-space: 7px; --body-line: 1.32; font-size: 10.8px; }
