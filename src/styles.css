@@ -95,9 +95,11 @@ button { cursor: pointer; }
 .module-move-button { opacity: 0; }
 .module-row:hover .module-move-button, .module-row.selected .module-move-button, .module-move-button:focus-visible { opacity: 1; }
 .module-type { color: #829087; font-size: 10px; }
-.add-module { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.add-module { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 5px; padding: 14px 2px 2px; border-top: 1px solid var(--border); }
 .add-module-label { color: #617068; font-size: 10px; font-weight: 750; }
-.add-module select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: #35423a; background: white; }
+.add-module input { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; outline: none; color: #35423a; background: white; font-size: 11px; }
+.add-module input:focus { border-color: #75a98a; box-shadow: 0 0 0 3px rgba(23, 107, 69, .08); }
+.add-module .primary-button:disabled { cursor: not-allowed; opacity: .45; }
 .custom-mode-options { display: grid; gap: 6px; }
 .custom-mode-options > button { border: 1px solid var(--border); border-radius: 9px; padding: 9px 10px; color: #34423a; background: white; text-align: left; }
 .custom-mode-options > button:hover { border-color: #a7beb0; background: #f7faf8; }
