@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   createSection,
   duplicateSection,
+  moveSection,
   reorderSection,
   type ResumeDocument,
   type ResumeSection,
@@ -76,9 +77,35 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange }: Side
             <span className="drag-handle" title="拖动排序">⋮⋮</span>
             <span className="module-copy">
               <strong>{section.title || sectionLabels[section.type]}</strong>
-              <small>{sectionLabels[section.type]}</small>
+              <small>{sectionLabels[section.type]}{!section.enabled && " · 已隐藏"}</small>
             </span>
             <div className="module-actions">
+              <button
+                type="button"
+                className="icon-button module-move-button"
+                title="上移模块"
+                aria-label={`上移${section.title || sectionLabels[section.type]}`}
+                disabled={index === 0}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onSectionsChange(moveSection(resume.sections, section.id, -1));
+                }}
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                className="icon-button module-move-button"
+                title="下移模块"
+                aria-label={`下移${section.title || sectionLabels[section.type]}`}
+                disabled={index === resume.sections.length - 1}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onSectionsChange(moveSection(resume.sections, section.id, 1));
+                }}
+              >
+                ↓
+              </button>
               <button
                 type="button"
                 className="icon-button"
@@ -115,6 +142,7 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange }: Side
       </div>
 
       <div className="add-module">
+        <span className="add-module-label">添加标准模块</span>
         <select value={newType} onChange={(event) => setNewType(event.target.value as SectionType)}>
           {Object.entries(sectionLabels).map(([value, label]) => (
             <option key={value} value={value}>
