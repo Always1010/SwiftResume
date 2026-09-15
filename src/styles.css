@@ -149,8 +149,6 @@ button { cursor: pointer; }
 .resume-editable-block.profile-block { margin: -7px; padding: 7px; }
 .resume-editable-block.section-block { margin: calc(var(--section-space) - 5px) -7px -5px; padding: 5px 7px; scroll-margin-top: 48px; }
 .resume-editable-block.section-block .resume-flow-entry { display: flow-root; }
-.resume-editable-block.module-hidden { border-style: dashed; opacity: .58; }
-.hidden-module-badge { position: absolute; z-index: 2; top: 3px; right: 7px; border-radius: 999px; padding: 2px 6px; color: #68756d; background: #e5ebe7; font-size: 8px; font-weight: 750; }
 .resume-empty-module { margin: 4px 0 0; color: #95a098; font-size: 10px; }
 .resume-editable-block.editing { border-color: #83b294; background: #f9fbf9; box-shadow: 0 5px 22px rgba(26, 67, 42, .11); }
 .inline-editor-shell { color: #17211b; font-family: Inter, "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; font-size: 12px; line-height: 1.45; }

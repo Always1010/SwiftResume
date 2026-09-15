@@ -25,10 +25,12 @@ export function ResumeEditorCanvas({
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (editingId !== "profile" && !resume.sections.some((section) => section.id === editingId)) {
-      setEditingId(null);
-    }
-  }, [editingId, resume.sections]);
+    if (!editingId || editingId === "profile") return;
+    const editingSection = resume.sections.find((section) => section.id === editingId);
+    if (editingSection?.enabled) return;
+    if (editingSection) onCommit();
+    setEditingId(null);
+  }, [editingId, onCommit, resume.sections]);
 
   const closeEditor = () => {
     if (!editingId) return;
@@ -95,18 +97,17 @@ export function ResumeEditorCanvas({
           {editingId === "profile" ? renderEditor("profile") : <ResumeProfileView resume={resume} />}
         </section>
 
-        {resume.sections.map((section) => (
+        {resume.sections.filter((section) => section.enabled).map((section) => (
           <section
             id={`resume-block-${section.id}`}
             data-resume-block={section.id}
             key={section.id}
-            className={`resume-editable-block section-block ${selectedId === section.id ? "located" : ""} ${editingId === section.id ? "editing" : ""} ${section.enabled ? "" : "module-hidden"}`}
+            className={`resume-editable-block section-block ${selectedId === section.id ? "located" : ""} ${editingId === section.id ? "editing" : ""}`}
             role={editingId === section.id ? undefined : "button"}
             tabIndex={editingId === section.id ? undefined : 0}
             onClick={() => editBlock(section.id)}
             onKeyDown={(event) => handleViewKeyDown(event, section.id)}
           >
-            {!section.enabled && editingId !== section.id && <span className="hidden-module-badge">已隐藏</span>}
             {editingId === section.id ? renderEditor(section.id) : <ResumeSectionView section={section} />}
           </section>
         ))}

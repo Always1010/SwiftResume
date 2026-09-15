@@ -53,4 +53,30 @@ describe("ResumeEditorCanvas", () => {
     expect(document.querySelectorAll(".resume-editable-block.editing")).toHaveLength(0);
     expect(onCommit).toHaveBeenCalledTimes(1);
   });
+
+  it("does not render hidden modules on the resume canvas", () => {
+    const resume = createBlankResume();
+    const visibleSection = createSection("education");
+    const hiddenSection = { ...createSection("skills"), enabled: false };
+    resume.sections = [visibleSection, hiddenSection];
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    roots.push(root);
+
+    act(() => root.render(
+      <ResumeEditorCanvas
+        resume={resume}
+        selectedId="profile"
+        onSelect={() => undefined}
+        onProfileChange={() => undefined}
+        onSectionChange={() => undefined}
+        onDeleteSection={() => undefined}
+        onCommit={() => undefined}
+      />,
+    ));
+
+    expect(document.querySelector(`#resume-block-${visibleSection.id}`)).not.toBeNull();
+    expect(document.querySelector(`#resume-block-${hiddenSection.id}`)).toBeNull();
+  });
 });
