@@ -1,8 +1,51 @@
-import { isResumeDocument, type ResumeDocument } from "../model/resume";
+import { createDefaultResume, isResumeDocument, type ResumeDocument } from "../model/resume";
 
 const DATABASE = "swift-resume";
 const STORE = "documents";
-const DOCUMENT_KEY = "active-resume";
+const LEGACY_DOCUMENT_KEY = "active-resume";
+const LIBRARY_KEY = "resume-library";
+const resumeKey = (resumeId: string) => `resume:${resumeId}`;
+
+export interface ResumeSummary {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ResumeLibrary {
+  version: 1;
+  activeResumeId: string;
+  resumes: ResumeSummary[];
+}
+
+export interface ResumeWorkspace {
+  library: ResumeLibrary;
+  resume: ResumeDocument;
+}
+
+const makeId = () => crypto.randomUUID();
+
+export function createResumeSummary(id: string, resume: ResumeDocument, createdAt = resume.updatedAt): ResumeSummary {
+  return { id, title: resume.title, createdAt, updatedAt: resume.updatedAt };
+}
+
+export function updateResumeSummary(library: ResumeLibrary, resumeId: string, resume: ResumeDocument): ResumeLibrary {
+  const current = library.resumes.find((item) => item.id === resumeId);
+  if (current?.title === resume.title && current.updatedAt === resume.updatedAt) return library;
+  return {
+    ...library,
+    resumes: library.resumes.map((item) =>
+      item.id === resumeId ? { ...item, title: resume.title, updatedAt: resume.updatedAt } : item,
+    ),
+  };
+}
+
+function isResumeLibrary(value: unknown): value is ResumeLibrary {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<ResumeLibrary>;
+  return candidate.version === 1 && typeof candidate.activeResumeId === "string" && Array.isArray(candidate.resumes);
+}
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -17,26 +60,97 @@ function openDatabase(): Promise<IDBDatabase> {
   });
 }
 
-export async function loadResume(): Promise<ResumeDocument | null> {
-  const database = await openDatabase();
+function getValue<T>(database: IDBDatabase, key: string): Promise<T | undefined> {
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE, "readonly");
-    const request = transaction.objectStore(STORE).get(DOCUMENT_KEY);
-    request.onsuccess = () => resolve(isResumeDocument(request.result) ? request.result : null);
+    const request = transaction.objectStore(STORE).get(key);
+    request.onsuccess = () => resolve(request.result as T | undefined);
     request.onerror = () => reject(request.error);
-    transaction.oncomplete = () => database.close();
   });
 }
 
-export async function saveResume(resume: ResumeDocument): Promise<void> {
+export async function loadResumeWorkspace(): Promise<ResumeWorkspace> {
+  const database = await openDatabase();
+  try {
+    const storedLibrary = await getValue<unknown>(database, LIBRARY_KEY);
+    if (isResumeLibrary(storedLibrary)) {
+      const preferred = storedLibrary.resumes.find((item) => item.id === storedLibrary.activeResumeId)
+        ?? storedLibrary.resumes[0];
+      if (preferred) {
+        const storedResume = await getValue<unknown>(database, resumeKey(preferred.id));
+        if (isResumeDocument(storedResume)) {
+          const library = preferred.id === storedLibrary.activeResumeId
+            ? storedLibrary
+            : { ...storedLibrary, activeResumeId: preferred.id };
+          return { library, resume: storedResume };
+        }
+      }
+    }
+
+    const legacy = await getValue<unknown>(database, LEGACY_DOCUMENT_KEY);
+    const resume = isResumeDocument(legacy) ? legacy : createDefaultResume();
+    const id = makeId();
+    const library: ResumeLibrary = {
+      version: 1,
+      activeResumeId: id,
+      resumes: [createResumeSummary(id, resume)],
+    };
+    await saveResumeWorkspace(id, resume, library, database);
+    return { library, resume };
+  } finally {
+    database.close();
+  }
+}
+
+export async function loadResumeById(resumeId: string): Promise<ResumeDocument | null> {
+  const database = await openDatabase();
+  try {
+    const value = await getValue<unknown>(database, resumeKey(resumeId));
+    return isResumeDocument(value) ? value : null;
+  } finally {
+    database.close();
+  }
+}
+
+export async function saveResumeWorkspace(
+  resumeId: string,
+  resume: ResumeDocument,
+  library: ResumeLibrary,
+  existingDatabase?: IDBDatabase,
+): Promise<void> {
+  const database = existingDatabase ?? await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(STORE, "readwrite");
+    const store = transaction.objectStore(STORE);
+    store.put(resume, resumeKey(resumeId));
+    store.put(library, LIBRARY_KEY);
+    transaction.oncomplete = () => {
+      if (!existingDatabase) database.close();
+      resolve();
+    };
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
+export async function activateResume(library: ResumeLibrary, resumeId: string): Promise<ResumeLibrary> {
+  const next = { ...library, activeResumeId: resumeId };
   const database = await openDatabase();
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE, "readwrite");
-    transaction.objectStore(STORE).put(resume, DOCUMENT_KEY);
-    transaction.oncomplete = () => {
-      database.close();
-      resolve();
-    };
+    transaction.objectStore(STORE).put(next, LIBRARY_KEY);
+    transaction.oncomplete = () => { database.close(); resolve(next); };
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
+export async function deleteResume(resumeId: string, library: ResumeLibrary): Promise<void> {
+  const database = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(STORE, "readwrite");
+    const store = transaction.objectStore(STORE);
+    store.delete(resumeKey(resumeId));
+    store.put(library, LIBRARY_KEY);
+    transaction.oncomplete = () => { database.close(); resolve(); };
     transaction.onerror = () => reject(transaction.error);
   });
 }

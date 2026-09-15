@@ -4,15 +4,27 @@ import { ResumePreview } from "./components/ResumePreview";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { exportTypstPdf } from "./export/typstPdf";
-import { createDefaultResume, resumeReducer, type Density, type ResumeDocument, type ResumeSection } from "./model/resume";
+import { createBlankResume, createDefaultResume, duplicateResume, resumeReducer, type Density, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
-import { downloadResume, loadResume, parseResumeFile, saveResume } from "./storage/resumeStorage";
+import {
+  activateResume,
+  createResumeSummary,
+  deleteResume,
+  downloadResume,
+  loadResumeById,
+  loadResumeWorkspace,
+  parseResumeFile,
+  saveResumeWorkspace,
+  updateResumeSummary,
+  type ResumeLibrary,
+} from "./storage/resumeStorage";
 import { useResumeSync } from "./sync/resumeSync";
 
 const densityLabels: Record<Density, string> = { comfortable: "宽松", standard: "标准", compact: "紧凑" };
 
 export function App() {
   const [resume, dispatch] = useReducer(resumeReducer, undefined, createDefaultResume);
+  const [library, setLibrary] = useState<ResumeLibrary | null>(null);
   const [selectedId, setSelectedId] = useState("profile");
   const [ready, setReady] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
@@ -22,11 +34,17 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
   const importRef = useRef<HTMLInputElement>(null);
+  const libraryRef = useRef<ResumeLibrary | null>(null);
+  libraryRef.current = library;
+  const activeResumeId = library?.activeResumeId ?? "";
 
   useEffect(() => {
     let active = true;
-    loadResume().then((stored) => {
-      if (active && stored) dispatch({ type: "replace", value: stored });
+    loadResumeWorkspace().then((workspace) => {
+      if (active) {
+        setLibrary(workspace.library);
+        dispatch({ type: "replace", value: workspace.resume });
+      }
     }).catch(() => setSaveState("error")).finally(() => active && setReady(true));
     return () => { active = false; };
   }, []);
@@ -40,11 +58,17 @@ export function App() {
   useEffect(() => {
     if (!ready) return;
     setSaveState("saving");
+    if (!activeResumeId || !libraryRef.current) return;
+    const nextLibrary = updateResumeSummary(libraryRef.current, activeResumeId, resume);
+    if (nextLibrary !== libraryRef.current) {
+      libraryRef.current = nextLibrary;
+      setLibrary(nextLibrary);
+    }
     const timer = window.setTimeout(() => {
-      saveResume(resume).then(() => setSaveState("saved")).catch(() => setSaveState("error"));
+      saveResumeWorkspace(activeResumeId, resume, nextLibrary).then(() => setSaveState("saved")).catch(() => setSaveState("error"));
     }, settings.saveDelayMs);
     return () => window.clearTimeout(timer);
-  }, [ready, resume, settings.saveDelayMs]);
+  }, [activeResumeId, ready, resume, settings.saveDelayMs]);
 
   useEffect(() => {
     if (selectedId !== "profile" && !resume.sections.some((section) => section.id === selectedId)) setSelectedId("profile");
@@ -52,11 +76,81 @@ export function App() {
 
   const setSections = (sections: ResumeSection[]) => dispatch({ type: "set-sections", value: sections });
   const updateSection = (section: ResumeSection) => setSections(resume.sections.map((item) => item.id === section.id ? section : item));
+  const persistCurrentResume = async () => {
+    const currentLibrary = libraryRef.current;
+    if (!currentLibrary || !activeResumeId) return currentLibrary;
+    const nextLibrary = updateResumeSummary(currentLibrary, activeResumeId, resume);
+    await saveResumeWorkspace(activeResumeId, resume, nextLibrary);
+    libraryRef.current = nextLibrary;
+    setLibrary(nextLibrary);
+    return nextLibrary;
+  };
+  const switchResume = async (resumeId: string) => {
+    if (resumeId === activeResumeId) return;
+    setSaveState("saving");
+    try {
+      const currentLibrary = await persistCurrentResume();
+      if (!currentLibrary) return;
+      const target = await loadResumeById(resumeId);
+      if (!target) throw new Error("找不到所选简历");
+      const nextLibrary = await activateResume(currentLibrary, resumeId);
+      libraryRef.current = nextLibrary;
+      setLibrary(nextLibrary);
+      dispatch({ type: "replace", value: target });
+      setSelectedId("profile");
+      setSaveState("saved");
+    } catch (error) {
+      setSaveState("error");
+      window.alert(error instanceof Error ? error.message : "切换简历失败");
+    }
+  };
+  const addResume = async (document: ResumeDocument) => {
+    const currentLibrary = await persistCurrentResume();
+    if (!currentLibrary) return;
+    const id = crypto.randomUUID();
+    const nextLibrary: ResumeLibrary = {
+      ...currentLibrary,
+      activeResumeId: id,
+      resumes: [...currentLibrary.resumes, createResumeSummary(id, document)],
+    };
+    await saveResumeWorkspace(id, document, nextLibrary);
+    libraryRef.current = nextLibrary;
+    setLibrary(nextLibrary);
+    dispatch({ type: "replace", value: document });
+    setSelectedId("profile");
+    setSaveState("saved");
+  };
+  const createResume = () => {
+    void addResume(createBlankResume()).catch((error) => {
+      setSaveState("error");
+      window.alert(error instanceof Error ? error.message : "新建简历失败");
+    });
+  };
+  const copyResume = () => {
+    void addResume(duplicateResume(resume)).catch((error) => {
+      setSaveState("error");
+      window.alert(error instanceof Error ? error.message : "复制简历失败");
+    });
+  };
+  const removeCurrentResume = async () => {
+    const currentLibrary = libraryRef.current;
+    if (!currentLibrary || currentLibrary.resumes.length <= 1) return;
+    if (!window.confirm(`确定删除“${resume.title}”吗？此操作不会删除手动导出的备份。`)) return;
+    const remaining = currentLibrary.resumes.filter((item) => item.id !== activeResumeId);
+    const nextId = remaining[0].id;
+    const target = await loadResumeById(nextId);
+    if (!target) throw new Error("无法读取下一份简历");
+    const nextLibrary: ResumeLibrary = { ...currentLibrary, activeResumeId: nextId, resumes: remaining };
+    await deleteResume(activeResumeId, nextLibrary);
+    libraryRef.current = nextLibrary;
+    setLibrary(nextLibrary);
+    dispatch({ type: "replace", value: target });
+    setSelectedId("profile");
+  };
   const importFile = async (file: File | undefined) => {
     if (!file) return;
     try {
-      dispatch({ type: "replace", value: await parseResumeFile(file) });
-      setSelectedId("profile");
+      await addResume(await parseResumeFile(file));
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "导入失败");
     }
@@ -66,6 +160,7 @@ export function App() {
     dispatch({ type: "replace", value });
   }, []);
   const { supported: syncSupported } = useResumeSync({
+    resumeId: activeResumeId,
     resume,
     ready,
     enabled: settings.liveSync,
@@ -93,7 +188,17 @@ export function App() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand"><span className="brand-mark">S</span><div><strong>SwiftResume</strong><small>模块化简历工作台</small></div></div>
-        <input className="document-title" aria-label="简历文件名" value={resume.title} onChange={(event) => dispatch({ type: "update-title", value: event.target.value })} />
+        <div className="document-manager">
+          <select aria-label="切换简历" value={activeResumeId} disabled={!library} onChange={(event) => void switchResume(event.target.value)}>
+            {library?.resumes.map((item) => <option key={item.id} value={item.id}>{item.title || "未命名简历"}</option>)}
+          </select>
+          <input className="document-title" aria-label="简历文件名" value={resume.title} onChange={(event) => dispatch({ type: "update-title", value: event.target.value })} />
+          <div className="document-actions">
+            <button type="button" className="text-button" onClick={createResume}>＋ 新建</button>
+            <button type="button" className="text-button" onClick={copyResume}>⧉ 创建副本</button>
+            <button type="button" className="text-button danger-text" disabled={!library || library.resumes.length <= 1} onClick={() => void removeCurrentResume().catch((error) => window.alert(error instanceof Error ? error.message : "删除失败"))}>删除</button>
+          </div>
+        </div>
         <div className="topbar-actions">
           <span className={`save-status ${saveState}`}>{saveState === "saved" ? "● 已自动保存" : saveState === "saving" ? "● 保存中" : "● 保存失败"}</span>
           <span className={`sync-status ${settings.liveSync && syncSupported ? "active" : ""}`} title={syncSupported ? "多个 SwiftResume 页面实时同步" : "当前浏览器不支持多页面同步"}>

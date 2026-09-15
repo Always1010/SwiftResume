@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   createDefaultResume,
+  createBlankResume,
   createSection,
   duplicateSection,
+  duplicateResume,
   isResumeDocument,
   moveSection,
   reorderSection,
@@ -13,6 +15,14 @@ describe("resume model", () => {
     const resume = createDefaultResume();
     expect(isResumeDocument(resume)).toBe(true);
     expect(resume.sections.length).toBeGreaterThan(2);
+  });
+
+  it("creates blank documents and independent resume copies", () => {
+    const blank = createBlankResume();
+    expect(blank.profile.name).toBe("");
+    expect(blank.sections).toEqual([]);
+    const copy = duplicateResume(createDefaultResume());
+    expect(copy.title).toContain("副本");
   });
 
   it("creates and duplicates independent modules", () => {
