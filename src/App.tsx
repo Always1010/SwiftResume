@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { EditorPanel } from "./components/EditorPanel";
 import { ResumePreview } from "./components/ResumePreview";
 import { Sidebar } from "./components/Sidebar";
+import { exportTypstPdf } from "./export/typstPdf";
 import { createDefaultResume, resumeReducer, type Density, type ResumeSection } from "./model/resume";
 import { downloadResume, loadResume, parseResumeFile, saveResume } from "./storage/resumeStorage";
 
@@ -13,6 +14,7 @@ export function App() {
   const [ready, setReady] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
   const [overflow, setOverflow] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -48,6 +50,18 @@ export function App() {
     }
   };
   const handleOverflow = useCallback((value: boolean) => setOverflow(value), []);
+  const exportPdf = async () => {
+    setExporting(true);
+    try {
+      await exportTypstPdf(resume);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "未知错误";
+      window.alert(`Typst PDF 导出失败，将打开浏览器打印作为备用方案。\n\n${message}`);
+      window.print();
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="app-shell">
@@ -59,7 +73,7 @@ export function App() {
           <button type="button" className="secondary-button" onClick={() => downloadResume(resume)}>备份 JSON</button>
           <button type="button" className="secondary-button" onClick={() => importRef.current?.click()}>导入</button>
           <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => void importFile(event.target.files?.[0])} />
-          <button type="button" className="primary-button export-button" onClick={() => window.print()}>导出 PDF</button>
+          <button type="button" className="primary-button export-button" disabled={exporting} onClick={() => void exportPdf()}>{exporting ? "正在生成…" : "导出 PDF"}</button>
         </div>
       </header>
       <div className="workspace">

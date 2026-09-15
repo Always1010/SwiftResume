@@ -45,6 +45,7 @@ button { cursor: pointer; }
 .primary-button, .secondary-button, .add-item-button { border-radius: 8px; padding: 8px 13px; border: 1px solid var(--border); font-size: 12px; font-weight: 650; }
 .primary-button { border-color: var(--green); color: white; background: var(--green); }
 .primary-button:hover { background: var(--green-dark); }
+.primary-button:disabled { cursor: wait; opacity: .68; }
 .secondary-button { color: #34453b; background: white; }
 .secondary-button:hover { border-color: #aebdb4; background: #f8faf8; }
 .export-button { padding-inline: 17px; }
