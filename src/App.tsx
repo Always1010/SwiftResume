@@ -20,6 +20,7 @@ export function App() {
   const [exporting, setExporting] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(true);
   const importRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -105,19 +106,26 @@ export function App() {
           <button type="button" className="primary-button export-button" disabled={exporting} onClick={() => void exportPdf()}>{exporting ? "正在生成…" : "导出 PDF"}</button>
         </div>
       </header>
-      <div className="workspace">
+      <div className={`workspace ${previewOpen ? "" : "preview-hidden"}`}>
         <Sidebar resume={resume} selectedId={selectedId} onSelect={setSelectedId} onSectionsChange={setSections} />
         <EditorPanel resume={resume} selectedId={selectedId} onProfileChange={(value) => dispatch({ type: "update-profile", value })} onSectionChange={updateSection} onDeleteSection={(sectionId) => setSections(resume.sections.filter((section) => section.id !== sectionId))} />
-        <section className="preview-panel">
-          <div className="preview-toolbar">
-            <div><strong>A4 实时预览</strong>{settings.showOverflowWarning && <span className={overflow ? "overflow-warning" : "page-ok"}>{overflow ? "内容已超出一页" : "一页内"}</span>}</div>
-            <div className="density-switch" aria-label="排版密度">{(Object.keys(densityLabels) as Density[]).map((density) => (
-              <button type="button" key={density} className={resume.theme.density === density ? "active" : ""} onClick={() => dispatch({ type: "update-theme", value: { density } })}>{densityLabels[density]}</button>
-            ))}</div>
-            <label className="accent-picker" title="强调色"><span>配色</span><input type="color" value={resume.theme.accent} onChange={(event) => dispatch({ type: "update-theme", value: { accent: event.target.value } })} /></label>
-          </div>
-          <ResumePreview resume={resume} zoom={settings.previewZoom} onOverflowChange={handleOverflow} />
-        </section>
+        {previewOpen ? (
+          <section className="preview-panel">
+            <div className="preview-toolbar">
+              <div><strong>A4 实时预览</strong>{settings.showOverflowWarning && <span className={overflow ? "overflow-warning" : "page-ok"}>{overflow ? "内容已超出一页" : "一页内"}</span>}</div>
+              <div className="density-switch" aria-label="排版密度">{(Object.keys(densityLabels) as Density[]).map((density) => (
+                <button type="button" key={density} className={resume.theme.density === density ? "active" : ""} onClick={() => dispatch({ type: "update-theme", value: { density } })}>{densityLabels[density]}</button>
+              ))}</div>
+              <label className="accent-picker" title="强调色"><span>配色</span><input type="color" value={resume.theme.accent} onChange={(event) => dispatch({ type: "update-theme", value: { accent: event.target.value } })} /></label>
+              <button type="button" className="preview-close-button" aria-label="关闭简历预览" title="关闭预览" onClick={() => setPreviewOpen(false)}>×</button>
+            </div>
+            <ResumePreview resume={resume} zoom={settings.previewZoom} onOverflowChange={handleOverflow} />
+          </section>
+        ) : (
+          <aside className="preview-collapsed" aria-label="简历预览已关闭">
+            <button type="button" onClick={() => setPreviewOpen(true)} title="显示简历预览"><span>▣</span><strong>显示预览</strong></button>
+          </aside>
+        )}
       </div>
       {settingsOpen && <SettingsPanel settings={settings} syncSupported={syncSupported} onChange={setSettings} onClose={() => setSettingsOpen(false)} />}
     </div>
