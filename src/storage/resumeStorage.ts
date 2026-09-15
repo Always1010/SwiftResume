@@ -133,6 +133,20 @@ export async function saveResumeWorkspace(
   });
 }
 
+export async function saveResumeById(resumeId: string, resume: ResumeDocument): Promise<void> {
+  const database = await openDatabase();
+  try {
+    const storedLibrary = await getValue<unknown>(database, LIBRARY_KEY);
+    if (!isResumeLibrary(storedLibrary) || !storedLibrary.resumes.some((item) => item.id === resumeId)) {
+      throw new Error("找不到这份简历所属的简历库");
+    }
+    const nextLibrary = updateResumeSummary(storedLibrary, resumeId, resume);
+    await saveResumeWorkspace(resumeId, resume, nextLibrary, database);
+  } finally {
+    database.close();
+  }
+}
+
 export async function activateResume(library: ResumeLibrary, resumeId: string): Promise<ResumeLibrary> {
   const next = { ...library, activeResumeId: resumeId };
   const database = await openDatabase();

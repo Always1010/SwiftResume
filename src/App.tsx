@@ -380,7 +380,7 @@ export function App() {
     delayMs: settings.syncDelayMs,
     onRemoteResume: applyRemoteResume,
   });
-  usePreviewPublisher(activeResumeId, resume, ready);
+  usePreviewPublisher(activeResumeId, resume, ready, applyRemoteResume);
 
   const openStandalonePreview = () => {
     if (!activeResumeId) return;
