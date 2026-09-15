@@ -25,6 +25,17 @@ const DIRECTORY_HANDLE_KEY = "backup-directory-handle";
 const SNAPSHOT_INTERVAL_MS = 10 * 60 * 1000;
 const snapshotKey = (resumeId: string) => `swift-resume:last-disk-snapshot:${resumeId}`;
 
+export interface SnapshotState {
+  savedAt: number;
+  resumeUpdatedAt: string;
+}
+
+export interface ProfilePhotoAsset {
+  bytes: Uint8Array;
+  extension: string;
+  mimeType: string;
+}
+
 export type DiskBackupStatus =
   | "unsupported"
   | "not-configured"
@@ -100,13 +111,89 @@ async function writeJson(directory: FileSystemDirectoryHandle, name: string, val
   await writable.close();
 }
 
+async function writeBytes(directory: FileSystemDirectoryHandle, name: string, value: Uint8Array) {
+  const file = await directory.getFileHandle(name, { create: true });
+  const writable = await file.createWritable();
+  const buffer = new ArrayBuffer(value.byteLength);
+  new Uint8Array(buffer).set(value);
+  await writable.write(buffer);
+  await writable.close();
+}
+
 async function readJson(directory: FileSystemDirectoryHandle, name: string): Promise<unknown> {
   const file = await directory.getFileHandle(name);
   return JSON.parse(await (await file.getFile()).text()) as unknown;
 }
 
-export function shouldCreateSnapshot(lastSnapshotAt: number | null, now: number): boolean {
-  return lastSnapshotAt === null || now - lastSnapshotAt >= SNAPSHOT_INTERVAL_MS;
+export function profilePhotoAsset(photo: string): ProfilePhotoAsset | null {
+  const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(photo);
+  if (!match) return null;
+  const mimeType = match[1].toLowerCase();
+  const extension = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/svg+xml": "svg",
+    "image/avif": "avif",
+    "image/bmp": "bmp",
+    "image/x-icon": "ico",
+  }[mimeType] ?? "img";
+  try {
+    const binary = atob(match[2]);
+    return {
+      bytes: Uint8Array.from(binary, (character) => character.charCodeAt(0)),
+      extension,
+      mimeType,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function shouldCreateSnapshot(
+  previous: SnapshotState | null,
+  now: number,
+  resumeUpdatedAt: string,
+  force = false,
+): boolean {
+  if (force) return true;
+  if (previous?.resumeUpdatedAt === resumeUpdatedAt) return false;
+  return previous === null || now - previous.savedAt >= SNAPSHOT_INTERVAL_MS;
+}
+
+function loadSnapshotState(resumeId: string): SnapshotState | null {
+  const stored = localStorage.getItem(snapshotKey(resumeId));
+  if (!stored) return null;
+  try {
+    const value = JSON.parse(stored) as Partial<SnapshotState>;
+    return typeof value.savedAt === "number" && typeof value.resumeUpdatedAt === "string"
+      ? { savedAt: value.savedAt, resumeUpdatedAt: value.resumeUpdatedAt }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+async function backupProfilePhoto(
+  directory: FileSystemDirectoryHandle,
+  resumeId: string,
+  resume: ResumeDocument,
+) {
+  const assetsDirectory = await directory.getDirectoryHandle("assets", { create: true });
+  const resumeAssets = await assetsDirectory.getDirectoryHandle(resumeId, { create: true });
+  const asset = profilePhotoAsset(resume.profile.photo);
+  if (!asset) {
+    await writeJson(resumeAssets, "profile-photo.json", { fileName: null, updatedAt: resume.updatedAt });
+    return;
+  }
+  const fileName = `profile-photo.${asset.extension}`;
+  await writeBytes(resumeAssets, fileName, asset.bytes);
+  await writeJson(resumeAssets, "profile-photo.json", {
+    fileName,
+    mimeType: asset.mimeType,
+    updatedAt: resume.updatedAt,
+  });
 }
 
 export async function backupResumeToDirectory(
@@ -123,16 +210,16 @@ export async function backupResumeToDirectory(
 
   await writeJson(resumesDirectory, `${resumeId}.swiftresume.json`, resume);
   await writeJson(directory, "index.swiftresume.json", library);
+  await backupProfilePhoto(directory, resumeId, resume);
 
   const now = Date.now();
-  const previous = Number(localStorage.getItem(snapshotKey(resumeId)));
-  const lastSnapshotAt = Number.isFinite(previous) && previous > 0 ? previous : null;
-  if (!forceSnapshot && !shouldCreateSnapshot(lastSnapshotAt, now)) return;
+  const previous = loadSnapshotState(resumeId);
+  if (!shouldCreateSnapshot(previous, now, resume.updatedAt, forceSnapshot)) return;
   const historyDirectory = await directory.getDirectoryHandle("history", { create: true });
   const resumeHistory = await historyDirectory.getDirectoryHandle(resumeId, { create: true });
   const timestamp = new Date(now).toISOString().replaceAll(":", "-");
   await writeJson(resumeHistory, `${timestamp}.swiftresume.json`, resume);
-  localStorage.setItem(snapshotKey(resumeId), String(now));
+  localStorage.setItem(snapshotKey(resumeId), JSON.stringify({ savedAt: now, resumeUpdatedAt: resume.updatedAt } satisfies SnapshotState));
 }
 
 export async function readDiskBackup(directory: FileSystemDirectoryHandle): Promise<DiskBackupWorkspace> {

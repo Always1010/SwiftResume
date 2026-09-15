@@ -140,7 +140,7 @@ export function SettingsPanel({
               </div>
             </div>
             <div className="setting-row">
-              <div><strong>备份与恢复</strong><p>立即备份会保存全部简历；恢复会使用目录中的索引替换浏览器简历库。</p></div>
+              <div><strong>备份与恢复</strong><p>最新版本保存在 resumes，独立图片保存在 assets，历史快照保存在 history。</p></div>
               <div className="setting-actions">
                 <button type="button" className="secondary-button" disabled={!backupDirectoryName} onClick={onRestoreBackup}>从目录恢复</button>
                 <button type="button" className="primary-button" disabled={!backupDirectoryName || backupStatus === "permission-required"} onClick={onBackupNow}>立即备份</button>
