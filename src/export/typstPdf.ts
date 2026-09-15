@@ -36,11 +36,31 @@ function heading(title: string, templateId: ResumeTemplateId) {
   if (templateId === "academic") return `#v(7pt)\n#line(length: 100%, stroke: .45pt)\n#text(size: 11.5pt, weight: "bold", tracking: .7pt, ${label})\n#v(3pt)\n`;
   if (templateId === "developer") return `#v(7pt)\n#text(font: "Noto Sans CJK SC", size: 11.5pt, weight: "bold", fill: accent, ${label})\n#line(length: 100%, stroke: (dash: "dashed", paint: accent, thickness: .45pt))\n#v(3pt)\n`;
   if (templateId === "compact") return `#v(5pt)\n#block(width: 100%, fill: rgb("#f1f4f2"), inset: (x: 5pt, y: 2.5pt), stroke: (left: 2.5pt + accent))[#text(size: 11pt, weight: "bold", ${label})]\n#v(2pt)\n`;
+  if (templateId === "newspaper") return `#v(7pt)\n#line(length: 100%, stroke: .7pt)\n#align(center)[#text(size: 11.5pt, weight: "bold", tracking: 1.1pt, ${label})]\n#line(length: 100%, stroke: .3pt)\n#v(3pt)\n`;
+  if (templateId === "swiss") return `#v(7pt)\n#grid(columns: (36mm, 1fr), block(fill: accent, inset: (x: 5pt, y: 3pt))[#text(size: 11pt, weight: "bold", fill: white, ${label})], rect(height: 16pt, fill: rgb("#151515")))\n#v(3pt)\n`;
+  if (templateId === "magazine") return `#v(8pt)\n#grid(columns: (auto, 1fr), column-gutter: 7pt, align: bottom, text(size: 15pt, weight: "bold", ${label}), line(length: 100%, stroke: 3pt + accent))\n#v(3pt)\n`;
+  if (templateId === "blueprint") return `#v(7pt)\n#block(width: 100%, stroke: .7pt + accent, inset: (x: 5pt, y: 2.5pt))[#text(size: 11pt, weight: "bold", fill: accent, ${label}) #h(1fr) #text(size: 7pt, fill: accent, "SECTION")]\n#v(3pt)\n`;
+  if (templateId === "japanese") return `#v(9pt)\n#grid(columns: (8mm, auto, 1fr), column-gutter: 4pt, text(fill: accent, "一"), text(size: 11pt, weight: "medium", tracking: 1.5pt, ${label}), line(length: 100%, stroke: .3pt + rgb("#c9c6c0")))\n#v(4pt)\n`;
+  if (templateId === "archive") return `#v(7pt)\n#line(length: 100%, stroke: .5pt + rgb("#756b5b"))\n#text(size: 10.5pt, weight: "bold", tracking: 1pt, fill: rgb("#3f382d"), ${label})\n#line(length: 100%, stroke: .5pt + rgb("#756b5b"))\n#v(3pt)\n`;
+  if (templateId === "nordic") return `#v(7pt)\n#block(width: 100%, radius: 7pt, fill: rgb("#eef3f1"), inset: (x: 7pt, y: 3pt))[#text(size: 11pt, weight: "medium", fill: rgb("#405650"), ${label})]\n#v(3pt)\n`;
+  if (templateId === "bauhaus") return `#v(7pt)\n#grid(columns: (10pt, auto, 1fr), column-gutter: 6pt, rect(width: 9pt, height: 9pt, fill: accent), text(size: 12pt, weight: "bold", ${label}), line(length: 100%, stroke: 2.5pt))\n#v(3pt)\n`;
+  if (templateId === "index") return `#v(7pt)\n#block(width: 38mm, radius: (top-right: 8pt, bottom-right: 8pt), fill: accent, inset: (x: 7pt, y: 3pt))[#text(size: 10.5pt, weight: "bold", fill: white, ${label})]\n#v(3pt)\n`;
+  if (templateId === "monochrome") return `#v(7pt)\n#grid(columns: (auto, 1fr), block(fill: black, inset: (x: 7pt, y: 3pt))[#text(size: 11pt, weight: "bold", fill: white, ${label})], rect(height: 17pt, fill: black))\n#v(3pt)\n`;
+  if (templateId === "gradient") return `#v(7pt)\n#block(width: 100%, radius: 8pt, fill: rgb("#edf3f6"), stroke: .4pt + accent, inset: (x: 7pt, y: 3pt))[#text(size: 11.5pt, weight: "bold", fill: accent, ${label})]\n#v(3pt)\n`;
+  if (templateId === "terminal") return `#v(7pt)\n#text(size: 11pt, weight: "bold", fill: rgb("#176b45"), ${asString(`$ ${title}`)})\n#line(length: 100%, stroke: (dash: "dotted", paint: rgb("#78a48a"), thickness: .5pt))\n#v(3pt)\n`;
+  if (templateId === "ledger") return `#v(7pt)\n#block(width: 100%, stroke: .45pt + rgb("#78867e"), inset: (x: 5pt, y: 2pt))[#text(size: 10.5pt, weight: "bold", ${label}) #h(1fr) #text(size: 7pt, fill: rgb("#78867e"), "ENTRY")]\n#v(3pt)\n`;
+  if (templateId === "diplomat") return `#v(8pt)\n#grid(columns: (1fr, auto, 1fr), column-gutter: 7pt, line(length: 100%, stroke: .4pt + rgb("#827353")), text(size: 10.5pt, weight: "bold", tracking: 1.4pt, ${label}), line(length: 100%, stroke: .4pt + rgb("#827353")))\n#v(4pt)\n`;
+  if (templateId === "studio") return `#v(7pt)\n#grid(columns: (auto, 1fr), column-gutter: 7pt, text(size: 13pt, weight: "bold", fill: accent, ${label}), rect(height: 12pt, fill: rgb("#252525")))\n#v(3pt)\n`;
+  if (templateId === "ribbon") return `#v(7pt)\n#block(width: 100%, fill: accent, inset: (x: 8pt, y: 3pt))[#text(size: 11pt, weight: "bold", tracking: .8pt, fill: white, ${label})]\n#v(3pt)\n`;
+  if (templateId === "capsule") return `#v(7pt)\n#grid(columns: (auto, 1fr), column-gutter: 6pt, box(radius: 9pt, fill: accent, inset: (x: 7pt, y: 2.5pt), text(size: 10pt, weight: "bold", fill: white, ${label})), line(length: 100%, stroke: .35pt + accent))\n#v(3pt)\n`;
+  if (templateId === "split") return `#v(7pt)\n#grid(columns: (1fr, 1fr), column-gutter: 0pt, block(fill: accent, inset: (x: 7pt, y: 3pt))[#text(size: 11pt, weight: "bold", fill: white, ${label})], rect(height: 17pt, fill: rgb("#202725")))\n#v(3pt)\n`;
+  if (templateId === "metro") return `#v(7pt)\n#grid(columns: (9pt, auto, 1fr), column-gutter: 5pt, circle(radius: 4pt, fill: accent, stroke: 1pt + white), block(fill: accent, inset: (x: 6pt, y: 2pt))[#text(size: 10pt, weight: "bold", fill: white, ${label})], line(length: 100%, stroke: (dash: "dashed", paint: accent, thickness: .5pt)))\n#v(3pt)\n`;
+  if (templateId === "folio") return `#v(9pt)\n#grid(columns: (9mm, auto, 1fr), column-gutter: 6pt, text(size: 8pt, weight: "bold", fill: accent, "§"), text(size: 13pt, weight: "regular", tracking: .8pt, ${label}), line(length: 100%, stroke: .5pt))\n#v(4pt)\n`;
   return `#v(6pt)\n#grid(columns: (auto, 1fr), column-gutter: 5pt, align: bottom, text(size: 13pt, weight: "bold", ${label}), line(length: 100%, stroke: 0.45pt))\n#v(3pt)\n`;
 }
 
 function topLine(left: string, right: string, role = "", templateId: ResumeTemplateId = "classic") {
-  const date = templateId === "timeline" && right
+  const date = ["timeline", "capsule", "metro", "index"].includes(templateId) && right
     ? `box(fill: accent, radius: 5pt, inset: (x: 4pt, y: 1pt), text(size: 7.5pt, fill: white, ${asString(right)}))`
     : `text(size: 8pt, fill: ${templateId === "academic" ? `rgb("#333333")` : "accent"}, ${asString(right)})`;
   return `#grid(
@@ -202,6 +222,26 @@ function profileSource(resume: ResumeDocument, templateId: ResumeTemplateId, pho
   if (templateId === "developer") return `#block(width: 100%, fill: rgb("#f3f7f5"), stroke: .4pt + accent, inset: 10pt)[${grid}]`;
   if (templateId === "compact") return `#block(width: 100%, fill: rgb("#f2f4f3"), inset: 9pt)[${grid}]`;
   if (templateId === "timeline") return `${grid}\n#line(length: 100%, stroke: 1.2pt + accent)`;
+  if (templateId === "newspaper") return `#line(length: 100%, stroke: .8pt)\n#v(1pt)\n#line(length: 100%, stroke: .3pt)\n#v(4pt)\n${grid}\n#v(4pt)\n#line(length: 100%, stroke: .3pt)\n#v(1pt)\n#line(length: 100%, stroke: .8pt)`;
+  if (templateId === "swiss") return `#grid(columns: (10mm, 1fr${photo ? ", 27mm" : ""}), column-gutter: 10pt, rect(width: 10mm, height: 35mm, fill: rgb("#151515")), ${textBlock}${photo ? `, ${photo}` : ""})\n#v(3pt)\n#line(length: 100%, stroke: 4pt + accent)`;
+  if (templateId === "magazine") return `#block(width: 100%, inset: (bottom: 7pt), stroke: (bottom: 3pt + rgb("#171717")))[${grid}]`;
+  if (templateId === "blueprint") return `#block(width: 100%, fill: rgb("#f7fbfd"), stroke: .8pt + accent, inset: 9pt)[${grid}]`;
+  if (templateId === "japanese") return `#block(width: 100%, inset: (left: 12mm, bottom: 7pt), stroke: (bottom: .35pt + rgb("#c9c6c0")))[${grid}]`;
+  if (templateId === "archive") return `#block(width: 100%, fill: rgb("#f7f1e4"), stroke: .6pt + rgb("#756b5b"), inset: 9pt)[${grid}]`;
+  if (templateId === "nordic") return `#block(width: 100%, radius: 9pt, fill: rgb("#eaf1ef"), inset: 11pt)[${grid}]`;
+  if (templateId === "bauhaus") return `#grid(columns: (8mm, 1fr${photo ? ", 27mm" : ""}), column-gutter: 10pt, circle(radius: 4mm, fill: rgb("#e23d35")), ${textBlock}${photo ? `, ${photo}` : ""})\n#line(length: 100%, stroke: 4pt + accent)`;
+  if (templateId === "index") return `#block(width: 100%, stroke: (left: 5pt + accent, bottom: .35pt + rgb("#ccd4d0")), inset: (left: 9pt, bottom: 7pt))[${grid}]`;
+  if (templateId === "monochrome") return `#block(width: 100%, fill: black, inset: 12pt)[#let profile-ink = white\n#let profile-muted = rgb("#d5d5d5")\n#let profile-accent = white\n${grid}]`;
+  if (templateId === "gradient") return `#block(width: 100%, radius: 10pt, fill: rgb("#edf3f6"), stroke: .45pt + accent, inset: 11pt)[${grid}]`;
+  if (templateId === "terminal") return `#block(width: 100%, radius: 4pt, fill: rgb("#101b17"), inset: 11pt)[#let profile-ink = rgb("#d9fbe7")\n#let profile-muted = rgb("#95b7a3")\n#let profile-accent = rgb("#63d594")\n${grid}]`;
+  if (templateId === "ledger") return `#block(width: 100%, stroke: .55pt + rgb("#78867e"), inset: 8pt)[${grid}]`;
+  if (templateId === "diplomat") return `#line(length: 100%, stroke: .4pt + rgb("#827353"))\n#v(4pt)\n#align(center)[${textBlock}]${photo ? `\n#place(top + right, ${photo})` : ""}\n#v(4pt)\n#line(length: 100%, stroke: 1pt + rgb("#827353"))`;
+  if (templateId === "studio") return `#block(width: 100%, fill: white, stroke: (left: 6pt + rgb("#252525"), bottom: 4pt + accent), inset: 10pt)[${grid}]`;
+  if (templateId === "ribbon") return `${grid}\n#block(width: 100%, height: 4pt, fill: accent)[]`;
+  if (templateId === "capsule") return `#block(width: 100%, radius: 14pt, fill: rgb("#f0f5f2"), inset: 11pt)[${grid}]`;
+  if (templateId === "split") return `#grid(columns: (1fr, 1fr), column-gutter: 0pt, [#block(width: 100%, fill: accent, inset: 10pt)[#let profile-ink = white\n#let profile-muted = rgb("#e0e8e4")\n#let profile-accent = white\n${textBlock}]], [#block(width: 100%, fill: rgb("#202725"), inset: 10pt)[${photo || `#text(fill: white, ${asString(resume.profile.headline)})`}]])`;
+  if (templateId === "metro") return `#block(width: 100%, fill: rgb("#f5f6f5"), stroke: (left: 4pt + accent), inset: 10pt)[${grid}]`;
+  if (templateId === "folio") return `#block(width: 100%, inset: (bottom: 9pt), stroke: (bottom: .55pt + black))[${grid}]`;
   return grid;
 }
 
@@ -209,7 +249,11 @@ export function createTypstSource(resume: ResumeDocument): string {
   const density = getDensityLayout(resume.theme.density);
   const templateId = resume.theme.templateId;
   const photoPath = photoAssetPath(resume.profile.photo);
-  const pageMargin = templateId === "minimal" || templateId === "academic" ? "(x: 15mm, y: 11mm)" : templateId === "compact" ? "(x: 11mm, y: 9mm)" : "(x: 12.5mm, y: 10.5mm)";
+  const pageMargin = ["minimal", "academic", "diplomat", "folio"].includes(templateId)
+    ? "(x: 15mm, y: 11mm)"
+    : ["compact", "magazine", "studio"].includes(templateId)
+      ? "(x: 11mm, y: 9mm)"
+      : "(x: 12.5mm, y: 10.5mm)";
 
   return `// swift-resume-template: ${templateId}
 #set page(paper: "a4", margin: ${pageMargin})
