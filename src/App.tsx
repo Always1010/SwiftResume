@@ -31,6 +31,7 @@ import {
   type DiskBackupStatus,
 } from "./storage/diskBackup";
 import { useResumeSync } from "./sync/resumeSync";
+import { usePreviewPublisher } from "./sync/previewSync";
 
 export function App() {
   const [resume, dispatch] = useReducer(resumeReducer, undefined, createDefaultResume);
@@ -336,6 +337,17 @@ export function App() {
     delayMs: settings.syncDelayMs,
     onRemoteResume: applyRemoteResume,
   });
+  usePreviewPublisher(activeResumeId, resume, ready);
+
+  const openStandalonePreview = () => {
+    if (!activeResumeId) return;
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.hash = "";
+    url.searchParams.set("view", "preview");
+    url.searchParams.set("resumeId", activeResumeId);
+    window.open(url.toString(), `swift-resume-preview-${activeResumeId}`)?.focus();
+  };
   const exportPdf = async () => {
     if (settings.exportEngine === "browser") {
       window.print();
@@ -380,6 +392,7 @@ export function App() {
           <button type="button" className="secondary-button" onClick={() => downloadResume(resume)}>备份 JSON</button>
           <button type="button" className="secondary-button" onClick={() => importRef.current?.click()}>导入</button>
           <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => void importFile(event.target.files?.[0])} />
+          <button type="button" className="secondary-button standalone-preview-button" disabled={!activeResumeId} onClick={openStandalonePreview}>↗ 独立预览</button>
           <button type="button" className="primary-button export-button" disabled={exporting} onClick={() => void exportPdf()}>{exporting ? "正在生成…" : "导出 PDF"}</button>
         </div>
       </header>
