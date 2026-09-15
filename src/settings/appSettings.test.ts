@@ -4,18 +4,20 @@ import { DEFAULT_SETTINGS, normalizeSettings } from "./appSettings";
 describe("app settings", () => {
   it("enables live synchronization by default", () => {
     expect(normalizeSettings(null).liveSync).toBe(true);
+    expect(normalizeSettings(null).diskBackupEnabled).toBe(true);
   });
 
   it("preserves supported values", () => {
     const settings = normalizeSettings({
       liveSync: false,
+      diskBackupEnabled: false,
       syncDelayMs: 300,
       saveDelayMs: 1000,
       exportEngine: "browser",
       showOverflowWarning: false,
       previewZoom: 80,
     });
-    expect(settings).toMatchObject({ liveSync: false, syncDelayMs: 300, exportEngine: "browser", previewZoom: 80 });
+    expect(settings).toMatchObject({ liveSync: false, diskBackupEnabled: false, syncDelayMs: 300, exportEngine: "browser", previewZoom: 80 });
   });
 
   it("falls back for unsupported values", () => {

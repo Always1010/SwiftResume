@@ -18,6 +18,16 @@ import {
   updateResumeSummary,
   type ResumeLibrary,
 } from "./storage/resumeStorage";
+import {
+  backupResumeToDirectory,
+  chooseBackupDirectory,
+  isDiskBackupSupported,
+  loadBackupDirectory,
+  queryBackupPermission,
+  readDiskBackup,
+  requestBackupPermission,
+  type DiskBackupStatus,
+} from "./storage/diskBackup";
 import { useResumeSync } from "./sync/resumeSync";
 
 const densityLabels: Record<Density, string> = { comfortable: "宽松", standard: "标准", compact: "紧凑" };
@@ -33,6 +43,8 @@ export function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
+  const [backupDirectory, setBackupDirectory] = useState<FileSystemDirectoryHandle | null>(null);
+  const [backupStatus, setBackupStatus] = useState<DiskBackupStatus>(() => isDiskBackupSupported() ? "not-configured" : "unsupported");
   const importRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<ResumeLibrary | null>(null);
   libraryRef.current = library;
@@ -52,6 +64,17 @@ export function App() {
   useEffect(() => subscribeToSettings(setSettings), []);
 
   useEffect(() => {
+    if (!isDiskBackupSupported()) return;
+    let active = true;
+    loadBackupDirectory().then(async (handle) => {
+      if (!active || !handle) return;
+      setBackupDirectory(handle);
+      setBackupStatus(await queryBackupPermission(handle) === "granted" ? "ready" : "permission-required");
+    }).catch(() => active && setBackupStatus("error"));
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
     saveSettings(settings);
   }, [settings]);
 
@@ -69,6 +92,20 @@ export function App() {
     }, settings.saveDelayMs);
     return () => window.clearTimeout(timer);
   }, [activeResumeId, ready, resume, settings.saveDelayMs]);
+
+  useEffect(() => {
+    if (!ready || !settings.diskBackupEnabled || !backupDirectory || !activeResumeId || !libraryRef.current) return;
+    const timer = window.setTimeout(() => {
+      const currentLibrary = libraryRef.current;
+      if (!currentLibrary) return;
+      const nextLibrary = updateResumeSummary(currentLibrary, activeResumeId, resume);
+      setBackupStatus("saving");
+      backupResumeToDirectory(backupDirectory, activeResumeId, resume, nextLibrary)
+        .then(() => setBackupStatus("ready"))
+        .catch((error: unknown) => setBackupStatus(error instanceof DOMException && error.name === "NotAllowedError" ? "permission-required" : "error"));
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [activeResumeId, backupDirectory, ready, resume, settings.diskBackupEnabled]);
 
   useEffect(() => {
     if (selectedId !== "profile" && !resume.sections.some((section) => section.id === selectedId)) setSelectedId("profile");
@@ -155,6 +192,80 @@ export function App() {
       window.alert(error instanceof Error ? error.message : "导入失败");
     }
   };
+  const backupAllResumes = async (directory: FileSystemDirectoryHandle, forceSnapshot = true) => {
+    const currentLibrary = libraryRef.current;
+    if (!currentLibrary) return;
+    const nextLibrary = updateResumeSummary(currentLibrary, activeResumeId, resume);
+    for (const summary of nextLibrary.resumes) {
+      const document = summary.id === activeResumeId ? resume : await loadResumeById(summary.id);
+      if (document) await backupResumeToDirectory(directory, summary.id, document, nextLibrary, forceSnapshot);
+    }
+  };
+  const selectBackupDirectory = async () => {
+    try {
+      const directory = await chooseBackupDirectory();
+      setBackupDirectory(directory);
+      setSettings((current) => ({ ...current, diskBackupEnabled: true }));
+      setBackupStatus("saving");
+      await backupAllResumes(directory);
+      setBackupStatus("ready");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setBackupStatus(error instanceof DOMException && error.name === "NotAllowedError" ? "permission-required" : "error");
+      window.alert(error instanceof Error ? error.message : "选择备份目录失败");
+    }
+  };
+  const authorizeBackupDirectory = async () => {
+    if (!backupDirectory) return;
+    try {
+      if (!await requestBackupPermission(backupDirectory)) {
+        setBackupStatus("permission-required");
+        return;
+      }
+      setBackupStatus("saving");
+      await backupAllResumes(backupDirectory);
+      setBackupStatus("ready");
+    } catch (error) {
+      setBackupStatus("error");
+      window.alert(error instanceof Error ? error.message : "授权备份目录失败");
+    }
+  };
+  const backupNow = async () => {
+    if (!backupDirectory) return;
+    try {
+      setBackupStatus("saving");
+      await backupAllResumes(backupDirectory);
+      setBackupStatus("ready");
+    } catch (error) {
+      setBackupStatus(error instanceof DOMException && error.name === "NotAllowedError" ? "permission-required" : "error");
+      window.alert(error instanceof Error ? error.message : "磁盘备份失败");
+    }
+  };
+  const restoreBackup = async () => {
+    if (!backupDirectory) return;
+    try {
+      if (!await requestBackupPermission(backupDirectory)) {
+        setBackupStatus("permission-required");
+        return;
+      }
+      const restored = await readDiskBackup(backupDirectory);
+      if (!window.confirm(`将从磁盘恢复 ${restored.documents.length} 份简历，并替换当前浏览器简历库。是否继续？`)) return;
+      for (const item of restored.documents) {
+        await saveResumeWorkspace(item.id, item.resume, restored.library);
+      }
+      const activeDocument = restored.documents.find((item) => item.id === restored.library.activeResumeId)?.resume
+        ?? restored.documents[0].resume;
+      libraryRef.current = restored.library;
+      setLibrary(restored.library);
+      dispatch({ type: "replace", value: activeDocument });
+      setSelectedId("profile");
+      setBackupStatus("ready");
+      setSaveState("saved");
+    } catch (error) {
+      setBackupStatus(error instanceof DOMException && error.name === "NotAllowedError" ? "permission-required" : "error");
+      window.alert(error instanceof Error ? error.message : "恢复磁盘备份失败");
+    }
+  };
   const handleOverflow = useCallback((value: boolean) => setOverflow(value), []);
   const applyRemoteResume = useCallback((value: ResumeDocument) => {
     dispatch({ type: "replace", value });
@@ -194,13 +305,16 @@ export function App() {
           </select>
           <input className="document-title" aria-label="简历文件名" value={resume.title} onChange={(event) => dispatch({ type: "update-title", value: event.target.value })} />
           <div className="document-actions">
-            <button type="button" className="text-button" onClick={createResume}>＋ 新建</button>
-            <button type="button" className="text-button" onClick={copyResume}>⧉ 创建副本</button>
-            <button type="button" className="text-button danger-text" disabled={!library || library.resumes.length <= 1} onClick={() => void removeCurrentResume().catch((error) => window.alert(error instanceof Error ? error.message : "删除失败"))}>删除</button>
+            <button type="button" className="icon-button" title="新建空白简历" aria-label="新建空白简历" onClick={createResume}>＋</button>
+            <button type="button" className="icon-button" title="创建当前简历的副本" aria-label="创建当前简历的副本" onClick={copyResume}>⧉</button>
+            <button type="button" className="icon-button danger-text" title="删除当前简历" aria-label="删除当前简历" disabled={!library || library.resumes.length <= 1} onClick={() => void removeCurrentResume().catch((error) => window.alert(error instanceof Error ? error.message : "删除失败"))}>×</button>
           </div>
         </div>
         <div className="topbar-actions">
           <span className={`save-status ${saveState}`}>{saveState === "saved" ? "● 已自动保存" : saveState === "saving" ? "● 保存中" : "● 保存失败"}</span>
+          <span className={`disk-status ${backupStatus}`} title={backupDirectory ? `备份目录：${backupDirectory.name}` : "尚未选择本地备份目录"}>
+            {backupStatus === "ready" ? "● 磁盘已备份" : backupStatus === "saving" ? "● 磁盘备份中" : backupStatus === "permission-required" ? "● 磁盘待授权" : backupStatus === "error" ? "● 磁盘备份失败" : backupStatus === "unsupported" ? "磁盘备份不支持" : "磁盘未配置"}
+          </span>
           <span className={`sync-status ${settings.liveSync && syncSupported ? "active" : ""}`} title={syncSupported ? "多个 SwiftResume 页面实时同步" : "当前浏览器不支持多页面同步"}>
             <span />{settings.liveSync && syncSupported ? "多页同步" : "同步关闭"}
           </span>
@@ -232,7 +346,19 @@ export function App() {
           </aside>
         )}
       </div>
-      {settingsOpen && <SettingsPanel settings={settings} syncSupported={syncSupported} onChange={setSettings} onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && <SettingsPanel
+        settings={settings}
+        syncSupported={syncSupported}
+        backupSupported={isDiskBackupSupported()}
+        backupStatus={backupStatus}
+        backupDirectoryName={backupDirectory?.name ?? ""}
+        onChange={setSettings}
+        onClose={() => setSettingsOpen(false)}
+        onChooseBackupDirectory={() => void selectBackupDirectory()}
+        onAuthorizeBackupDirectory={() => void authorizeBackupDirectory()}
+        onBackupNow={() => void backupNow()}
+        onRestoreBackup={() => void restoreBackup()}
+      />}
     </div>
   );
 }
