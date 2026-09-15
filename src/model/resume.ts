@@ -46,13 +46,13 @@ export function normalizeDensity(value: unknown): Density {
 export function getDensityLayout(value: unknown): DensityLayout {
   const density = normalizeDensity(value);
   return {
-    fontSizePx: interpolateDensity(density, 10.8, 11.5, 11.5),
-    sectionSpacePx: interpolateDensity(density, 10, 14, 17),
-    entrySpacePx: interpolateDensity(density, 7, 10, 13),
-    bodyLine: interpolateDensity(density, 1.32, 1.42, 1.52),
-    typstFontSizePt: interpolateDensity(density, 8.3, 8.8, 9.2),
-    typstLeadingEm: interpolateDensity(density, 0.32, 0.42, 0.52),
-    typstGapPt: interpolateDensity(density, 4, 6, 8),
+    fontSizePx: interpolateDensity(density, 10.2, 11.5, 12.7),
+    sectionSpacePx: interpolateDensity(density, 6, 14, 25),
+    entrySpacePx: interpolateDensity(density, 4, 10, 19),
+    bodyLine: interpolateDensity(density, 1.22, 1.42, 1.68),
+    typstFontSizePt: interpolateDensity(density, 7.7, 8.8, 10),
+    typstLeadingEm: interpolateDensity(density, 0.22, 0.42, 0.72),
+    typstGapPt: interpolateDensity(density, 2.5, 6, 12),
   };
 }
 
