@@ -330,6 +330,29 @@ export function createBlankResume(): ResumeDocument {
   };
 }
 
+export function createStarterResume(): ResumeDocument {
+  const resume = createBlankResume();
+  const objective = createSection("custom", "builder") as CustomSection;
+  objective.title = "求职意向";
+  objective.nodes = [createCustomNode("paragraph")];
+
+  const summary = createSection("custom", "builder") as CustomSection;
+  summary.title = "自我评价";
+  summary.nodes = [createCustomNode("paragraph")];
+
+  return {
+    ...resume,
+    sections: [
+      objective,
+      createSection("experience"),
+      createSection("projects"),
+      createSection("education"),
+      createSection("skills"),
+      summary,
+    ],
+  };
+}
+
 export function duplicateResume(resume: ResumeDocument): ResumeDocument {
   const copy = structuredClone(resume);
   copy.title = `${copy.title || "未命名简历"} 副本`;

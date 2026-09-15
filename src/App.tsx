@@ -6,7 +6,7 @@ import { ResumePreview } from "./components/ResumePreview";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { exportTypstPdf } from "./export/typstPdf";
-import { createBlankResume, createDefaultResume, duplicateResume, normalizeResumeDocument, resumeReducer, type ResumeDocument, type ResumeSection } from "./model/resume";
+import { createDefaultResume, createStarterResume, duplicateResume, normalizeResumeDocument, resumeReducer, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
 import {
   activateResume,
@@ -194,7 +194,7 @@ export function App() {
     setSaveState("saved");
   };
   const createResume = () => {
-    void addResume(createBlankResume()).catch((error) => {
+    void addResume(createStarterResume()).catch((error) => {
       setSaveState("error");
       window.alert(error instanceof Error ? error.message : "新建简历失败");
     });
@@ -394,7 +394,7 @@ export function App() {
           </select>
           <input className="document-title" aria-label="简历文件名" value={resume.title} onChange={(event) => dispatch({ type: "update-title", value: event.target.value })} />
           <div className="document-actions">
-            <button type="button" className="icon-button" title="新建空白简历" aria-label="新建空白简历" onClick={createResume}>＋</button>
+            <button type="button" className="icon-button" title="新建简历" aria-label="新建简历" onClick={createResume}>＋</button>
             <button type="button" className="icon-button" title="创建当前简历的副本" aria-label="创建当前简历的副本" onClick={copyResume}>⧉</button>
             <button type="button" className="icon-button danger-text" title="删除当前简历" aria-label="删除当前简历" disabled={!library || library.resumes.length <= 1} onClick={() => void removeCurrentResume().catch((error) => window.alert(error instanceof Error ? error.message : "删除失败"))}>×</button>
           </div>

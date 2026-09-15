@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createDefaultResume,
   createBlankResume,
+  createStarterResume,
   createSection,
   duplicateSection,
   duplicateResume,
@@ -26,6 +27,29 @@ describe("resume model", () => {
     expect(blank.sections).toEqual([]);
     const copy = duplicateResume(createDefaultResume());
     expect(copy.title).toContain("副本");
+  });
+
+  it("creates a content-free starter resume with a complete module structure", () => {
+    const starter = createStarterResume();
+    expect(starter.profile.name).toBe("");
+    expect(starter.sections.map((section) => section.title)).toEqual([
+      "求职意向",
+      "工作经历",
+      "项目经历",
+      "教育背景",
+      "专业技能",
+      "自我评价",
+    ]);
+    expect(starter.sections.map((section) => section.type)).toEqual([
+      "custom",
+      "experience",
+      "projects",
+      "education",
+      "skills",
+      "custom",
+    ]);
+    expect(JSON.stringify(starter)).not.toContain("某某大学");
+    expect(JSON.stringify(starter)).not.toContain("轻量级 HTTP 服务器");
   });
 
   it("creates and duplicates independent modules", () => {
