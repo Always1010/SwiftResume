@@ -9,7 +9,6 @@ import type {
 } from "../model/resume";
 import { sanitizeRichText } from "../model/richText";
 import { paginatePreviewItems } from "../preview/pagination";
-import type { PreviewZoom } from "../settings/appSettings";
 import { BlockDocumentPreview } from "./customEditors/BlockDocumentPreview";
 
 function SectionHeading({ children }: { children: string }) {
@@ -201,7 +200,7 @@ function buildFlowItems(resume: ResumeDocument): PreviewFlowItem[] {
 
 interface ResumePreviewProps {
   resume: ResumeDocument;
-  zoom: PreviewZoom;
+  zoom: number;
   onPageCountChange?: (pageCount: number) => void;
 }
 
