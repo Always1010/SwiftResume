@@ -1,13 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { shouldCreateSnapshot } from "./diskBackup";
+import { profilePhotoAsset, shouldCreateSnapshot } from "./diskBackup";
 
 describe("disk backup snapshots", () => {
   it("creates the first snapshot immediately", () => {
-    expect(shouldCreateSnapshot(null, 100)).toBe(true);
+    expect(shouldCreateSnapshot(null, 100, "v1")).toBe(true);
   });
 
-  it("limits periodic snapshots to one every ten minutes", () => {
-    expect(shouldCreateSnapshot(1_000, 1_000 + 9 * 60 * 1_000)).toBe(false);
-    expect(shouldCreateSnapshot(1_000, 1_000 + 10 * 60 * 1_000)).toBe(true);
+  it("only creates changed periodic snapshots every ten minutes", () => {
+    const previous = { savedAt: 1_000, resumeUpdatedAt: "v1" };
+    expect(shouldCreateSnapshot(previous, 1_000 + 20 * 60 * 1_000, "v1")).toBe(false);
+    expect(shouldCreateSnapshot(previous, 1_000 + 9 * 60 * 1_000, "v2")).toBe(false);
+    expect(shouldCreateSnapshot(previous, 1_000 + 10 * 60 * 1_000, "v2")).toBe(true);
+  });
+
+  it("extracts profile photos as independent image assets", () => {
+    const asset = profilePhotoAsset("data:image/png;base64,aGVsbG8=");
+    expect(asset?.extension).toBe("png");
+    expect(asset?.mimeType).toBe("image/png");
+    expect(new TextDecoder().decode(asset?.bytes)).toBe("hello");
   });
 });

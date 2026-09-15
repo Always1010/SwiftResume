@@ -192,7 +192,7 @@ export function App() {
       window.alert(error instanceof Error ? error.message : "导入失败");
     }
   };
-  const backupAllResumes = async (directory: FileSystemDirectoryHandle, forceSnapshot = true) => {
+  const backupAllResumes = async (directory: FileSystemDirectoryHandle, forceSnapshot = false) => {
     const currentLibrary = libraryRef.current;
     if (!currentLibrary) return;
     const nextLibrary = updateResumeSummary(currentLibrary, activeResumeId, resume);
@@ -207,7 +207,7 @@ export function App() {
       setBackupDirectory(directory);
       setSettings((current) => ({ ...current, diskBackupEnabled: true }));
       setBackupStatus("saving");
-      await backupAllResumes(directory);
+      await backupAllResumes(directory, true);
       setBackupStatus("ready");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
