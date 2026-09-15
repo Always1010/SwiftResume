@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   createSection,
   duplicateSection,
-  moveSection,
   reorderSection,
   type CustomEditorMode,
   type ResumeDocument,
@@ -20,15 +19,15 @@ const sectionLabels: Record<SectionType, string> = {
 };
 
 const customModeLabels: Record<CustomEditorMode, string> = {
-  builder: "结构搭建",
+  builder: "组件搭建",
   document: "自由文档",
   richtext: "富文本",
 };
 
 const customModeDescriptions: Record<CustomEditorMode, string> = {
-  builder: "逐块配置，精确控制布局",
-  document: "像文档一样直接编辑（推荐）",
-  richtext: "自由输入或粘贴长文本",
+  builder: "按字段精确配置的高级模式",
+  document: "Notion 式块编辑，可输入 / 插入内容",
+  richtext: "Word 式工具栏与完整文字格式",
 };
 
 interface SidebarProps {
@@ -98,32 +97,6 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange }: Side
               <small>{section.type === "custom" ? customModeLabels[section.editorMode] : sectionLabels[section.type]}{!section.enabled && " · 已隐藏"}</small>
             </span>
             <div className="module-actions">
-              <button
-                type="button"
-                className="icon-button module-move-button"
-                title="上移模块"
-                aria-label={`上移${section.title || sectionLabels[section.type]}`}
-                disabled={index === 0}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onSectionsChange(moveSection(resume.sections, section.id, -1));
-                }}
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                className="icon-button module-move-button"
-                title="下移模块"
-                aria-label={`下移${section.title || sectionLabels[section.type]}`}
-                disabled={index === resume.sections.length - 1}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onSectionsChange(moveSection(resume.sections, section.id, 1));
-                }}
-              >
-                ↓
-              </button>
               <button
                 type="button"
                 className="icon-button"
