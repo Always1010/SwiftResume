@@ -130,6 +130,11 @@ export function App() {
 
   const setSections = (sections: ResumeSection[]) => dispatch({ type: "set-sections", value: sections });
   const updateSection = (section: ResumeSection) => setSections(resume.sections.map((item) => item.id === section.id ? section : item));
+  const removeSection = (sectionId: string) => {
+    const section = resume.sections.find((item) => item.id === sectionId);
+    if (!section || !window.confirm(`确定删除“${section.title}”模块吗？`)) return;
+    setSections(resume.sections.filter((item) => item.id !== sectionId));
+  };
   const persistCurrentResume = async () => {
     const currentLibrary = libraryRef.current;
     if (!currentLibrary || !activeResumeId) return currentLibrary;
@@ -397,8 +402,8 @@ export function App() {
         </div>
       </header>
       <div className={`workspace ${settings.previewOpen ? "" : "preview-hidden"}`}>
-        <Sidebar resume={resume} selectedId={selectedId} onSelect={setSelectedId} onSectionsChange={setSections} />
-        <EditorPanel resume={resume} selectedId={selectedId} onProfileChange={(value) => dispatch({ type: "update-profile", value })} onSectionChange={updateSection} onDeleteSection={(sectionId) => setSections(resume.sections.filter((section) => section.id !== sectionId))} />
+        <Sidebar resume={resume} selectedId={selectedId} onSelect={setSelectedId} onSectionsChange={setSections} onDeleteSection={removeSection} />
+        <EditorPanel resume={resume} selectedId={selectedId} onProfileChange={(value) => dispatch({ type: "update-profile", value })} onSectionChange={updateSection} onDeleteSection={removeSection} />
         {settings.previewOpen ? (
           <section className="preview-panel">
             <div className="preview-toolbar">
