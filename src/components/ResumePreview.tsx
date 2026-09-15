@@ -1,4 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { getDensityLayout } from "../model/resume";
 import type {
   CustomContentNode,
   ExperienceItem,
@@ -227,7 +228,14 @@ export function ResumePreview({ resume, zoom, onPageCountChange }: ResumePreview
 
   useLayoutEffect(() => onPageCountChange?.(pages.length), [onPageCountChange, pages.length]);
 
-  const pageStyle = { "--resume-accent": resume.theme.accent } as CSSProperties;
+  const density = getDensityLayout(resume.theme.density);
+  const pageStyle = {
+    "--resume-accent": resume.theme.accent,
+    "--section-space": `${density.sectionSpacePx}px`,
+    "--entry-space": `${density.entrySpacePx}px`,
+    "--body-line": density.bodyLine,
+    fontSize: `${density.fontSizePx}px`,
+  } as CSSProperties;
   const renderItem = (index: number) => {
     const item = flowItems[index];
     return <div key={item.id} data-preview-flow-item className={item.className}>{item.content}</div>;
@@ -239,13 +247,13 @@ export function ResumePreview({ resume, zoom, onPageCountChange }: ResumePreview
         <div className="resume-pages">
           {pages.map((pageItems, pageIndex) => (
             <div className="resume-page-wrap" key={`${pageIndex}-${pageItems.join("-")}`}>
-              <div className={`resume-page density-${resume.theme.density}`} style={pageStyle}>{pageItems.map(renderItem)}</div>
+              <div className="resume-page" style={pageStyle}>{pageItems.map(renderItem)}</div>
               <span className="resume-page-number">第 {pageIndex + 1} 页</span>
             </div>
           ))}
         </div>
       </div>
-      <div ref={measureRef} aria-hidden="true" className={`resume-page resume-measure-page density-${resume.theme.density}`} style={pageStyle}>
+      <div ref={measureRef} aria-hidden="true" className="resume-page resume-measure-page" style={pageStyle}>
         {flowItems.map((_, index) => renderItem(index))}
       </div>
     </div>

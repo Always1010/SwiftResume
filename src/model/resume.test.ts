@@ -7,6 +7,8 @@ import {
   duplicateResume,
   isResumeDocument,
   moveSection,
+  getDensityLayout,
+  normalizeDensity,
   normalizeResumeDocument,
   reorderSection,
 } from "./resume";
@@ -79,5 +81,22 @@ describe("resume model", () => {
       expect(custom.editorMode).toBe("builder");
       expect(custom.nodes.map((node) => node.type)).toEqual(["title", "paragraph", "bullets"]);
     }
+  });
+
+  it("migrates legacy density values and clamps numeric values", () => {
+    expect(normalizeDensity("compact")).toBe(0);
+    expect(normalizeDensity("standard")).toBe(50);
+    expect(normalizeDensity("comfortable")).toBe(100);
+    expect(normalizeDensity(140)).toBe(100);
+    expect(normalizeDensity(-20)).toBe(0);
+
+    const resume = createDefaultResume();
+    resume.theme.density = "comfortable" as never;
+    expect(normalizeResumeDocument(resume)?.theme.density).toBe(100);
+  });
+
+  it("interpolates density layout continuously", () => {
+    expect(getDensityLayout(25).sectionSpacePx).toBe(12);
+    expect(getDensityLayout(75).entrySpacePx).toBe(11.5);
   });
 });

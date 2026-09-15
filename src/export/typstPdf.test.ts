@@ -11,6 +11,15 @@ describe("Typst source generator", () => {
     expect(source).toContain(resume.theme.accent);
   });
 
+  it("applies continuously adjusted density to exported typography", () => {
+    const resume = createDefaultResume();
+    resume.theme.density = 25;
+    const source = createTypstSource(resume);
+    expect(source).toContain("size: 8.55pt");
+    expect(source).toContain("leading: 0.37em");
+    expect(source).toContain("spacing: 5pt");
+  });
+
   it("quotes user content instead of injecting markup", () => {
     const resume = createDefaultResume();
     resume.profile.name = "A\\B\"C";

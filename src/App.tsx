@@ -6,7 +6,7 @@ import { ResumePreview } from "./components/ResumePreview";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { exportTypstPdf } from "./export/typstPdf";
-import { createBlankResume, createDefaultResume, duplicateResume, normalizeResumeDocument, resumeReducer, type Density, type ResumeDocument, type ResumeSection } from "./model/resume";
+import { createBlankResume, createDefaultResume, duplicateResume, normalizeResumeDocument, resumeReducer, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
 import {
   activateResume,
@@ -31,8 +31,6 @@ import {
   type DiskBackupStatus,
 } from "./storage/diskBackup";
 import { useResumeSync } from "./sync/resumeSync";
-
-const densityLabels: Record<Density, string> = { comfortable: "宽松", standard: "标准", compact: "紧凑" };
 
 export function App() {
   const [resume, dispatch] = useReducer(resumeReducer, undefined, createDefaultResume);
@@ -396,9 +394,20 @@ export function App() {
                 <button type="button" className="preview-collapse-button" onClick={() => setPreviewOpen(false)}><span aria-hidden="true">→</span> 收起预览</button>
                 {settings.showOverflowWarning && <span className="page-count-badge">共 {pageCount} 页</span>}
               </div>
-              <div className="density-switch" aria-label="排版密度">{(Object.keys(densityLabels) as Density[]).map((density) => (
-                <button type="button" key={density} className={resume.theme.density === density ? "active" : ""} onClick={() => dispatch({ type: "update-theme", value: { density } })}>{densityLabels[density]}</button>
-              ))}</div>
+              <label className="density-control">
+                <span>紧凑</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  aria-label="排版密度"
+                  value={resume.theme.density}
+                  onChange={(event) => dispatch({ type: "update-theme", value: { density: Number(event.target.value) } })}
+                />
+                <span>宽松</span>
+                <output>{resume.theme.density}</output>
+              </label>
               <label className="accent-picker" title="强调色"><span>配色</span><input type="color" value={resume.theme.accent} onChange={(event) => dispatch({ type: "update-theme", value: { accent: event.target.value } })} /></label>
             </div>
             <ResumePreview resume={resume} zoom={settings.previewZoom} onPageCountChange={handlePageCount} />

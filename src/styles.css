@@ -189,10 +189,9 @@ button { cursor: pointer; }
 .preview-collapse-button:hover { color: var(--green); background: #e9f2ec; }
 .preview-collapse-button span { font-size: 14px; }
 .page-count-badge { border-radius: 999px; padding: 4px 8px; color: var(--green); background: #e8f2eb; font-size: 10px; font-weight: 750; white-space: nowrap; }
-.density-switch { display: flex; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: white; }
-.density-switch button { border: 0; border-right: 1px solid var(--border); padding: 6px 9px; color: #758078; background: transparent; font-size: 10px; }
-.density-switch button:last-child { border-right: 0; }
-.density-switch button.active { color: white; background: var(--green); }
+.density-control { display: grid; grid-template-columns: auto 116px auto 27px; align-items: center; gap: 7px; color: #718078; font-size: 10px; white-space: nowrap; }
+.density-control input { width: 116px; height: 16px; margin: 0; accent-color: var(--green); cursor: ew-resize; }
+.density-control output { display: grid; width: 27px; height: 23px; place-items: center; border: 1px solid var(--border); border-radius: 6px; color: var(--green); background: white; font-size: 9px; font-weight: 750; }
 .accent-picker { display: flex; align-items: center; gap: 6px; color: #718078; font-size: 10px; }
 .accent-picker input { width: 27px; height: 27px; border: 0; padding: 0; background: transparent; }
 .preview-collapsed { display: flex; align-items: stretch; justify-content: center; overflow: hidden; background: #f6f9f6; }
@@ -265,8 +264,6 @@ button { cursor: pointer; }
 .backup-prompt small { color: #8a958e; font-size: 9px; }
 
 .resume-page { --section-space: 14px; --entry-space: 10px; --body-line: 1.42; width: 210mm; height: 297mm; min-height: 297mm; margin: 0 auto; overflow: hidden; padding: 11mm 12.5mm 10mm; color: #303030; background: white; box-shadow: 0 8px 30px rgba(42, 55, 46, .16); font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif; font-size: 11.5px; line-height: var(--body-line); }
-.resume-page.density-comfortable { --section-space: 17px; --entry-space: 13px; --body-line: 1.52; }
-.resume-page.density-compact { --section-space: 10px; --entry-space: 7px; --body-line: 1.32; font-size: 10.8px; }
 .resume-header { display: flex; min-height: 36mm; justify-content: space-between; gap: 20px; }
 .identity h1 { margin: 0 0 2px; color: #202020; font-size: 23px; line-height: 1.2; }
 .headline { margin: 0 0 8px; color: var(--resume-accent); font-size: 12px; font-weight: 700; }

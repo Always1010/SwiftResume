@@ -2,10 +2,11 @@ import { createTypstCompiler, loadFonts } from "@myriaddreamin/typst.ts";
 import { CompileFormatEnum } from "@myriaddreamin/typst.ts/compiler";
 import * as compilerWrapper from "@myriaddreamin/typst-ts-web-compiler";
 import compilerWasmUrl from "@myriaddreamin/typst-ts-web-compiler/wasm?url";
-import type { ResumeDocument, ResumeSection } from "../model/resume";
+import { getDensityLayout, type ResumeDocument, type ResumeSection } from "../model/resume";
 import { richTextToPlainText, sanitizeRichText } from "../model/richText";
 
 const asString = (value: string) => JSON.stringify(value);
+const withUnit = (value: number, unit: string) => `${Math.round(value * 100) / 100}${unit}`;
 const extensionCompilerWrapper = {
   ...compilerWrapper,
   default: (moduleOrPath: unknown) =>
@@ -147,11 +148,7 @@ function sectionSource(section: ResumeSection) {
 }
 
 export function createTypstSource(resume: ResumeDocument): string {
-  const density = {
-    comfortable: { size: "9.2pt", leading: "0.52em", gap: "8pt" },
-    standard: { size: "8.8pt", leading: "0.42em", gap: "6pt" },
-    compact: { size: "8.3pt", leading: "0.32em", gap: "4pt" },
-  }[resume.theme.density];
+  const density = getDensityLayout(resume.theme.density);
   const details = resume.profile.details
     .filter((item) => item.label || item.value)
     .map((item) => `[#text(fill: rgb("#7a8490"), ${asString(`${item.label}：`)}) #text(weight: "medium", ${asString(item.value)})]`)
@@ -162,8 +159,8 @@ export function createTypstSource(resume: ResumeDocument): string {
     : `rect(width: 27mm, height: 35mm, fill: rgb("#edf1ee"), inset: 0pt)[#align(center + horizon)[#text(size: 7pt, fill: rgb("#98a39c"), "PHOTO")]]`;
 
   return `#set page(paper: "a4", margin: (x: 12.5mm, y: 10.5mm))
-#set text(font: "Noto Sans CJK SC", lang: "zh", size: ${density.size}, fill: rgb("#303030"))
-#set par(leading: ${density.leading}, spacing: ${density.gap})
+#set text(font: "Noto Sans CJK SC", lang: "zh", size: ${withUnit(density.typstFontSizePt, "pt")}, fill: rgb("#303030"))
+#set par(leading: ${withUnit(density.typstLeadingEm, "em")}, spacing: ${withUnit(density.typstGapPt, "pt")})
 #set list(indent: 12pt, body-indent: 4pt, spacing: 1pt)
 #let accent = rgb(${asString(resume.theme.accent)})
 

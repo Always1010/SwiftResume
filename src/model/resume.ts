@@ -1,4 +1,46 @@
-export type Density = "comfortable" | "standard" | "compact";
+export type Density = number;
+
+export const MIN_DENSITY = 0;
+export const DEFAULT_DENSITY = 50;
+export const MAX_DENSITY = 100;
+
+export interface DensityLayout {
+  fontSizePx: number;
+  sectionSpacePx: number;
+  entrySpacePx: number;
+  bodyLine: number;
+  typstFontSizePt: number;
+  typstLeadingEm: number;
+  typstGapPt: number;
+}
+
+function interpolateDensity(value: number, compact: number, standard: number, comfortable: number) {
+  const [start, end, progress] = value <= DEFAULT_DENSITY
+    ? [compact, standard, value / DEFAULT_DENSITY]
+    : [standard, comfortable, (value - DEFAULT_DENSITY) / (MAX_DENSITY - DEFAULT_DENSITY)];
+  return start + (end - start) * progress;
+}
+
+export function normalizeDensity(value: unknown): Density {
+  if (value === "compact") return MIN_DENSITY;
+  if (value === "standard") return DEFAULT_DENSITY;
+  if (value === "comfortable") return MAX_DENSITY;
+  if (typeof value !== "number" || !Number.isFinite(value)) return DEFAULT_DENSITY;
+  return Math.min(MAX_DENSITY, Math.max(MIN_DENSITY, Math.round(value)));
+}
+
+export function getDensityLayout(value: unknown): DensityLayout {
+  const density = normalizeDensity(value);
+  return {
+    fontSizePx: interpolateDensity(density, 10.8, 11.5, 11.5),
+    sectionSpacePx: interpolateDensity(density, 10, 14, 17),
+    entrySpacePx: interpolateDensity(density, 7, 10, 13),
+    bodyLine: interpolateDensity(density, 1.32, 1.42, 1.52),
+    typstFontSizePt: interpolateDensity(density, 8.3, 8.8, 9.2),
+    typstLeadingEm: interpolateDensity(density, 0.32, 0.42, 0.52),
+    typstGapPt: interpolateDensity(density, 4, 6, 8),
+  };
+}
 
 export type SectionType =
   | "education"
@@ -174,7 +216,7 @@ export function createDefaultResume(): ResumeDocument {
     schemaVersion: 1,
     title: "我的中文简历",
     updatedAt: new Date().toISOString(),
-    theme: { accent: "#596d82", density: "standard" },
+    theme: { accent: "#596d82", density: DEFAULT_DENSITY },
     profile: {
       name: "林同学",
       headline: "后端开发工程师",
@@ -474,6 +516,7 @@ function migrateLegacyCustomSection(section: LegacyCustomSection): CustomSection
 export function normalizeResumeDocument(value: unknown): ResumeDocument | null {
   if (!isResumeDocument(value)) return null;
   const resume = structuredClone(value);
+  resume.theme.density = normalizeDensity(resume.theme.density);
   resume.sections = resume.sections.map((section) =>
     section.type === "custom"
       ? migrateLegacyCustomSection(section as CustomSection | LegacyCustomSection)
