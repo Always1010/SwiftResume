@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultResume } from "../model/resume";
+import { createDefaultResume, RESUME_TEMPLATE_IDS } from "../model/resume";
 import { createTypstSource } from "./typstPdf";
 
 describe("Typst source generator", () => {
@@ -11,6 +11,20 @@ describe("Typst source generator", () => {
     expect(source).toContain("开发工具：");
     expect(source).toContain("#list(");
     expect(source).toContain(resume.theme.accent);
+    expect(source).not.toContain("基本信息");
+  });
+
+  it("generates a distinct source marker and layout for all nine templates", () => {
+    const sources = RESUME_TEMPLATE_IDS.map((templateId) => {
+      const resume = createDefaultResume();
+      resume.theme.templateId = templateId;
+      const source = createTypstSource(resume);
+      expect(source).toContain(`swift-resume-template: ${templateId}`);
+      expect(source).toContain("民族");
+      expect(source).not.toContain("基本信息");
+      return source;
+    });
+    expect(new Set(sources).size).toBe(RESUME_TEMPLATE_IDS.length);
   });
 
   it("applies continuously adjusted density to exported typography", () => {

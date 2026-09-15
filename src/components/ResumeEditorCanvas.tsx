@@ -76,7 +76,7 @@ export function ResumeEditorCanvas({
   return (
     <main className="resume-editor-scroller panel" aria-label="整页简历编辑区" onClick={handleBoundaryClick}>
       <div className="resume-editor-hint">点击简历中的文字或模块即可就地编辑；侧栏用于快速定位。</div>
-      <div className="resume-editor-canvas resume-page" style={canvasStyle}>
+      <div className="resume-editor-canvas resume-page resume-template-classic" style={canvasStyle}>
         <section
           id="resume-block-profile"
           data-resume-block="profile"

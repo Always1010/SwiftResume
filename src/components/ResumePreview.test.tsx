@@ -1,10 +1,18 @@
 // @vitest-environment jsdom
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { createSection } from "../model/resume";
-import { ResumeSectionView } from "./ResumePreview";
+import { createDefaultResume, createSection } from "../model/resume";
+import { ResumeProfileView, ResumeSectionView } from "./ResumePreview";
 
 describe("ResumeSectionView", () => {
+  it("keeps extended personal details inside the profile header without a basic-info section", () => {
+    const html = renderToStaticMarkup(<ResumeProfileView resume={createDefaultResume()} />);
+    expect(html).toContain("民族");
+    expect(html).toContain("求职状态");
+    expect(html).not.toContain("基本信息");
+    expect(html).toContain("profile-detail-grid");
+  });
+
   it("renders a custom module as body-only when all heading fields are blank", () => {
     const section = createSection("content");
     if (section.type !== "content") throw new Error("expected content section");
