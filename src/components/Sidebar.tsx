@@ -3,7 +3,6 @@ import {
   createSection,
   duplicateSection,
   reorderSection,
-  type CustomEditorMode,
   type ResumeDocument,
   type ResumeSection,
   type SectionType,
@@ -15,19 +14,7 @@ const sectionLabels: Record<SectionType, string> = {
   projects: "项目经历",
   experience: "工作经历",
   awards: "荣誉奖项",
-  custom: "自定义板块",
-};
-
-const customModeLabels: Record<CustomEditorMode, string> = {
-  builder: "组件搭建",
-  document: "自由文档",
-  richtext: "富文本",
-};
-
-const customModeDescriptions: Record<CustomEditorMode, string> = {
-  builder: "按字段精确配置的高级模式",
-  document: "Notion 式块编辑，可输入 / 插入内容",
-  richtext: "Word 式工具栏与完整文字格式",
+  custom: "自定义模块",
 };
 
 interface SidebarProps {
@@ -40,13 +27,12 @@ interface SidebarProps {
 
 export function Sidebar({ resume, selectedId, onSelect, onSectionsChange, onDeleteSection }: SidebarProps) {
   const [newTitle, setNewTitle] = useState("");
-  const [newCustomMode, setNewCustomMode] = useState<CustomEditorMode>("document");
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   const addSection = () => {
     const title = newTitle.trim();
     if (!title) return;
-    const section = createSection("custom", newCustomMode);
+    const section = createSection("custom");
     section.title = title;
     onSectionsChange([...resume.sections, section]);
     onSelect(section.id);
@@ -95,7 +81,7 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange, onDele
             <span className="drag-handle" title="拖动排序">⋮⋮</span>
             <span className="module-copy">
               <strong>{section.title || sectionLabels[section.type]}</strong>
-              <small>{section.type === "custom" ? customModeLabels[section.editorMode] : sectionLabels[section.type]}{!section.enabled && " · 已隐藏"}</small>
+              <small>{section.type === "custom" ? "标题行 + 富文本" : sectionLabels[section.type]}{!section.enabled && " · 已隐藏"}</small>
             </span>
             <div className="module-actions">
               <button
@@ -155,20 +141,7 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange, onDele
               if (event.key === "Enter") addSection();
             }}
           />
-          <div className="custom-mode-options" aria-label="选择自定义模块编辑方式">
-            {(Object.keys(customModeLabels) as CustomEditorMode[]).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                className={newCustomMode === mode ? "selected" : ""}
-                aria-pressed={newCustomMode === mode}
-                onClick={() => setNewCustomMode(mode)}
-              >
-                <strong>{customModeLabels[mode]}{mode === "document" && <span>推荐</span>}</strong>
-                <small>{customModeDescriptions[mode]}</small>
-              </button>
-            ))}
-          </div>
+          <p className="add-module-hint">新模块包含可选标题日期行和富文本正文；标题行留空时仅显示正文。</p>
           <button type="button" className="primary-button" disabled={!newTitle.trim()} onClick={addSection}>
             ＋ 添加模块
           </button>

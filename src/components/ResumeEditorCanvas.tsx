@@ -57,6 +57,7 @@ export function ResumeEditorCanvas({
     "--section-space": `${density.sectionSpacePx}px`,
     "--entry-space": `${density.entrySpacePx}px`,
     "--body-line": density.bodyLine,
+    "--resume-font-size": `${density.fontSizePx}px`,
     fontSize: `${density.fontSizePx}px`,
   } as CSSProperties;
 

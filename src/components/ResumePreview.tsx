@@ -1,88 +1,25 @@
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { getDensityLayout } from "../model/resume";
-import type {
-  CustomContentNode,
-  ExperienceItem,
-  ProjectItem,
-  ResumeDocument,
-  ResumeSection,
-} from "../model/resume";
-import { sanitizeRichText } from "../model/richText";
+import type { ContentEntry, ResumeDocument, ResumeSection } from "../model/resume";
+import { renderContentRichText } from "../model/contentRichText";
 import { paginatePreviewItems } from "../preview/pagination";
-import { BlockDocumentPreview } from "./customEditors/BlockDocumentPreview";
 
 function SectionHeading({ children }: { children: string }) {
   return <div className="resume-section-heading"><h2>{children}</h2><span /></div>;
 }
 
-function BulletList({ bullets }: { bullets: string[] }) {
-  const visible = bullets.filter((item) => item.trim());
-  if (!visible.length) return null;
-  return <ul>{visible.map((bullet, index) => <li key={index}>{bullet}</li>)}</ul>;
-}
-
-function ProjectEntry({ item }: { item: ProjectItem }) {
+function ContentEntryView({ entry }: { entry: ContentEntry }) {
+  const showHeading = Boolean(entry.title || entry.subtitle || entry.date);
   return (
     <article className="resume-entry">
-      <div className="entry-topline">
-        <div><strong>{item.name || "未命名项目"}</strong>{item.role && <span className="entry-role">{item.role}</span>}</div>
-        <time>{item.date}</time>
-      </div>
-      {item.stack && <p><b>开发工具：</b>{item.stack}</p>}
-      {item.summary && <p><b>项目描述：</b>{item.summary}</p>}
-      {item.bullets.some(Boolean) && <p className="responsibility-label"><b>主要内容：</b></p>}
-      <BulletList bullets={item.bullets} />
+      {showHeading && (
+        <div className="entry-topline">
+          <div>{entry.title && <strong>{entry.title}</strong>}{entry.subtitle && <span className={`entry-role ${entry.title ? "" : "solo"}`}>{entry.subtitle}</span>}</div>
+          {entry.date && <time>{entry.date}</time>}
+        </div>
+      )}
+      <div className="resume-rich-text" dangerouslySetInnerHTML={{ __html: renderContentRichText(entry.body) }} />
     </article>
-  );
-}
-
-function ExperienceEntry({ item }: { item: ExperienceItem }) {
-  return (
-    <article className="resume-entry">
-      <div className="entry-topline">
-        <div><strong>{item.company || "未命名公司"}</strong>{item.role && <span className="entry-role">{item.role}</span>}</div>
-        <time>{item.date}</time>
-      </div>
-      {item.summary && <p>{item.summary}</p>}
-      <BulletList bullets={item.bullets} />
-    </article>
-  );
-}
-
-const customFontFamilies = {
-  sans: '"Microsoft YaHei", "PingFang SC", Arial, sans-serif',
-  serif: '"Noto Serif CJK SC", "Songti SC", SimSun, serif',
-  mono: '"Cascadia Mono", "Microsoft YaHei", monospace',
-};
-
-function customTextStyle(node: CustomContentNode, key: string): CSSProperties {
-  const style = node.styles?.[key];
-  return {
-    color: style?.color,
-    fontSize: style?.fontSize ? `${style.fontSize}pt` : undefined,
-    fontWeight: style?.fontWeight,
-    fontFamily: style?.fontFamily ? customFontFamilies[style.fontFamily] : undefined,
-  };
-}
-
-function CustomNodeView({ node }: { node: CustomContentNode }) {
-  if (!node.enabled) return null;
-  if (node.type === "title") {
-    return (
-      <div className="entry-topline custom-title-row">
-        <div><strong style={customTextStyle(node, "title")}>{node.title}</strong>{node.subtitle && <span style={customTextStyle(node, "subtitle")} className="entry-role">{node.subtitle}</span>}</div>
-        <time style={customTextStyle(node, "date")}>{node.date}</time>
-      </div>
-    );
-  }
-  if (node.type === "paragraph") return node.text ? <p style={customTextStyle(node, "text")} className="custom-paragraph">{node.text}</p> : null;
-  if (node.type === "bullets") return <ul>{node.items.filter((item) => item.text.trim()).map((item) => <li style={customTextStyle(node, `item:${item.id}`)} key={item.id}>{item.text}</li>)}</ul>;
-  return (
-    <div className="custom-key-value-preview">
-      {node.pairs.filter((pair) => pair.label || pair.value).map((pair) => (
-        <div key={pair.id}><span style={customTextStyle(node, `label:${pair.id}`)}>{pair.label}{pair.label && "："}</span><strong style={customTextStyle(node, `value:${pair.id}`)}>{pair.value}</strong></div>
-      ))}
-    </div>
   );
 }
 
@@ -111,11 +48,8 @@ function sectionItems(section: ResumeSection): PreviewFlowItem[] {
       content: <ul className="resume-flow-bullet"><li>{item.text}</li></ul>,
     }));
   }
-  if (section.type === "projects") {
-    return section.items.map((item) => ({ id: item.id, content: <ProjectEntry item={item} /> }));
-  }
-  if (section.type === "experience") {
-    return section.items.map((item) => ({ id: item.id, content: <ExperienceEntry item={item} /> }));
+  if (section.type === "projects" || section.type === "experience" || section.type === "custom") {
+    return section.entries.map((entry) => ({ id: entry.id, content: <ContentEntryView entry={entry} /> }));
   }
   if (section.type === "awards") {
     return section.items.map((item) => ({
@@ -123,22 +57,7 @@ function sectionItems(section: ResumeSection): PreviewFlowItem[] {
       content: <ul className="award-list"><li><span><strong>{item.name}</strong>{item.detail && ` · ${item.detail}`}</span><time>{item.date}</time></li></ul>,
     }));
   }
-  if (section.editorMode === "richtext") {
-    return [{
-      id: `${section.id}-richtext`,
-      content: <div className="resume-rich-text" dangerouslySetInnerHTML={{ __html: sanitizeRichText(section.richText) }} />,
-    }];
-  }
-  if (section.editorMode === "document") {
-    return [{
-      id: `${section.id}-document`,
-      content: <BlockDocumentPreview blocks={section.documentBlocks} hiddenIds={section.hiddenDocumentBlockIds} />,
-    }];
-  }
-  return section.nodes.filter((node) => node.enabled).map((node) => ({
-    id: node.id,
-    content: <article className="resume-entry custom-content"><CustomNodeView node={node} /></article>,
-  }));
+  return [];
 }
 
 export function ResumeProfileView({ resume }: { resume: ResumeDocument }) {

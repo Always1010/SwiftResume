@@ -42,13 +42,7 @@ export function getDensityLayout(value: unknown): DensityLayout {
   };
 }
 
-export type SectionType =
-  | "education"
-  | "skills"
-  | "projects"
-  | "experience"
-  | "awards"
-  | "custom";
+export type SectionType = "education" | "skills" | "projects" | "experience" | "awards" | "custom";
 
 export interface ResumeProfile {
   name: string;
@@ -87,33 +81,39 @@ export interface SkillsSection extends SectionBase {
   items: Array<{ id: string; text: string }>;
 }
 
-export interface ProjectItem {
+export interface RichTextMark {
+  type: string;
+  attrs?: Record<string, unknown>;
+}
+
+export interface RichTextNode {
+  type?: string;
+  attrs?: Record<string, unknown>;
+  content?: RichTextNode[];
+  marks?: RichTextMark[];
+  text?: string;
+}
+
+export interface RichTextDocument extends RichTextNode {
+  type: "doc";
+}
+
+export interface ContentEntry {
   id: string;
-  name: string;
-  role: string;
+  title: string;
+  subtitle: string;
   date: string;
-  stack: string;
-  summary: string;
-  bullets: string[];
+  body: RichTextDocument;
 }
 
 export interface ProjectsSection extends SectionBase {
   type: "projects";
-  items: ProjectItem[];
-}
-
-export interface ExperienceItem {
-  id: string;
-  company: string;
-  role: string;
-  date: string;
-  summary: string;
-  bullets: string[];
+  entries: ContentEntry[];
 }
 
 export interface ExperienceSection extends SectionBase {
   type: "experience";
-  items: ExperienceItem[];
+  entries: ContentEntry[];
 }
 
 export interface AwardsSection extends SectionBase {
@@ -121,98 +121,20 @@ export interface AwardsSection extends SectionBase {
   items: Array<{ id: string; name: string; date: string; detail: string }>;
 }
 
-export type CustomEditorMode = "builder" | "document" | "richtext";
-export type CustomNodeType = "title" | "paragraph" | "bullets" | "keyValues";
-
-export type ResumeFontFamily = "sans" | "serif" | "mono";
-export type ResumeFontWeight = 400 | 500 | 600 | 700;
-
-export interface CustomTextStyle {
-  fontSize?: number;
-  fontWeight?: ResumeFontWeight;
-  fontFamily?: ResumeFontFamily;
-  color?: string;
-}
-
-export type SerializedEditorNode = Record<string, unknown>;
-
-interface CustomNodeBase {
-  id: string;
-  type: CustomNodeType;
-  enabled: boolean;
-  styles?: Record<string, CustomTextStyle>;
-}
-
-export interface CustomTitleNode extends CustomNodeBase {
-  type: "title";
-  title: string;
-  subtitle: string;
-  date: string;
-}
-
-export interface CustomParagraphNode extends CustomNodeBase {
-  type: "paragraph";
-  text: string;
-}
-
-export interface CustomBulletsNode extends CustomNodeBase {
-  type: "bullets";
-  items: Array<{ id: string; text: string }>;
-}
-
-export interface CustomKeyValuesNode extends CustomNodeBase {
-  type: "keyValues";
-  pairs: Array<{ id: string; label: string; value: string }>;
-}
-
-export type CustomContentNode =
-  | CustomTitleNode
-  | CustomParagraphNode
-  | CustomBulletsNode
-  | CustomKeyValuesNode;
-
 export interface CustomSection extends SectionBase {
   type: "custom";
-  editorMode: CustomEditorMode;
-  nodes: CustomContentNode[];
-  documentBlocks: SerializedEditorNode[];
-  hiddenDocumentBlockIds: string[];
-  richText: string;
+  entries: ContentEntry[];
 }
 
-interface LegacyCustomSection extends SectionBase {
-  type: "custom";
-  editorMode?: CustomEditorMode;
-  nodes?: CustomContentNode[];
-  documentBlocks?: SerializedEditorNode[];
-  hiddenDocumentBlockIds?: string[];
-  richText?: string;
-  items?: Array<{
-    id: string;
-    title: string;
-    subtitle: string;
-    date: string;
-    description: string;
-    bullets: string[];
-  }>;
-}
+export type ContentSection = ProjectsSection | ExperienceSection | CustomSection;
 
-export type ResumeSection =
-  | EducationSection
-  | SkillsSection
-  | ProjectsSection
-  | ExperienceSection
-  | AwardsSection
-  | CustomSection;
+export type ResumeSection = EducationSection | SkillsSection | ProjectsSection | ExperienceSection | AwardsSection | CustomSection;
 
 export interface ResumeDocument {
-  schemaVersion: 1;
+  schemaVersion: 2;
   title: string;
   profile: ResumeProfile;
-  theme: {
-    accent: string;
-    density: Density;
-  };
+  theme: { accent: string; density: Density };
   sections: ResumeSection[];
   updatedAt: string;
 }
@@ -224,13 +146,46 @@ export type ResumeAction =
   | { type: "update-theme"; value: Partial<ResumeDocument["theme"]> }
   | { type: "set-sections"; value: ResumeSection[] };
 
-const makeId = () =>
-  globalThis.crypto?.randomUUID?.() ??
-  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+const makeId = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+
+export function createEmptyRichText(): RichTextDocument {
+  return { type: "doc", content: [{ type: "paragraph" }] };
+}
+
+function text(textValue: string, bold = false): RichTextNode {
+  return { type: "text", text: textValue, ...(bold ? { marks: [{ type: "bold" }] } : {}) };
+}
+
+function paragraph(content: RichTextNode[]): RichTextNode {
+  return { type: "paragraph", content };
+}
+
+function projectBody(): RichTextDocument {
+  return {
+    type: "doc",
+    content: [
+      paragraph([text("开发工具：", true), text("C++ · CMake · GDB · Postman")]),
+      paragraph([text("项目描述：", true), text("基于 Linux 的高并发 HTTP 服务器，支持静态资源访问与连接管理。")]),
+      paragraph([text("主要内容：", true)]),
+      {
+        type: "bulletList",
+        content: [
+          "使用 epoll 与线程池实现 Reactor 高并发模型。",
+          "实现 GET、POST 请求解析、定时器和异步日志模块。",
+          "完成压力测试与性能分析，在实验环境中稳定处理高并发请求。",
+        ].map((value) => ({ type: "listItem", content: [paragraph([text(value)])] })),
+      },
+    ],
+  };
+}
+
+export function createContentEntry(): ContentEntry {
+  return { id: makeId(), title: "", subtitle: "", date: "", body: createEmptyRichText() };
+}
 
 export function createDefaultResume(): ResumeDocument {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     title: "我的中文简历",
     updatedAt: new Date().toISOString(),
     theme: { accent: "#596d82", density: DEFAULT_DENSITY },
@@ -254,16 +209,7 @@ export function createDefaultResume(): ResumeDocument {
         type: "education",
         title: "教育背景",
         enabled: true,
-        items: [
-          {
-            id: makeId(),
-            school: "某某大学",
-            date: "2021.09 – 2025.06",
-            major: "计算机科学与技术",
-            degree: "本科",
-            detail: "GPA 3.7/5.0 · 专业前 20%",
-          },
-        ],
+        items: [{ id: makeId(), school: "某某大学", date: "2021.09 – 2025.06", major: "计算机科学与技术", degree: "本科", detail: "GPA 3.7/5.0 · 专业前 20%" }],
       },
       {
         id: makeId(),
@@ -281,30 +227,14 @@ export function createDefaultResume(): ResumeDocument {
         type: "projects",
         title: "项目经历",
         enabled: true,
-        items: [
-          {
-            id: makeId(),
-            name: "轻量级 HTTP 服务器",
-            role: "核心开发",
-            date: "2024.07 – 2024.09",
-            stack: "C++ · CMake · GDB · Postman",
-            summary: "基于 Linux 的高并发 HTTP 服务器，支持静态资源访问与连接管理。",
-            bullets: [
-              "使用 epoll 与线程池实现 Reactor 高并发模型。",
-              "实现 GET、POST 请求解析、定时器和异步日志模块。",
-              "完成压力测试与性能分析，在实验环境中稳定处理高并发请求。",
-            ],
-          },
-        ],
+        entries: [{ id: makeId(), title: "轻量级 HTTP 服务器", subtitle: "核心开发", date: "2024.07 – 2024.09", body: projectBody() }],
       },
       {
         id: makeId(),
         type: "awards",
         title: "个人荣誉",
         enabled: true,
-        items: [
-          { id: makeId(), name: "大学生程序设计竞赛", date: "2024", detail: "省级二等奖" },
-        ],
+        items: [{ id: makeId(), name: "大学生程序设计竞赛", date: "2024", detail: "省级二等奖" }],
       },
     ],
   };
@@ -315,16 +245,7 @@ export function createBlankResume(): ResumeDocument {
   return {
     ...resume,
     title: "未命名简历",
-    profile: {
-      name: "",
-      headline: "",
-      ageGender: "",
-      location: "",
-      phone: "",
-      email: "",
-      photo: "",
-      details: [],
-    },
+    profile: { name: "", headline: "", ageGender: "", location: "", phone: "", email: "", photo: "", details: [] },
     sections: [],
     updatedAt: new Date().toISOString(),
   };
@@ -332,25 +253,11 @@ export function createBlankResume(): ResumeDocument {
 
 export function createStarterResume(): ResumeDocument {
   const resume = createBlankResume();
-  const objective = createSection("custom", "builder") as CustomSection;
+  const objective = createSection("custom") as CustomSection;
   objective.title = "求职意向";
-  objective.nodes = [createCustomNode("paragraph")];
-
-  const summary = createSection("custom", "builder") as CustomSection;
+  const summary = createSection("custom") as CustomSection;
   summary.title = "自我评价";
-  summary.nodes = [createCustomNode("paragraph")];
-
-  return {
-    ...resume,
-    sections: [
-      objective,
-      createSection("experience"),
-      createSection("projects"),
-      createSection("education"),
-      createSection("skills"),
-      summary,
-    ],
-  };
+  return { ...resume, sections: [objective, createSection("experience"), createSection("projects"), createSection("education"), createSection("skills"), summary] };
 }
 
 export function duplicateResume(resume: ResumeDocument): ResumeDocument {
@@ -360,136 +267,41 @@ export function duplicateResume(resume: ResumeDocument): ResumeDocument {
   return copy;
 }
 
-export function createCustomNode(type: CustomNodeType): CustomContentNode {
-  const id = makeId();
-  switch (type) {
-    case "title":
-      return { id, type: "title", enabled: true, title: "", subtitle: "", date: "" };
-    case "paragraph":
-      return { id, type: "paragraph", enabled: true, text: "" };
-    case "bullets":
-      return { id, type: "bullets", enabled: true, items: [{ id: makeId(), text: "" }] };
-    case "keyValues":
-      return { id, type: "keyValues", enabled: true, pairs: [{ id: makeId(), label: "", value: "" }] };
-  }
-}
-
-function styledText(text: string, bold = false): SerializedEditorNode {
-  return { type: "text", text, styles: bold ? { bold: true } : {} };
-}
-
-function legacyNodesToDocumentBlocks(nodes: CustomContentNode[]): SerializedEditorNode[] {
-  const blocks: SerializedEditorNode[] = [];
-  for (const node of nodes) {
-    if (node.type === "title") {
-      const content: SerializedEditorNode[] = [styledText(node.title || "标题", true)];
-      if (node.subtitle) content.push(styledText(`　${node.subtitle}`));
-      if (node.date) content.push(styledText(`　${node.date}`));
-      blocks.push({ id: node.id, type: "paragraph", content });
-      continue;
-    }
-    if (node.type === "paragraph") {
-      blocks.push({ id: node.id, type: "paragraph", content: node.text });
-      continue;
-    }
-    if (node.type === "bullets") {
-      node.items.forEach((item) => blocks.push({ id: item.id, type: "bulletListItem", content: item.text }));
-      continue;
-    }
-    node.pairs.forEach((pair) => {
-      blocks.push({
-        id: pair.id,
-        type: "paragraph",
-        content: [styledText(`${pair.label}${pair.label ? "：" : ""}`, true), styledText(pair.value)],
-      });
-    });
-  }
-  return blocks.length ? blocks : [{ type: "paragraph", content: "" }];
-}
-
-export function duplicateCustomNode(node: CustomContentNode): CustomContentNode {
-  const copy = structuredClone(node);
-  copy.id = makeId();
-  if (copy.type === "bullets") {
-    copy.items = copy.items.map((item) => ({ ...item, id: makeId() }));
-  }
-  if (copy.type === "keyValues") {
-    copy.pairs = copy.pairs.map((pair) => ({ ...pair, id: makeId() }));
-  }
-  return copy;
-}
-
-export function createSection(type: SectionType, customEditorMode: CustomEditorMode = "document"): ResumeSection {
+export function createSection(type: SectionType): ResumeSection {
   const id = makeId();
   switch (type) {
     case "education":
-      return {
-        id,
-        type,
-        title: "教育背景",
-        enabled: true,
-        items: [{ id: makeId(), school: "", date: "", major: "", degree: "", detail: "" }],
-      };
+      return { id, type, title: "教育背景", enabled: true, items: [{ id: makeId(), school: "", date: "", major: "", degree: "", detail: "" }] };
     case "skills":
       return { id, type, title: "专业技能", enabled: true, items: [{ id: makeId(), text: "" }] };
     case "projects":
-      return {
-        id,
-        type,
-        title: "项目经历",
-        enabled: true,
-        items: [
-          { id: makeId(), name: "", role: "", date: "", stack: "", summary: "", bullets: [""] },
-        ],
-      };
+      return { id, type, title: "项目经历", enabled: true, entries: [createContentEntry()] };
     case "experience":
-      return {
-        id,
-        type,
-        title: "工作经历",
-        enabled: true,
-        items: [{ id: makeId(), company: "", role: "", date: "", summary: "", bullets: [""] }],
-      };
+      return { id, type, title: "工作经历", enabled: true, entries: [createContentEntry()] };
     case "awards":
-      return {
-        id,
-        type,
-        title: "个人荣誉",
-        enabled: true,
-        items: [{ id: makeId(), name: "", date: "", detail: "" }],
-      };
+      return { id, type, title: "个人荣誉", enabled: true, items: [{ id: makeId(), name: "", date: "", detail: "" }] };
     case "custom":
-      return {
-        id,
-        type,
-        title: "自定义板块",
-        enabled: true,
-        editorMode: customEditorMode,
-        nodes: customEditorMode === "builder" ? [createCustomNode("title")] : [],
-        documentBlocks: customEditorMode === "document" ? [{ type: "paragraph", content: "" }] : [],
-        hiddenDocumentBlockIds: [],
-        richText: customEditorMode === "richtext" ? "<p><br></p>" : "",
-      };
+      return { id, type, title: "自定义模块", enabled: true, entries: [createContentEntry()] };
   }
+}
+
+function duplicateEntry(entry: ContentEntry): ContentEntry {
+  return { ...structuredClone(entry), id: makeId() };
 }
 
 export function duplicateSection(section: ResumeSection): ResumeSection {
   const copy = structuredClone(section);
   copy.id = makeId();
   copy.title = `${copy.title}副本`;
-  if (copy.type === "custom") {
-    copy.nodes = copy.nodes.map(duplicateCustomNode);
+  if (copy.type === "projects" || copy.type === "experience" || copy.type === "custom") {
+    copy.entries = copy.entries.map(duplicateEntry);
   } else {
     copy.items = copy.items.map((item) => ({ ...item, id: makeId() })) as typeof copy.items;
   }
   return copy;
 }
 
-export function moveSection(
-  sections: ResumeSection[],
-  sectionId: string,
-  direction: -1 | 1,
-): ResumeSection[] {
+export function moveSection(sections: ResumeSection[], sectionId: string, direction: -1 | 1): ResumeSection[] {
   const index = sections.findIndex((section) => section.id === sectionId);
   const target = index + direction;
   if (index < 0 || target < 0 || target >= sections.length) return sections;
@@ -498,11 +310,7 @@ export function moveSection(
   return next;
 }
 
-export function reorderSection(
-  sections: ResumeSection[],
-  sourceId: string,
-  targetId: string,
-): ResumeSection[] {
+export function reorderSection(sections: ResumeSection[], sourceId: string, targetId: string): ResumeSection[] {
   const from = sections.findIndex((section) => section.id === sourceId);
   const to = sections.findIndex((section) => section.id === targetId);
   if (from < 0 || to < 0 || from === to) return sections;
@@ -516,95 +324,22 @@ export function resumeReducer(state: ResumeDocument, action: ResumeAction): Resu
   if (action.type === "replace") return action.value;
   const updatedAt = new Date().toISOString();
   switch (action.type) {
-    case "update-title":
-      return { ...state, title: action.value, updatedAt };
-    case "update-profile":
-      return { ...state, profile: action.value, updatedAt };
-    case "update-theme":
-      return { ...state, theme: { ...state.theme, ...action.value }, updatedAt };
-    case "set-sections":
-      return { ...state, sections: action.value, updatedAt };
+    case "update-title": return { ...state, title: action.value, updatedAt };
+    case "update-profile": return { ...state, profile: action.value, updatedAt };
+    case "update-theme": return { ...state, theme: { ...state.theme, ...action.value }, updatedAt };
+    case "set-sections": return { ...state, sections: action.value, updatedAt };
   }
 }
 
 export function isResumeDocument(value: unknown): value is ResumeDocument {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<ResumeDocument>;
-  return (
-    candidate.schemaVersion === 1 &&
-    typeof candidate.title === "string" &&
-    Boolean(candidate.profile) &&
-    Boolean(candidate.theme) &&
-    Array.isArray(candidate.sections)
-  );
-}
-
-function migrateLegacyCustomSection(section: LegacyCustomSection): CustomSection {
-  const mode = section.editorMode === "builder" || section.editorMode === "document" || section.editorMode === "richtext"
-    ? section.editorMode
-    : "builder";
-  if (Array.isArray(section.nodes)) {
-    const nodes = section.nodes;
-    return {
-      ...section,
-      editorMode: mode,
-      nodes,
-      documentBlocks: Array.isArray(section.documentBlocks)
-        ? section.documentBlocks
-        : mode === "document" ? legacyNodesToDocumentBlocks(nodes) : [],
-      hiddenDocumentBlockIds: Array.isArray(section.hiddenDocumentBlockIds)
-        ? section.hiddenDocumentBlockIds.filter((id): id is string => typeof id === "string")
-        : mode === "document" ? nodes.filter((node) => !node.enabled).map((node) => node.id) : [],
-      richText: typeof section.richText === "string" ? section.richText : "",
-    };
-  }
-
-  const nodes: CustomContentNode[] = [];
-  for (const item of section.items ?? []) {
-    if (item.title || item.subtitle || item.date) {
-      nodes.push({
-        id: makeId(),
-        type: "title",
-        enabled: true,
-        title: item.title,
-        subtitle: item.subtitle,
-        date: item.date,
-      });
-    }
-    if (item.description) {
-      nodes.push({ id: makeId(), type: "paragraph", enabled: true, text: item.description });
-    }
-    const visibleBullets = item.bullets.filter((bullet) => bullet.trim());
-    if (visibleBullets.length) {
-      nodes.push({
-        id: makeId(),
-        type: "bullets",
-        enabled: true,
-        items: visibleBullets.map((text) => ({ id: makeId(), text })),
-      });
-    }
-  }
-  return {
-    id: section.id,
-    type: "custom",
-    title: section.title,
-    enabled: section.enabled,
-    editorMode: mode,
-    nodes: nodes.length ? nodes : [createCustomNode("paragraph")],
-    documentBlocks: mode === "document" ? legacyNodesToDocumentBlocks(nodes) : [],
-    hiddenDocumentBlockIds: mode === "document" ? nodes.filter((node) => !node.enabled).map((node) => node.id) : [],
-    richText: typeof section.richText === "string" ? section.richText : "",
-  };
+  return candidate.schemaVersion === 2 && typeof candidate.title === "string" && Boolean(candidate.profile) && Boolean(candidate.theme) && Array.isArray(candidate.sections);
 }
 
 export function normalizeResumeDocument(value: unknown): ResumeDocument | null {
   if (!isResumeDocument(value)) return null;
   const resume = structuredClone(value);
   resume.theme.density = normalizeDensity(resume.theme.density);
-  resume.sections = resume.sections.map((section) =>
-    section.type === "custom"
-      ? migrateLegacyCustomSection(section as CustomSection | LegacyCustomSection)
-      : section,
-  );
   return resume;
 }

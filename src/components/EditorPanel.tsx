@@ -1,25 +1,16 @@
-import { lazy, Suspense, useState, type ChangeEvent, type CSSProperties, type ReactNode } from "react";
-import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import type { ChangeEvent, ReactNode } from "react";
 import type {
   AwardsSection,
-  CustomContentNode,
-  CustomNodeType,
-  CustomSection,
-  CustomTextStyle,
+  ContentEntry,
+  ContentSection,
   EducationSection,
-  ExperienceSection,
-  ProjectsSection,
   ResumeDocument,
   ResumeProfile,
   ResumeSection,
   SkillsSection,
 } from "../model/resume";
-import { createCustomNode, duplicateCustomNode } from "../model/resume";
-
-const FreeDocumentEditor = lazy(() => import("./customEditors/FreeDocumentEditor").then((module) => ({ default: module.FreeDocumentEditor })));
-const MatureRichTextEditor = lazy(() => import("./customEditors/RichTextEditor").then((module) => ({ default: module.MatureRichTextEditor })));
+import { createContentEntry } from "../model/resume";
+import { ContentBodyEditor } from "./customEditors/ContentBodyEditor";
 
 const makeId = () => crypto.randomUUID();
 
@@ -37,21 +28,19 @@ interface FieldProps {
   value: string;
   placeholder?: string;
   multiline?: boolean;
-  inputStyle?: CSSProperties;
   onChange: (value: string) => void;
 }
 
-function Field({ label, value, placeholder, multiline, inputStyle, onChange }: FieldProps) {
+function Field({ label, value, placeholder, multiline, onChange }: FieldProps) {
   const common = {
     value,
     placeholder,
-    onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      onChange(event.target.value),
+    onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(event.target.value),
   };
   return (
     <label className={`field ${multiline ? "field-wide" : ""}`}>
       <span>{label}</span>
-      {multiline ? <textarea rows={3} style={inputStyle} {...common} /> : <input style={inputStyle} {...common} />}
+      {multiline ? <textarea rows={3} {...common} /> : <input {...common} />}
     </label>
   );
 }
@@ -60,50 +49,15 @@ function EditorCard({ children, onDelete }: { children: ReactNode; onDelete?: ()
   return (
     <div className="editor-card">
       {onDelete && (
-        <button type="button" className="remove-item" onClick={onDelete} title="删除条目">
-          ×
-        </button>
+        <button type="button" className="remove-item" onClick={onDelete} title="删除条目">×</button>
       )}
       {children}
     </div>
   );
 }
 
-function BulletsEditor({ bullets, onChange }: { bullets: string[]; onChange: (value: string[]) => void }) {
-  return (
-    <div className="field field-wide bullet-editor">
-      <span>要点</span>
-      {bullets.map((bullet, index) => (
-        <div className="inline-field" key={index}>
-          <span className="bullet-dot">•</span>
-          <textarea
-            rows={2}
-            value={bullet}
-            onChange={(event) =>
-              onChange(bullets.map((item, itemIndex) => (itemIndex === index ? event.target.value : item)))
-            }
-          />
-          <button
-            type="button"
-            className="icon-button danger"
-            onClick={() => onChange(bullets.filter((_, itemIndex) => itemIndex !== index))}
-            aria-label="删除要点"
-          >
-            ×
-          </button>
-        </div>
-      ))}
-      <button type="button" className="text-button" onClick={() => onChange([...bullets, ""])}>
-        ＋ 添加要点
-      </button>
-    </div>
-  );
-}
-
 function ProfileEditor({ profile, onChange }: { profile: ResumeProfile; onChange: (value: ResumeProfile) => void }) {
-  const update = <K extends keyof ResumeProfile>(key: K, value: ResumeProfile[K]) =>
-    onChange({ ...profile, [key]: value });
-
+  const update = <K extends keyof ResumeProfile>(key: K, value: ResumeProfile[K]) => onChange({ ...profile, [key]: value });
   const uploadPhoto = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -118,12 +72,7 @@ function ProfileEditor({ profile, onChange }: { profile: ResumeProfile; onChange
 
   return (
     <>
-      <div className="editor-title">
-        <div>
-          <span className="eyebrow">固定模块</span>
-          <h2>个人信息</h2>
-        </div>
-      </div>
+      <div className="editor-title"><div><span className="eyebrow">固定模块</span><h2>个人信息</h2></div></div>
       <div className="field-grid">
         <Field label="姓名" value={profile.name} onChange={(value) => update("name", value)} />
         <Field label="求职方向" value={profile.headline} onChange={(value) => update("headline", value)} />
@@ -132,71 +81,23 @@ function ProfileEditor({ profile, onChange }: { profile: ResumeProfile; onChange
         <Field label="手机" value={profile.phone} onChange={(value) => update("phone", value)} />
         <Field label="邮箱" value={profile.email} onChange={(value) => update("email", value)} />
       </div>
-
       <div className="photo-control">
-        <div className="photo-thumb">
-          {profile.photo ? <img src={profile.photo} alt="证件照预览" /> : <span>照片</span>}
-        </div>
+        <div className="photo-thumb">{profile.photo ? <img src={profile.photo} alt="证件照预览" /> : <span>照片</span>}</div>
         <div>
-          <strong>证件照</strong>
-          <p>建议使用 3:4 竖版照片，最大 4MB。</p>
-          <label className="secondary-button file-button">
-            选择照片
-            <input type="file" accept="image/*" onChange={uploadPhoto} />
-          </label>
-          {profile.photo && (
-            <button type="button" className="text-button danger-text" onClick={() => update("photo", "")}>
-              移除
-            </button>
-          )}
+          <strong>证件照</strong><p>建议使用 3:4 竖版照片，最大 4MB。</p>
+          <label className="secondary-button file-button">选择照片<input type="file" accept="image/*" onChange={uploadPhoto} /></label>
+          {profile.photo && <button type="button" className="text-button danger-text" onClick={() => update("photo", "")}>移除</button>}
         </div>
       </div>
-
       <div className="subheading-row">
         <h3>扩展信息</h3>
-        <button
-          type="button"
-          className="text-button"
-          onClick={() => update("details", [...profile.details, { id: makeId(), label: "", value: "" }])}
-        >
-          ＋ 添加字段
-        </button>
+        <button type="button" className="text-button" onClick={() => update("details", [...profile.details, { id: makeId(), label: "", value: "" }])}>＋ 添加字段</button>
       </div>
       {profile.details.map((detail) => (
         <div className="detail-row" key={detail.id}>
-          <input
-            aria-label="字段名称"
-            value={detail.label}
-            placeholder="字段名称"
-            onChange={(event) =>
-              update(
-                "details",
-                profile.details.map((item) =>
-                  item.id === detail.id ? { ...item, label: event.target.value } : item,
-                ),
-              )
-            }
-          />
-          <input
-            aria-label="字段内容"
-            value={detail.value}
-            placeholder="字段内容"
-            onChange={(event) =>
-              update(
-                "details",
-                profile.details.map((item) =>
-                  item.id === detail.id ? { ...item, value: event.target.value } : item,
-                ),
-              )
-            }
-          />
-          <button
-            type="button"
-            className="icon-button danger"
-            onClick={() => update("details", profile.details.filter((item) => item.id !== detail.id))}
-          >
-            ×
-          </button>
+          <input aria-label="字段名称" value={detail.label} placeholder="字段名称" onChange={(event) => update("details", profile.details.map((item) => item.id === detail.id ? { ...item, label: event.target.value } : item))} />
+          <input aria-label="字段内容" value={detail.value} placeholder="字段内容" onChange={(event) => update("details", profile.details.map((item) => item.id === detail.id ? { ...item, value: event.target.value } : item))} />
+          <button type="button" className="icon-button danger" onClick={() => update("details", profile.details.filter((item) => item.id !== detail.id))}>×</button>
         </div>
       ))}
     </>
@@ -235,51 +136,6 @@ function SkillsEditor({ section, onChange }: { section: SkillsSection; onChange:
   );
 }
 
-function ProjectsEditor({ section, onChange }: { section: ProjectsSection; onChange: (value: ProjectsSection) => void }) {
-  return (
-    <>
-      {section.items.map((item) => {
-        const updateItem = (patch: Partial<typeof item>) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, ...patch } : entry) });
-        return (
-          <EditorCard key={item.id} onDelete={() => onChange({ ...section, items: section.items.filter((entry) => entry.id !== item.id) })}>
-            <div className="field-grid">
-              <Field label="项目名称" value={item.name} onChange={(value) => updateItem({ name: value })} />
-              <Field label="职责" value={item.role} onChange={(value) => updateItem({ role: value })} />
-              <Field label="时间" value={item.date} onChange={(value) => updateItem({ date: value })} />
-              <Field label="技术栈" value={item.stack} onChange={(value) => updateItem({ stack: value })} />
-              <Field label="项目简介" value={item.summary} multiline onChange={(value) => updateItem({ summary: value })} />
-              <BulletsEditor bullets={item.bullets} onChange={(value) => updateItem({ bullets: value })} />
-            </div>
-          </EditorCard>
-        );
-      })}
-      <button type="button" className="add-item-button" onClick={() => onChange({ ...section, items: [...section.items, { id: makeId(), name: "", role: "", date: "", stack: "", summary: "", bullets: [""] }] })}>＋ 添加项目</button>
-    </>
-  );
-}
-
-function ExperienceEditor({ section, onChange }: { section: ExperienceSection; onChange: (value: ExperienceSection) => void }) {
-  return (
-    <>
-      {section.items.map((item) => {
-        const updateItem = (patch: Partial<typeof item>) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, ...patch } : entry) });
-        return (
-          <EditorCard key={item.id} onDelete={() => onChange({ ...section, items: section.items.filter((entry) => entry.id !== item.id) })}>
-            <div className="field-grid">
-              <Field label="公司" value={item.company} onChange={(value) => updateItem({ company: value })} />
-              <Field label="职位" value={item.role} onChange={(value) => updateItem({ role: value })} />
-              <Field label="时间" value={item.date} onChange={(value) => updateItem({ date: value })} />
-              <Field label="经历简介" value={item.summary} multiline onChange={(value) => updateItem({ summary: value })} />
-              <BulletsEditor bullets={item.bullets} onChange={(value) => updateItem({ bullets: value })} />
-            </div>
-          </EditorCard>
-        );
-      })}
-      <button type="button" className="add-item-button" onClick={() => onChange({ ...section, items: [...section.items, { id: makeId(), company: "", role: "", date: "", summary: "", bullets: [""] }] })}>＋ 添加工作经历</button>
-    </>
-  );
-}
-
 function AwardsEditor({ section, onChange }: { section: AwardsSection; onChange: (value: AwardsSection) => void }) {
   return (
     <>
@@ -300,233 +156,80 @@ function AwardsEditor({ section, onChange }: { section: AwardsSection; onChange:
   );
 }
 
-const customNodeLabels: Record<CustomNodeType, string> = {
-  title: "标题日期行",
-  paragraph: "说明段落",
-  bullets: "要点列表",
-  keyValues: "键值字段",
-};
-
-function updateCustomNode(section: CustomSection, node: CustomContentNode): CustomSection {
-  return { ...section, nodes: section.nodes.map((item) => item.id === node.id ? node : item) };
+function entryLabels(type: ContentSection["type"]) {
+  if (type === "projects") return { title: "项目名称（选填）", subtitle: "职责（选填）", titlePlaceholder: "例如：轻量级 HTTP 服务器", subtitlePlaceholder: "例如：核心开发", add: "添加项目" };
+  if (type === "experience") return { title: "公司 / 组织（选填）", subtitle: "职位（选填）", titlePlaceholder: "例如：某某科技", subtitlePlaceholder: "例如：后端开发", add: "添加工作经历" };
+  return { title: "标题 / 名称（选填）", subtitle: "补充信息（选填）", titlePlaceholder: "留空则只显示正文", subtitlePlaceholder: "角色、职位或其他说明", add: "添加内容条目" };
 }
 
-const resumeFontFamilies = {
-  sans: '"Microsoft YaHei", "PingFang SC", Arial, sans-serif',
-  serif: '"Noto Serif CJK SC", "Songti SC", SimSun, serif',
-  mono: '"Cascadia Mono", "Microsoft YaHei", monospace',
-} as const;
-
-function textStyleCss(style: CustomTextStyle | undefined): CSSProperties {
-  return {
-    color: style?.color,
-    fontSize: style?.fontSize ? `${style.fontSize}pt` : undefined,
-    fontWeight: style?.fontWeight,
-    fontFamily: style?.fontFamily ? resumeFontFamilies[style.fontFamily] : undefined,
+function ContentSectionEditor({ section, onChange }: { section: ContentSection; onChange: (value: ContentSection) => void }) {
+  const labels = entryLabels(section.type);
+  const replaceEntry = (entry: ContentEntry) => onChange({ ...section, entries: section.entries.map((item) => item.id === entry.id ? entry : item) });
+  const moveEntry = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= section.entries.length) return;
+    const entries = [...section.entries];
+    [entries[index], entries[target]] = [entries[target], entries[index]];
+    onChange({ ...section, entries });
   };
-}
-
-function StructuredStyleControl({ node, styleKey, onChange }: {
-  node: CustomContentNode;
-  styleKey: string;
-  onChange: (node: CustomContentNode) => void;
-}) {
-  const style = node.styles?.[styleKey] ?? {};
-  const update = (patch: Partial<CustomTextStyle>) => onChange({
-    ...node,
-    styles: { ...node.styles, [styleKey]: { ...style, ...patch } },
-  });
-  return (
-    <details className="structured-style-control">
-      <summary title="设置该字段的字体、字号和粗细">Aa</summary>
-      <div className="structured-style-popover">
-        <button type="button" aria-label="切换粗体" className={style.fontWeight === 700 ? "active" : ""} onClick={() => update({ fontWeight: style.fontWeight === 700 ? 400 : 700 })}><strong>B</strong></button>
-        <label><span>字号</span><select aria-label="字段字号" value={style.fontSize ?? 11} onChange={(event) => update({ fontSize: Number(event.target.value) })}>{[8, 9, 10, 11, 12, 14, 16, 18, 20, 24].map((size) => <option key={size} value={size}>{size} pt</option>)}</select></label>
-        <label><span>粗细</span><select aria-label="字段字重" value={style.fontWeight ?? 400} onChange={(event) => update({ fontWeight: Number(event.target.value) as CustomTextStyle["fontWeight"] })}><option value="400">常规</option><option value="500">中等</option><option value="600">半粗</option><option value="700">粗体</option></select></label>
-        <label><span>字体</span><select aria-label="字段字体" value={style.fontFamily ?? "sans"} onChange={(event) => update({ fontFamily: event.target.value as CustomTextStyle["fontFamily"] })}><option value="sans">黑体</option><option value="serif">宋体</option><option value="mono">等宽</option></select></label>
-        <label className="style-color"><span>颜色</span><input type="color" value={style.color ?? "#303030"} onChange={(event) => update({ color: event.target.value })} /></label>
-      </div>
-    </details>
-  );
-}
-
-function StyledCustomField({ node, styleKey, label, value, multiline, onValueChange, onChange }: {
-  node: CustomContentNode;
-  styleKey: string;
-  label: string;
-  value: string;
-  multiline?: boolean;
-  onValueChange: (value: string) => void;
-  onChange: (node: CustomContentNode) => void;
-}) {
-  return (
-    <div className={`structured-styled-field ${multiline ? "field-wide" : ""}`}>
-      <Field label={label} value={value} multiline={multiline} inputStyle={textStyleCss(node.styles?.[styleKey])} onChange={onValueChange} />
-      <StructuredStyleControl node={node} styleKey={styleKey} onChange={onChange} />
-    </div>
-  );
-}
-
-function CustomNodeFields({
-  node,
-  mode,
-  onChange,
-}: {
-  node: CustomContentNode;
-  mode: "builder" | "document";
-  onChange: (node: CustomContentNode) => void;
-}) {
-  if (node.type === "title") {
-    if (mode === "document") {
-      return (
-        <div className="document-title-row">
-          <input aria-label="标题" placeholder="标题或名称" value={node.title} onChange={(event) => onChange({ ...node, title: event.target.value })} />
-          <input aria-label="副标题" placeholder="角色 / 副标题" value={node.subtitle} onChange={(event) => onChange({ ...node, subtitle: event.target.value })} />
-          <input aria-label="时间" placeholder="时间" value={node.date} onChange={(event) => onChange({ ...node, date: event.target.value })} />
-        </div>
-      );
-    }
-    return (
-      <div className="field-grid">
-        <StyledCustomField node={node} styleKey="title" label="标题" value={node.title} onValueChange={(value) => onChange({ ...node, title: value })} onChange={onChange} />
-        <StyledCustomField node={node} styleKey="subtitle" label="副标题" value={node.subtitle} onValueChange={(value) => onChange({ ...node, subtitle: value })} onChange={onChange} />
-        <StyledCustomField node={node} styleKey="date" label="时间" value={node.date} onValueChange={(value) => onChange({ ...node, date: value })} onChange={onChange} />
-      </div>
-    );
-  }
-
-  if (node.type === "paragraph") {
-    return mode === "document"
-      ? <textarea className="document-paragraph-input" rows={3} aria-label="说明段落" placeholder="直接输入一段内容……" value={node.text} onChange={(event) => onChange({ ...node, text: event.target.value })} />
-      : <StyledCustomField node={node} styleKey="text" label="说明" value={node.text} multiline onValueChange={(value) => onChange({ ...node, text: value })} onChange={onChange} />;
-  }
-
-  if (node.type === "bullets") {
-    return (
-      <div className={mode === "document" ? "document-bullets" : "field field-wide bullet-editor"}>
-        {mode === "builder" && <span>要点</span>}
-        {node.items.map((item) => (
-          <div className="inline-field" key={item.id}>
-            <span className="bullet-dot">•</span>
-            <textarea
-              rows={mode === "document" ? 1 : 2}
-              aria-label="要点内容"
-              value={item.text}
-              style={textStyleCss(node.styles?.[`item:${item.id}`])}
-              onChange={(event) => onChange({ ...node, items: node.items.map((entry) => entry.id === item.id ? { ...entry, text: event.target.value } : entry) })}
-            />
-            {mode === "builder" && <StructuredStyleControl node={node} styleKey={`item:${item.id}`} onChange={onChange} />}
-            <button type="button" className="icon-button danger" aria-label="删除要点" onClick={() => onChange({ ...node, items: node.items.filter((entry) => entry.id !== item.id) })}>×</button>
-          </div>
-        ))}
-        <button type="button" className="text-button" onClick={() => onChange({ ...node, items: [...node.items, { id: makeId(), text: "" }] })}>＋ 添加要点</button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="custom-key-values">
-      {node.pairs.map((pair) => (
-        <div className="detail-row" key={pair.id}>
-          <div className="structured-inline-field"><input style={textStyleCss(node.styles?.[`label:${pair.id}`])} aria-label="字段名称" placeholder="字段名称" value={pair.label} onChange={(event) => onChange({ ...node, pairs: node.pairs.map((entry) => entry.id === pair.id ? { ...entry, label: event.target.value } : entry) })} /><StructuredStyleControl node={node} styleKey={`label:${pair.id}`} onChange={onChange} /></div>
-          <div className="structured-inline-field"><input style={textStyleCss(node.styles?.[`value:${pair.id}`])} aria-label="字段内容" placeholder="字段内容" value={pair.value} onChange={(event) => onChange({ ...node, pairs: node.pairs.map((entry) => entry.id === pair.id ? { ...entry, value: event.target.value } : entry) })} /><StructuredStyleControl node={node} styleKey={`value:${pair.id}`} onChange={onChange} /></div>
-          <button type="button" className="icon-button danger" aria-label="删除字段" onClick={() => onChange({ ...node, pairs: node.pairs.filter((entry) => entry.id !== pair.id) })}>×</button>
-        </div>
-      ))}
-      <button type="button" className="text-button" onClick={() => onChange({ ...node, pairs: [...node.pairs, { id: makeId(), label: "", value: "" }] })}>＋ 添加字段</button>
-    </div>
-  );
-}
-
-function SortableCustomNode({ node, index, section, onChange }: { node: CustomContentNode; index: number; section: CustomSection; onChange: (value: CustomSection) => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: node.id });
-  return (
-    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={`custom-node builder ${node.enabled ? "" : "node-hidden"} ${isDragging ? "node-dragging" : ""}`}>
-      <div className="custom-node-toolbar">
-        <span>
-          <button type="button" className="custom-node-drag-handle" title="拖动排序" aria-label={`拖动${customNodeLabels[node.type]}`} {...attributes} {...listeners}>⋮⋮</button>
-          <strong>{customNodeLabels[node.type]}</strong>
-        </span>
-        <div>
-          <button type="button" className="icon-button" title={node.enabled ? "从简历中隐藏" : "显示在简历中"} onClick={() => onChange(updateCustomNode(section, { ...node, enabled: !node.enabled }))}>{node.enabled ? "◉" : "○"}</button>
-          <button type="button" className="icon-button" title="复制内容" onClick={() => {
-            const nodes = [...section.nodes];
-            nodes.splice(index + 1, 0, duplicateCustomNode(node));
-            onChange({ ...section, nodes });
-          }}>⧉</button>
-          <button type="button" className="icon-button danger" title="删除内容" onClick={() => onChange({ ...section, nodes: section.nodes.filter((item) => item.id !== node.id) })}>×</button>
-        </div>
-      </div>
-      <div className="custom-node-content">
-        <CustomNodeFields node={node} mode="builder" onChange={(value) => onChange(updateCustomNode(section, value))} />
-      </div>
-    </div>
-  );
-}
-
-function CustomStructuredEditor({ section, onChange }: { section: CustomSection; onChange: (value: CustomSection) => void }) {
-  const [newNodeType, setNewNodeType] = useState<CustomNodeType>("paragraph");
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    if (!over || active.id === over.id) return;
-    const from = section.nodes.findIndex((node) => node.id === active.id);
-    const to = section.nodes.findIndex((node) => node.id === over.id);
-    if (from >= 0 && to >= 0) onChange({ ...section, nodes: arrayMove(section.nodes, from, to) });
+  const duplicateEntry = (entry: ContentEntry, index: number) => {
+    const copy = structuredClone(entry);
+    copy.id = makeId();
+    const entries = [...section.entries];
+    entries.splice(index + 1, 0, copy);
+    onChange({ ...section, entries });
   };
+
   return (
     <>
-      <div className="editor-mode-notice"><strong>组件搭建（高级）</strong><span>按字段精确控制结构和样式；拖动每个组件左上角的手柄调整顺序。</span></div>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={section.nodes.map((node) => node.id)} strategy={verticalListSortingStrategy}>
-          <div className="custom-builder-list">
-            {section.nodes.map((node, index) => <SortableCustomNode key={node.id} node={node} index={index} section={section} onChange={onChange} />)}
-            {!section.nodes.length && <div className="custom-empty-state">还没有内容，可以从下方添加标题、段落、列表或字段。</div>}
-          </div>
-        </SortableContext>
-      </DndContext>
-      <div className="custom-add-node">
-        <select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as CustomNodeType)}>
-          {(Object.keys(customNodeLabels) as CustomNodeType[]).map((type) => <option value={type} key={type}>{customNodeLabels[type]}</option>)}
-        </select>
-        <button type="button" className="add-item-button" onClick={() => onChange({ ...section, nodes: [...section.nodes, createCustomNode(newNodeType)] })}>＋ 添加内容</button>
+      <div className="content-editor-notice">
+        <strong>标题行 + 富文本正文</strong>
+        <span>标题、补充信息和时间均可留空；全部留空时，简历只显示正文。</span>
       </div>
+      <div className="content-entry-list">
+        {section.entries.map((entry, index) => (
+          <article className="content-entry-editor" key={entry.id}>
+            <div className="content-entry-actions">
+              <strong>内容 {index + 1}</strong>
+              <div>
+                <button type="button" className="icon-button" title="上移" disabled={index === 0} onClick={() => moveEntry(index, -1)}>↑</button>
+                <button type="button" className="icon-button" title="下移" disabled={index === section.entries.length - 1} onClick={() => moveEntry(index, 1)}>↓</button>
+                <button type="button" className="icon-button" title="复制" onClick={() => duplicateEntry(entry, index)}>⧉</button>
+                <button type="button" className="icon-button danger" title="删除" onClick={() => onChange({ ...section, entries: section.entries.filter((item) => item.id !== entry.id) })}>×</button>
+              </div>
+            </div>
+            <div className="content-heading-fields">
+              <Field label={labels.title} value={entry.title} placeholder={labels.titlePlaceholder} onChange={(title) => replaceEntry({ ...entry, title })} />
+              <Field label={labels.subtitle} value={entry.subtitle} placeholder={labels.subtitlePlaceholder} onChange={(subtitle) => replaceEntry({ ...entry, subtitle })} />
+              <Field label="时间（选填）" value={entry.date} placeholder="例如：2024.07 – 2024.09" onChange={(date) => replaceEntry({ ...entry, date })} />
+            </div>
+            <div className="content-body-label"><span>正文</span><small>支持局部加粗、列表、下划线和链接</small></div>
+            <ContentBodyEditor entryId={entry.id} content={entry.body} onChange={(body) => replaceEntry({ ...entry, body })} />
+          </article>
+        ))}
+        {!section.entries.length && <div className="custom-empty-state">还没有内容，点击下方按钮添加。</div>}
+      </div>
+      <button type="button" className="add-item-button" onClick={() => onChange({ ...section, entries: [...section.entries, createContentEntry()] })}>＋ {labels.add}</button>
     </>
   );
 }
 
-function CustomEditor({ section, onChange }: { section: CustomSection; onChange: (value: CustomSection) => void }) {
-  if (section.editorMode === "document") return <Suspense fallback={<div className="editor-loading">正在加载自由文档编辑器……</div>}><FreeDocumentEditor section={section} onChange={onChange} /></Suspense>;
-  if (section.editorMode === "richtext") return <Suspense fallback={<div className="editor-loading">正在加载富文本编辑器……</div>}><MatureRichTextEditor section={section} onChange={onChange} /></Suspense>;
-  return <CustomStructuredEditor section={section} onChange={onChange} />;
-}
-
 export function EditorPanel({ resume, selectedId, onProfileChange, onSectionChange, onDeleteSection, embedded = false }: EditorPanelProps) {
   const className = embedded ? "editor inline-module-editor" : "editor panel";
-  if (selectedId === "profile") {
-    return <section className={className}><ProfileEditor profile={resume.profile} onChange={onProfileChange} /></section>;
-  }
-
+  if (selectedId === "profile") return <section className={className}><ProfileEditor profile={resume.profile} onChange={onProfileChange} /></section>;
   const section = resume.sections.find((item) => item.id === selectedId);
   if (!section) return null;
 
   return (
     <section className={className}>
       <div className="editor-title">
-        <div>
-          <span className="eyebrow">{section.type}</span>
-          <input className="section-title-input" value={section.title} aria-label="板块标题" onChange={(event) => onSectionChange({ ...section, title: event.target.value })} />
-        </div>
+        <div><span className="eyebrow">{section.type}</span><input className="section-title-input" value={section.title} aria-label="板块标题" onChange={(event) => onSectionChange({ ...section, title: event.target.value })} /></div>
         <button type="button" className="secondary-button danger-text" onClick={() => onDeleteSection(section.id)}>删除模块</button>
       </div>
       {section.type === "education" && <EducationEditor section={section} onChange={onSectionChange} />}
       {section.type === "skills" && <SkillsEditor section={section} onChange={onSectionChange} />}
-      {section.type === "projects" && <ProjectsEditor section={section} onChange={onSectionChange} />}
-      {section.type === "experience" && <ExperienceEditor section={section} onChange={onSectionChange} />}
+      {(section.type === "projects" || section.type === "experience" || section.type === "custom") && <ContentSectionEditor section={section} onChange={onSectionChange} />}
       {section.type === "awards" && <AwardsEditor section={section} onChange={onSectionChange} />}
-      {section.type === "custom" && <CustomEditor section={section} onChange={onSectionChange} />}
     </section>
   );
 }

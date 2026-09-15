@@ -1,24 +1,31 @@
 import { describe, expect, it } from "vitest";
 import {
-  createDefaultResume,
   createBlankResume,
-  createStarterResume,
+  createDefaultResume,
   createSection,
-  duplicateSection,
+  createStarterResume,
   duplicateResume,
+  duplicateSection,
+  getDensityLayout,
   isResumeDocument,
   moveSection,
-  getDensityLayout,
   normalizeDensity,
   normalizeResumeDocument,
   reorderSection,
 } from "./resume";
 
 describe("resume model", () => {
-  it("creates a usable default document", () => {
+  it("creates a schema v2 resume with structured headings and rich-text bodies", () => {
     const resume = createDefaultResume();
     expect(isResumeDocument(resume)).toBe(true);
-    expect(resume.sections.length).toBeGreaterThan(2);
+    expect(resume.schemaVersion).toBe(2);
+    const projects = resume.sections.find((section) => section.type === "projects");
+    expect(projects?.type).toBe("projects");
+    if (projects?.type === "projects") {
+      expect(projects.entries[0].title).toBe("轻量级 HTTP 服务器");
+      expect(JSON.stringify(projects.entries[0].body)).toContain("开发工具");
+      expect(JSON.stringify(projects.entries[0].body)).toContain("bulletList");
+    }
   });
 
   it("creates blank documents and independent resume copies", () => {
@@ -40,25 +47,28 @@ describe("resume model", () => {
       "专业技能",
       "自我评价",
     ]);
-    expect(starter.sections.map((section) => section.type)).toEqual([
-      "custom",
-      "experience",
-      "projects",
-      "education",
-      "skills",
-      "custom",
-    ]);
     expect(JSON.stringify(starter)).not.toContain("某某大学");
     expect(JSON.stringify(starter)).not.toContain("轻量级 HTTP 服务器");
   });
 
-  it("creates and duplicates independent modules", () => {
+  it("creates one neutral content entry for every custom module", () => {
+    const section = createSection("custom");
+    expect(section.type).toBe("custom");
+    if (section.type === "custom") {
+      expect(section.title).toBe("自定义模块");
+      expect(section.entries).toHaveLength(1);
+      expect(section.entries[0]).toMatchObject({ title: "", subtitle: "", date: "" });
+      expect(section.entries[0].body).toEqual({ type: "doc", content: [{ type: "paragraph" }] });
+    }
+  });
+
+  it("duplicates content modules without sharing entry identities", () => {
     const section = createSection("projects");
     const copy = duplicateSection(section);
     expect(copy.id).not.toBe(section.id);
     expect(copy.type).toBe("projects");
     if (copy.type === "projects" && section.type === "projects") {
-      expect(copy.items[0].id).not.toBe(section.items[0].id);
+      expect(copy.entries[0].id).not.toBe(section.entries[0].id);
     }
   });
 
@@ -67,91 +77,21 @@ describe("resume model", () => {
     const moved = moveSection(sections, sections[0].id, 1);
     expect(moved[1].id).toBe(sections[0].id);
     expect(sections[0].id).not.toBe(moved[0].id);
-
     const reordered = reorderSection(sections, sections[0].id, sections[2].id);
     expect(reordered[2].id).toBe(sections[0].id);
   });
 
-  it("creates three compatible custom module modes", () => {
-    const builder = createSection("custom", "builder");
-    const document = createSection("custom", "document");
-    const richText = createSection("custom", "richtext");
-    expect(builder.type === "custom" && builder.editorMode).toBe("builder");
-    expect(document.type === "custom" && document.editorMode).toBe("document");
-    expect(richText.type === "custom" && richText.editorMode).toBe("richtext");
-    if (builder.type === "custom" && document.type === "custom" && richText.type === "custom") {
-      expect(builder.nodes).toHaveLength(1);
-      expect(builder.documentBlocks).toEqual([]);
-      expect(builder.richText).toBe("");
-      expect(document.nodes).toEqual([]);
-      expect(document.documentBlocks).toEqual([{ type: "paragraph", content: "" }]);
-      expect(document.richText).toBe("");
-      expect(richText.nodes).toEqual([]);
-      expect(richText.documentBlocks).toEqual([]);
-      expect(richText.richText).toBe("<p><br></p>");
-    }
+  it("rejects obsolete schema v1 documents instead of migrating them", () => {
+    const obsolete = { ...createDefaultResume(), schemaVersion: 1 };
+    expect(normalizeResumeDocument(obsolete)).toBeNull();
   });
 
-  it("migrates the old document view into independent document blocks", () => {
-    const resume = createDefaultResume();
-    const legacyDocument = createSection("custom", "builder");
-    if (legacyDocument.type !== "custom") throw new Error("expected custom section");
-    legacyDocument.editorMode = "document";
-    legacyDocument.nodes = [
-      { id: "title", type: "title", enabled: true, title: "开源项目", subtitle: "维护者", date: "2026" },
-      { id: "hidden", type: "paragraph", enabled: false, text: "内部备注" },
-    ];
-    delete (legacyDocument as Partial<typeof legacyDocument>).documentBlocks;
-    delete (legacyDocument as Partial<typeof legacyDocument>).hiddenDocumentBlockIds;
-    resume.sections.push(legacyDocument);
-
-    const migrated = normalizeResumeDocument(resume)?.sections.at(-1);
-    expect(migrated?.type).toBe("custom");
-    if (migrated?.type === "custom") {
-      expect(migrated.documentBlocks).toHaveLength(2);
-      expect(migrated.hiddenDocumentBlockIds).toEqual(["hidden"]);
-      expect(migrated.nodes).toHaveLength(2);
-    }
-  });
-
-  it("migrates legacy custom modules without dropping content", () => {
-    const resume = createDefaultResume();
-    resume.sections.push({
-      id: "legacy",
-      type: "custom",
-      title: "开源经历",
-      enabled: true,
-      items: [{
-        id: "item",
-        title: "SwiftResume",
-        subtitle: "维护者",
-        date: "2026",
-        description: "浏览器端简历工具",
-        bullets: ["支持自由模块"],
-      }],
-    } as never);
-    const migrated = normalizeResumeDocument(resume);
-    const custom = migrated?.sections.at(-1);
-    expect(custom?.type).toBe("custom");
-    if (custom?.type === "custom") {
-      expect(custom.editorMode).toBe("builder");
-      expect(custom.nodes.map((node) => node.type)).toEqual(["title", "paragraph", "bullets"]);
-    }
-  });
-
-  it("migrates legacy density values and clamps numeric values", () => {
+  it("normalizes density values and interpolates layout continuously", () => {
     expect(normalizeDensity("compact")).toBe(0);
     expect(normalizeDensity("standard")).toBe(50);
     expect(normalizeDensity("comfortable")).toBe(100);
     expect(normalizeDensity(140)).toBe(100);
     expect(normalizeDensity(-20)).toBe(0);
-
-    const resume = createDefaultResume();
-    resume.theme.density = "comfortable" as never;
-    expect(normalizeResumeDocument(resume)?.theme.density).toBe(100);
-  });
-
-  it("interpolates density layout continuously", () => {
     expect(getDensityLayout(25).sectionSpacePx).toBe(12);
     expect(getDensityLayout(75).entrySpacePx).toBe(11.5);
   });
