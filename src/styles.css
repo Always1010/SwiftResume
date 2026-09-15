@@ -85,9 +85,14 @@ button { cursor: pointer; }
 .module-copy { min-width: 0; }
 .drag-handle { color: #a9b4ad; cursor: grab; letter-spacing: -3px; }
 .drag-handle.muted { cursor: default; font-size: 9px; letter-spacing: 0; }
-.module-actions { display: flex; }
+.module-actions { display: flex; align-items: center; }
+.module-actions .icon-button { width: 24px; height: 24px; font-size: 11px; }
+.module-actions .icon-button:disabled { cursor: not-allowed; opacity: .22; }
+.module-move-button { opacity: 0; }
+.module-row:hover .module-move-button, .module-row.selected .module-move-button, .module-move-button:focus-visible { opacity: 1; }
 .module-type { color: #829087; font-size: 10px; }
 .add-module { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.add-module-label { color: #617068; font-size: 10px; font-weight: 750; }
 .add-module select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: #35423a; background: white; }
 
 .editor { padding: 22px 22px 60px; }
