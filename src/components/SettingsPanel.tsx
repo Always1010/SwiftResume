@@ -19,6 +19,7 @@ interface SettingsPanelProps {
   onAuthorizeBackupDirectory: () => void;
   onBackupNow: () => void;
   onRestoreBackup: () => void;
+  onOpenHistory: () => void;
 }
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
@@ -57,6 +58,7 @@ export function SettingsPanel({
   onAuthorizeBackupDirectory,
   onBackupNow,
   onRestoreBackup,
+  onOpenHistory,
 }: SettingsPanelProps) {
   const update = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
     onChange({ ...settings, [key]: value });
@@ -142,6 +144,7 @@ export function SettingsPanel({
             <div className="setting-row">
               <div><strong>备份与恢复</strong><p>最新版本保存在 resumes，独立图片保存在 assets，历史快照保存在 history。</p></div>
               <div className="setting-actions">
+                <button type="button" className="secondary-button" disabled={!backupDirectoryName || backupStatus !== "ready"} onClick={onOpenHistory}>历史版本</button>
                 <button type="button" className="secondary-button" disabled={!backupDirectoryName} onClick={onRestoreBackup}>从目录恢复</button>
                 <button type="button" className="primary-button" disabled={!backupDirectoryName || backupStatus === "permission-required"} onClick={onBackupNow}>立即备份</button>
               </div>
