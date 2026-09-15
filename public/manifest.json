@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "SwiftResume",
+  "short_name": "SwiftResume",
+  "version": "0.1.0",
+  "description": "模块化、离线优先的中文简历编辑器",
+  "action": {
+    "default_title": "打开 SwiftResume"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}
