@@ -31,9 +31,9 @@ describe("Typst source generator", () => {
     const resume = createDefaultResume();
     resume.theme.density = 25;
     const source = createTypstSource(resume);
-    expect(source).toContain("size: 8.55pt");
-    expect(source).toContain("leading: 0.37em");
-    expect(source).toContain("spacing: 5pt");
+    expect(source).toContain("size: 8.25pt");
+    expect(source).toContain("leading: 0.32em");
+    expect(source).toContain("spacing: 4.25pt");
   });
 
   it("quotes user content instead of injecting markup", () => {

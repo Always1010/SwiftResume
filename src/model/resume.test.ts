@@ -114,7 +114,9 @@ describe("resume model", () => {
     expect(normalizeDensity("comfortable")).toBe(100);
     expect(normalizeDensity(140)).toBe(100);
     expect(normalizeDensity(-20)).toBe(0);
-    expect(getDensityLayout(25).sectionSpacePx).toBe(12);
-    expect(getDensityLayout(75).entrySpacePx).toBe(11.5);
+    expect(getDensityLayout(25).sectionSpacePx).toBe(10);
+    expect(getDensityLayout(75).entrySpacePx).toBe(14.5);
+    expect(getDensityLayout(0).bodyLine).toBe(1.22);
+    expect(getDensityLayout(100).bodyLine).toBe(1.68);
   });
 });
