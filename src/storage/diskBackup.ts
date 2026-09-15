@@ -37,6 +37,13 @@ export interface ProfilePhotoAsset {
   mimeType: string;
 }
 
+export interface HistorySnapshot {
+  fileName: string;
+  savedAt: number;
+  size: number;
+  resume: ResumeDocument;
+}
+
 export type DiskBackupStatus =
   | "unsupported"
   | "not-configured"
@@ -182,6 +189,48 @@ async function pruneHistorySnapshots(directory: FileSystemDirectoryHandle, resum
   for (const name of historySnapshotsToDelete(fileNames)) {
     await resumeHistory.removeEntry(name);
   }
+}
+
+async function getResumeHistoryDirectory(
+  directory: FileSystemDirectoryHandle,
+  resumeId: string,
+): Promise<FileSystemDirectoryHandle | null> {
+  const historyDirectory = await directory.getDirectoryHandle("history").catch(() => null);
+  if (!historyDirectory) return null;
+  return historyDirectory.getDirectoryHandle(resumeId).catch(() => null);
+}
+
+export async function listHistorySnapshots(
+  directory: FileSystemDirectoryHandle,
+  resumeId: string,
+): Promise<HistorySnapshot[]> {
+  if (await queryBackupPermission(directory) !== "granted") {
+    throw new DOMException("本地备份目录需要重新授权", "NotAllowedError");
+  }
+  const resumeHistory = await getResumeHistoryDirectory(directory, resumeId);
+  if (!resumeHistory) return [];
+  const snapshots: HistorySnapshot[] = [];
+  for await (const [fileName, handle] of resumeHistory.entries()) {
+    if (handle.kind !== "file" || !fileName.endsWith(".swiftresume.json")) continue;
+    try {
+      const file = await handle.getFile();
+      const resume = normalizeResumeDocument(JSON.parse(await file.text()) as unknown);
+      if (resume) snapshots.push({ fileName, savedAt: file.lastModified, size: file.size, resume });
+    } catch {
+      // Ignore an individual malformed or temporarily unavailable snapshot.
+    }
+  }
+  return snapshots.sort((left, right) => right.savedAt - left.savedAt);
+}
+
+export async function deleteHistorySnapshot(
+  directory: FileSystemDirectoryHandle,
+  resumeId: string,
+  fileName: string,
+): Promise<void> {
+  const resumeHistory = await getResumeHistoryDirectory(directory, resumeId);
+  if (!resumeHistory) throw new Error("历史版本目录不存在");
+  await resumeHistory.removeEntry(fileName);
 }
 
 function loadSnapshotState(resumeId: string): SnapshotState | null {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { EditorPanel } from "./components/EditorPanel";
+import { HistoryPanel } from "./components/HistoryPanel";
 import { ResumePreview } from "./components/ResumePreview";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
@@ -42,6 +43,7 @@ export function App() {
   const [exporting, setExporting] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [backupDirectory, setBackupDirectory] = useState<FileSystemDirectoryHandle | null>(null);
   const [backupStatus, setBackupStatus] = useState<DiskBackupStatus>(() => isDiskBackupSupported() ? "not-configured" : "unsupported");
@@ -266,6 +268,45 @@ export function App() {
       window.alert(error instanceof Error ? error.message : "恢复磁盘备份失败");
     }
   };
+  const createHistorySnapshot = async (resumeId: string) => {
+    const currentLibrary = libraryRef.current;
+    if (!backupDirectory || !currentLibrary) throw new Error("尚未设置可用的备份目录");
+    const document = resumeId === activeResumeId ? resume : await loadResumeById(resumeId);
+    if (!document) throw new Error("找不到要创建历史版本的简历");
+    const nextLibrary = resumeId === activeResumeId
+      ? updateResumeSummary(currentLibrary, resumeId, document)
+      : currentLibrary;
+    setBackupStatus("saving");
+    await backupResumeToDirectory(backupDirectory, resumeId, document, nextLibrary, true);
+    setBackupStatus("ready");
+  };
+  const restoreHistoryAsNew = async (document: ResumeDocument) => {
+    const restored = structuredClone(document);
+    restored.title = `${restored.title || "未命名简历"}（历史恢复）`;
+    restored.updatedAt = new Date().toISOString();
+    await addResume(restored);
+    setHistoryOpen(false);
+  };
+  const replaceResumeFromHistory = async (resumeId: string, document: ResumeDocument) => {
+    const currentLibrary = libraryRef.current;
+    if (!currentLibrary) throw new Error("简历库尚未就绪");
+    const currentDocument = resumeId === activeResumeId ? resume : await loadResumeById(resumeId);
+    if (!currentDocument) throw new Error("找不到要覆盖的简历");
+    if (backupDirectory) {
+      await backupResumeToDirectory(backupDirectory, resumeId, currentDocument, currentLibrary, true);
+    }
+    const restored = structuredClone(document);
+    restored.updatedAt = new Date().toISOString();
+    const nextLibrary = updateResumeSummary(currentLibrary, resumeId, restored);
+    await saveResumeWorkspace(resumeId, restored, nextLibrary);
+    libraryRef.current = nextLibrary;
+    setLibrary(nextLibrary);
+    if (resumeId === activeResumeId) dispatch({ type: "replace", value: restored });
+    if (backupDirectory) await backupResumeToDirectory(backupDirectory, resumeId, restored, nextLibrary);
+    setBackupStatus(backupDirectory ? "ready" : backupStatus);
+    setSaveState("saved");
+    setHistoryOpen(false);
+  };
   const handleOverflow = useCallback((value: boolean) => setOverflow(value), []);
   const applyRemoteResume = useCallback((value: ResumeDocument) => {
     const normalized = normalizeResumeDocument(value);
@@ -367,6 +408,16 @@ export function App() {
         onAuthorizeBackupDirectory={() => void authorizeBackupDirectory()}
         onBackupNow={() => void backupNow()}
         onRestoreBackup={() => void restoreBackup()}
+        onOpenHistory={() => { setSettingsOpen(false); setHistoryOpen(true); }}
+      />}
+      {historyOpen && backupDirectory && library && <HistoryPanel
+        directory={backupDirectory}
+        resumes={library.resumes}
+        initialResumeId={activeResumeId}
+        onClose={() => setHistoryOpen(false)}
+        onCreateSnapshot={createHistorySnapshot}
+        onRestoreAsNew={restoreHistoryAsNew}
+        onReplaceResume={replaceResumeFromHistory}
       />}
     </div>
   );
