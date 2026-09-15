@@ -170,16 +170,8 @@ function sectionSource(section: ResumeSection) {
     case "education":
       body = section.items.map((item) => `${topLine(item.school, item.date)}#grid(columns: (1fr, auto), text(${asString([item.major, item.degree].filter(Boolean).join(" | "))}), text(${asString(item.detail)}))\n`).join("#v(4pt)\n");
       break;
-    case "skills":
-      body = bullets(section.items.map((item) => item.text));
-      break;
-    case "projects":
-    case "experience":
-    case "custom":
+    case "content":
       body = section.entries.map(contentEntrySource).join("#v(6pt)\n");
-      break;
-    case "awards":
-      body = section.items.map((item) => topLine(`${item.name}${item.detail ? ` · ${item.detail}` : ""}`, item.date)).join("#v(2pt)\n");
       break;
   }
   return `${heading(section.title)}${body}`;

@@ -44,7 +44,7 @@ describe("Typst source generator", () => {
     const resume = createDefaultResume();
     resume.sections.push({
       id: "custom",
-      type: "custom",
+      type: "content",
       title: "个人优势",
       enabled: true,
       entries: [
@@ -81,8 +81,8 @@ describe("Typst source generator", () => {
 
   it("exports advanced rich text formatting and tables", () => {
     const resume = createDefaultResume();
-    const project = resume.sections.find((section) => section.type === "projects");
-    if (!project || project.type !== "projects") throw new Error("缺少项目模块");
+    const project = resume.sections.find((section) => section.title === "项目经历");
+    if (!project || project.type !== "content") throw new Error("缺少项目模块");
     project.entries[0].body = {
       type: "doc",
       content: [

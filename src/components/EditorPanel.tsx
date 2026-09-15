@@ -1,14 +1,5 @@
 import type { ChangeEvent, ReactNode } from "react";
-import type {
-  AwardsSection,
-  ContentEntry,
-  ContentSection,
-  EducationSection,
-  ResumeDocument,
-  ResumeProfile,
-  ResumeSection,
-  SkillsSection,
-} from "../model/resume";
+import type { ContentEntry, ContentSection, EducationSection, ResumeDocument, ResumeProfile, ResumeSection } from "../model/resume";
 import { createContentEntry } from "../model/resume";
 import { ContentBodyEditor } from "./customEditors/ContentBodyEditor";
 
@@ -123,42 +114,7 @@ function EducationEditor({ section, onChange }: { section: EducationSection; onC
   );
 }
 
-function SkillsEditor({ section, onChange }: { section: SkillsSection; onChange: (value: SkillsSection) => void }) {
-  return (
-    <>
-      {section.items.map((item, index) => (
-        <EditorCard key={item.id} onDelete={() => onChange({ ...section, items: section.items.filter((entry) => entry.id !== item.id) })}>
-          <Field label={`技能 ${index + 1}`} value={item.text} multiline onChange={(value) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, text: value } : entry) })} />
-        </EditorCard>
-      ))}
-      <button type="button" className="add-item-button" onClick={() => onChange({ ...section, items: [...section.items, { id: makeId(), text: "" }] })}>＋ 添加技能</button>
-    </>
-  );
-}
-
-function AwardsEditor({ section, onChange }: { section: AwardsSection; onChange: (value: AwardsSection) => void }) {
-  return (
-    <>
-      {section.items.map((item) => {
-        const updateItem = (patch: Partial<typeof item>) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, ...patch } : entry) });
-        return (
-          <EditorCard key={item.id} onDelete={() => onChange({ ...section, items: section.items.filter((entry) => entry.id !== item.id) })}>
-            <div className="field-grid">
-              <Field label="荣誉名称" value={item.name} onChange={(value) => updateItem({ name: value })} />
-              <Field label="时间" value={item.date} onChange={(value) => updateItem({ date: value })} />
-              <Field label="补充说明" value={item.detail} multiline onChange={(value) => updateItem({ detail: value })} />
-            </div>
-          </EditorCard>
-        );
-      })}
-      <button type="button" className="add-item-button" onClick={() => onChange({ ...section, items: [...section.items, { id: makeId(), name: "", date: "", detail: "" }] })}>＋ 添加荣誉</button>
-    </>
-  );
-}
-
-function entryLabels(type: ContentSection["type"]) {
-  if (type === "projects") return { title: "项目名称（选填）", subtitle: "职责（选填）", titlePlaceholder: "例如：轻量级 HTTP 服务器", subtitlePlaceholder: "例如：核心开发", add: "添加项目" };
-  if (type === "experience") return { title: "公司 / 组织（选填）", subtitle: "职位（选填）", titlePlaceholder: "例如：某某科技", subtitlePlaceholder: "例如：后端开发", add: "添加工作经历" };
+function entryLabels(_type: ContentSection["type"]) {
   return { title: "标题 / 名称（选填）", subtitle: "补充信息（选填）", titlePlaceholder: "留空则只显示正文", subtitlePlaceholder: "角色、职位或其他说明", add: "添加内容条目" };
 }
 
@@ -227,9 +183,7 @@ export function EditorPanel({ resume, selectedId, onProfileChange, onSectionChan
         <button type="button" className="secondary-button danger-text" onClick={() => onDeleteSection(section.id)}>删除模块</button>
       </div>
       {section.type === "education" && <EducationEditor section={section} onChange={onSectionChange} />}
-      {section.type === "skills" && <SkillsEditor section={section} onChange={onSectionChange} />}
-      {(section.type === "projects" || section.type === "experience" || section.type === "custom") && <ContentSectionEditor section={section} onChange={onSectionChange} />}
-      {section.type === "awards" && <AwardsEditor section={section} onChange={onSectionChange} />}
+      {section.type === "content" && <ContentSectionEditor section={section} onChange={onSectionChange} />}
     </section>
   );
 }

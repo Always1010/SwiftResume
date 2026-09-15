@@ -19,9 +19,9 @@ describe("resume model", () => {
     const resume = createDefaultResume();
     expect(isResumeDocument(resume)).toBe(true);
     expect(resume.schemaVersion).toBe(2);
-    const projects = resume.sections.find((section) => section.type === "projects");
-    expect(projects?.type).toBe("projects");
-    if (projects?.type === "projects") {
+    const projects = resume.sections.find((section) => section.title === "项目经历");
+    expect(projects?.type).toBe("content");
+    if (projects?.type === "content") {
       expect(projects.entries[0].title).toBe("轻量级 HTTP 服务器");
       expect(JSON.stringify(projects.entries[0].body)).toContain("开发工具");
       expect(JSON.stringify(projects.entries[0].body)).toContain("bulletList");
@@ -52,9 +52,9 @@ describe("resume model", () => {
   });
 
   it("creates one neutral content entry for every custom module", () => {
-    const section = createSection("custom");
-    expect(section.type).toBe("custom");
-    if (section.type === "custom") {
+    const section = createSection("content");
+    expect(section.type).toBe("content");
+    if (section.type === "content") {
       expect(section.title).toBe("自定义模块");
       expect(section.entries).toHaveLength(1);
       expect(section.entries[0]).toMatchObject({ title: "", subtitle: "", date: "" });
@@ -63,13 +63,24 @@ describe("resume model", () => {
   });
 
   it("duplicates content modules without sharing entry identities", () => {
-    const section = createSection("projects");
+    const section = createSection("content");
     const copy = duplicateSection(section);
     expect(copy.id).not.toBe(section.id);
-    expect(copy.type).toBe("projects");
-    if (copy.type === "projects" && section.type === "projects") {
+    expect(copy.type).toBe("content");
+    if (copy.type === "content" && section.type === "content") {
       expect(copy.entries[0].id).not.toBe(section.entries[0].id);
     }
+  });
+
+  it("uses only education and generic content sections in starter documents", () => {
+    const starter = createStarterResume();
+    expect(new Set(starter.sections.map((section) => section.type))).toEqual(new Set(["education", "content"]));
+    const skills = starter.sections.find((section) => section.title === "专业技能");
+    expect(skills?.type).toBe("content");
+    if (skills?.type === "content") {
+      expect(skills.entries[0]).toMatchObject({ title: "", subtitle: "", date: "" });
+    }
+    expect(starter.sections.some((section) => section.title === "个人荣誉")).toBe(false);
   });
 
   it("moves and drags sections without mutating the input", () => {

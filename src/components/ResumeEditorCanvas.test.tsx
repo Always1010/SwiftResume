@@ -57,7 +57,7 @@ describe("ResumeEditorCanvas", () => {
   it("does not render hidden modules on the resume canvas", () => {
     const resume = createBlankResume();
     const visibleSection = createSection("education");
-    const hiddenSection = { ...createSection("skills"), enabled: false };
+    const hiddenSection = { ...createSection("content"), enabled: false };
     resume.sections = [visibleSection, hiddenSection];
     const container = document.createElement("div");
     document.body.append(container);
