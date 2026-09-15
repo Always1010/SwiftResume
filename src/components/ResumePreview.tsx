@@ -1,13 +1,13 @@
-import { useLayoutEffect, useRef, type CSSProperties } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type {
   CustomContentNode,
-  CustomSection,
-  ExperienceSection,
-  ProjectsSection,
+  ExperienceItem,
+  ProjectItem,
   ResumeDocument,
   ResumeSection,
 } from "../model/resume";
 import { sanitizeRichText } from "../model/richText";
+import { paginatePreviewItems } from "../preview/pagination";
 import type { PreviewZoom } from "../settings/appSettings";
 
 function SectionHeading({ children }: { children: string }) {
@@ -20,9 +20,9 @@ function BulletList({ bullets }: { bullets: string[] }) {
   return <ul>{visible.map((bullet, index) => <li key={index}>{bullet}</li>)}</ul>;
 }
 
-function Projects({ section }: { section: ProjectsSection }) {
-  return <>{section.items.map((item) => (
-    <article className="resume-entry" key={item.id}>
+function ProjectEntry({ item }: { item: ProjectItem }) {
+  return (
+    <article className="resume-entry">
       <div className="entry-topline">
         <div><strong>{item.name || "未命名项目"}</strong>{item.role && <span className="entry-role">{item.role}</span>}</div>
         <time>{item.date}</time>
@@ -32,12 +32,12 @@ function Projects({ section }: { section: ProjectsSection }) {
       {item.bullets.some(Boolean) && <p className="responsibility-label"><b>主要内容：</b></p>}
       <BulletList bullets={item.bullets} />
     </article>
-  ))}</>;
+  );
 }
 
-function Experience({ section }: { section: ExperienceSection }) {
-  return <>{section.items.map((item) => (
-    <article className="resume-entry" key={item.id}>
+function ExperienceEntry({ item }: { item: ExperienceItem }) {
+  return (
+    <article className="resume-entry">
       <div className="entry-topline">
         <div><strong>{item.company || "未命名公司"}</strong>{item.role && <span className="entry-role">{item.role}</span>}</div>
         <time>{item.date}</time>
@@ -45,7 +45,7 @@ function Experience({ section }: { section: ExperienceSection }) {
       {item.summary && <p>{item.summary}</p>}
       <BulletList bullets={item.bullets} />
     </article>
-  ))}</>;
+  );
 }
 
 function CustomNodeView({ node }: { node: CustomContentNode }) {
@@ -69,85 +69,184 @@ function CustomNodeView({ node }: { node: CustomContentNode }) {
   );
 }
 
-function Custom({ section }: { section: CustomSection }) {
-  if (section.editorMode === "richtext") {
-    return <div className="resume-rich-text" dangerouslySetInnerHTML={{ __html: sanitizeRichText(section.richText) }} />;
-  }
-  return <article className="resume-entry custom-content">{section.nodes.map((node) => <CustomNodeView node={node} key={node.id} />)}</article>;
+interface PreviewFlowItem {
+  id: string;
+  content: ReactNode;
+  keepWithNext?: boolean;
+  className?: string;
 }
 
-function ResumeSectionView({ section }: { section: ResumeSection }) {
-  if (!section.enabled) return null;
-  return (
-    <section className="resume-section">
-      <SectionHeading>{section.title}</SectionHeading>
-      {section.type === "education" && section.items.map((item) => (
-        <article className="resume-entry education-entry" key={item.id}>
+function sectionItems(section: ResumeSection): PreviewFlowItem[] {
+  if (section.type === "education") {
+    return section.items.map((item) => ({
+      id: item.id,
+      content: (
+        <article className="resume-entry education-entry">
           <div className="entry-topline"><strong>{item.school || "未填写学校"}</strong><time>{item.date}</time></div>
           <div className="education-detail"><span>{[item.major, item.degree].filter(Boolean).join(" | ")}</span><span>{item.detail}</span></div>
         </article>
-      ))}
-      {section.type === "skills" && <BulletList bullets={section.items.map((item) => item.text)} />}
-      {section.type === "projects" && <Projects section={section} />}
-      {section.type === "experience" && <Experience section={section} />}
-      {section.type === "awards" && (
-        <ul className="award-list">{section.items.map((item) => (
-          <li key={item.id}><span><strong>{item.name}</strong>{item.detail && ` · ${item.detail}`}</span><time>{item.date}</time></li>
-        ))}</ul>
-      )}
-      {section.type === "custom" && <Custom section={section} />}
-    </section>
-  );
+      ),
+    }));
+  }
+  if (section.type === "skills") {
+    return section.items.filter((item) => item.text.trim()).map((item) => ({
+      id: item.id,
+      content: <ul className="resume-flow-bullet"><li>{item.text}</li></ul>,
+    }));
+  }
+  if (section.type === "projects") {
+    return section.items.map((item) => ({ id: item.id, content: <ProjectEntry item={item} /> }));
+  }
+  if (section.type === "experience") {
+    return section.items.map((item) => ({ id: item.id, content: <ExperienceEntry item={item} /> }));
+  }
+  if (section.type === "awards") {
+    return section.items.map((item) => ({
+      id: item.id,
+      content: <ul className="award-list"><li><span><strong>{item.name}</strong>{item.detail && ` · ${item.detail}`}</span><time>{item.date}</time></li></ul>,
+    }));
+  }
+  if (section.editorMode === "richtext") {
+    return [{
+      id: `${section.id}-richtext`,
+      content: <div className="resume-rich-text" dangerouslySetInnerHTML={{ __html: sanitizeRichText(section.richText) }} />,
+    }];
+  }
+  return section.nodes.filter((node) => node.enabled).map((node) => ({
+    id: node.id,
+    content: <article className="resume-entry custom-content"><CustomNodeView node={node} /></article>,
+  }));
+}
+
+function buildFlowItems(resume: ResumeDocument): PreviewFlowItem[] {
+  const items: PreviewFlowItem[] = [{
+    id: "resume-header",
+    className: "resume-flow-header",
+    content: (
+      <header className="resume-header">
+        <div className="identity">
+          <h1>{resume.profile.name || "姓名"}</h1>
+          {resume.profile.headline && <p className="headline">{resume.profile.headline}</p>}
+          <div className="contact-row">
+            {resume.profile.ageGender && <span>{resume.profile.ageGender}</span>}
+            {resume.profile.location && <span>{resume.profile.location}</span>}
+          </div>
+          <div className="contact-row">
+            {resume.profile.phone && <span>手机 {resume.profile.phone}</span>}
+            {resume.profile.email && <span>邮箱 {resume.profile.email}</span>}
+          </div>
+        </div>
+        <div className="resume-photo">{resume.profile.photo ? <img src={resume.profile.photo} alt="个人照片" /> : <span>PHOTO</span>}</div>
+      </header>
+    ),
+  }];
+
+  const details = resume.profile.details.filter((item) => item.label || item.value);
+  if (details.length) {
+    items.push({
+      id: "profile-details",
+      className: "resume-flow-section",
+      content: (
+        <section>
+          <SectionHeading>基本信息</SectionHeading>
+          <div className="detail-grid">{details.map((detail) => (
+            <div key={detail.id}><span>{detail.label}：</span><strong>{detail.value}</strong></div>
+          ))}</div>
+        </section>
+      ),
+    });
+  }
+
+  resume.sections.filter((section) => section.enabled).forEach((section) => {
+    const contentItems = sectionItems(section);
+    items.push({
+      id: `${section.id}-heading`,
+      className: "resume-flow-section",
+      keepWithNext: contentItems.length > 0,
+      content: <SectionHeading>{section.title}</SectionHeading>,
+    });
+    contentItems.forEach((item, index) => items.push({
+      ...item,
+      id: `${section.id}-${item.id}`,
+      className: index === 0 ? "resume-flow-entry first" : "resume-flow-entry",
+    }));
+  });
+
+  return items;
 }
 
 interface ResumePreviewProps {
   resume: ResumeDocument;
   zoom: PreviewZoom;
-  onOverflowChange: (overflow: boolean) => void;
+  onPageCountChange?: (pageCount: number) => void;
 }
 
-export function ResumePreview({ resume, zoom, onOverflowChange }: ResumePreviewProps) {
-  const pageRef = useRef<HTMLDivElement>(null);
+export function ResumePreview({ resume, zoom, onPageCountChange }: ResumePreviewProps) {
+  const measureRef = useRef<HTMLDivElement>(null);
+  const flowItems = useMemo(() => buildFlowItems(resume), [resume]);
+  const [pages, setPages] = useState<number[][]>(() => [flowItems.map((_, index) => index)]);
 
   useLayoutEffect(() => {
-    const page = pageRef.current;
+    const page = measureRef.current;
     if (!page) return;
-    const measure = () => onOverflowChange(page.scrollHeight > page.clientHeight + 2);
+
+    let frame = 0;
+    const measure = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        const styles = window.getComputedStyle(page);
+        const pageHeight = page.clientHeight
+          - Number.parseFloat(styles.paddingTop)
+          - Number.parseFloat(styles.paddingBottom);
+        const elements = Array.from(page.querySelectorAll<HTMLElement>("[data-preview-flow-item]"));
+        const measured = elements.map((element, index) => {
+          const itemStyles = window.getComputedStyle(element);
+          return {
+            height: element.getBoundingClientRect().height
+              + Number.parseFloat(itemStyles.marginTop)
+              + Number.parseFloat(itemStyles.marginBottom),
+            keepWithNext: flowItems[index]?.keepWithNext,
+          };
+        });
+        const nextPages = paginatePreviewItems(measured, pageHeight);
+        setPages((current) => JSON.stringify(current) === JSON.stringify(nextPages) ? current : nextPages);
+      });
+    };
+
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(page);
-    return () => observer.disconnect();
-  }, [resume, onOverflowChange]);
+    page.querySelectorAll("img").forEach((image) => image.addEventListener("load", measure));
+    void document.fonts?.ready.then(measure);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+      page.querySelectorAll("img").forEach((image) => image.removeEventListener("load", measure));
+    };
+  }, [flowItems]);
+
+  useLayoutEffect(() => onPageCountChange?.(pages.length), [onPageCountChange, pages.length]);
+
+  const pageStyle = { "--resume-accent": resume.theme.accent } as CSSProperties;
+  const renderItem = (index: number) => {
+    const item = flowItems[index];
+    return <div key={item.id} data-preview-flow-item className={item.className}>{item.content}</div>;
+  };
 
   return (
     <div className="preview-scroller">
       <div className="preview-zoom-stage" style={{ "--preview-zoom": zoom / 100 } as CSSProperties}>
-        <div ref={pageRef} className={`resume-page density-${resume.theme.density}`} style={{ "--resume-accent": resume.theme.accent } as CSSProperties}>
-          <header className="resume-header">
-            <div className="identity">
-              <h1>{resume.profile.name || "姓名"}</h1>
-              {resume.profile.headline && <p className="headline">{resume.profile.headline}</p>}
-              <div className="contact-row">
-                {resume.profile.ageGender && <span>{resume.profile.ageGender}</span>}
-                {resume.profile.location && <span>{resume.profile.location}</span>}
-              </div>
-              <div className="contact-row">
-                {resume.profile.phone && <span>手机 {resume.profile.phone}</span>}
-                {resume.profile.email && <span>邮箱 {resume.profile.email}</span>}
-              </div>
+        <div className="resume-pages">
+          {pages.map((pageItems, pageIndex) => (
+            <div className="resume-page-wrap" key={`${pageIndex}-${pageItems.join("-")}`}>
+              <div className={`resume-page density-${resume.theme.density}`} style={pageStyle}>{pageItems.map(renderItem)}</div>
+              <span className="resume-page-number">第 {pageIndex + 1} 页</span>
             </div>
-            <div className="resume-photo">{resume.profile.photo ? <img src={resume.profile.photo} alt="个人照片" /> : <span>PHOTO</span>}</div>
-          </header>
-          {resume.profile.details.some((item) => item.label || item.value) && (
-            <section className="resume-section profile-details">
-              <SectionHeading>基本信息</SectionHeading>
-              <div className="detail-grid">{resume.profile.details.map((detail) => (
-                <div key={detail.id}><span>{detail.label}：</span><strong>{detail.value}</strong></div>
-              ))}</div>
-            </section>
-          )}
-          {resume.sections.map((section) => <ResumeSectionView section={section} key={section.id} />)}
+          ))}
         </div>
+      </div>
+      <div ref={measureRef} aria-hidden="true" className={`resume-page resume-measure-page density-${resume.theme.density}`} style={pageStyle}>
+        {flowItems.map((_, index) => renderItem(index))}
       </div>
     </div>
   );
