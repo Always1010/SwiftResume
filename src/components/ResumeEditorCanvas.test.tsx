@@ -25,19 +25,31 @@ describe("ResumeEditorCanvas", () => {
     const root = createRoot(container);
     roots.push(root);
 
-    const render = (selectedId: string) => act(() => root.render(
+    let selectedId = "profile";
+    let editingId: string | null = null;
+    const render = () => root.render(
       <ResumeEditorCanvas
         resume={resume}
         selectedId={selectedId}
-        onSelect={() => undefined}
+        editingId={editingId}
+        onEdit={(id) => {
+          if (editingId) onCommit();
+          selectedId = id;
+          editingId = id;
+          render();
+        }}
+        onCloseEditor={() => {
+          if (editingId) onCommit();
+          editingId = null;
+          render();
+        }}
         onProfileChange={() => undefined}
         onSectionChange={() => undefined}
         onDeleteSection={() => undefined}
-        onCommit={onCommit}
-      />,
-    ));
+      />
+    );
 
-    render("profile");
+    act(render);
     act(() => document.querySelector<HTMLElement>("#resume-block-profile")?.click());
     expect(document.querySelectorAll(".resume-editable-block.editing")).toHaveLength(1);
 
@@ -45,13 +57,19 @@ describe("ResumeEditorCanvas", () => {
     expect(document.querySelectorAll(".resume-editable-block.editing")).toHaveLength(1);
     expect(onCommit).not.toHaveBeenCalled();
 
-    render(section.id);
+    act(() => {
+      if (editingId) onCommit();
+      selectedId = section.id;
+      editingId = section.id;
+      render();
+    });
     expect(document.querySelectorAll(".resume-editable-block.editing")).toHaveLength(1);
-    expect(onCommit).not.toHaveBeenCalled();
+    expect(document.querySelector<HTMLElement>(`.resume-editable-block[data-resume-block="${section.id}"]`)?.classList.contains("editing")).toBe(true);
+    expect(onCommit).toHaveBeenCalledTimes(1);
 
     act(() => document.querySelector<HTMLElement>(".resume-editor-scroller")?.click());
     expect(document.querySelectorAll(".resume-editable-block.editing")).toHaveLength(0);
-    expect(onCommit).toHaveBeenCalledTimes(1);
+    expect(onCommit).toHaveBeenCalledTimes(2);
   });
 
   it("does not render hidden modules on the resume canvas", () => {
@@ -68,11 +86,12 @@ describe("ResumeEditorCanvas", () => {
       <ResumeEditorCanvas
         resume={resume}
         selectedId="profile"
-        onSelect={() => undefined}
+        editingId={null}
+        onEdit={() => undefined}
+        onCloseEditor={() => undefined}
         onProfileChange={() => undefined}
         onSectionChange={() => undefined}
         onDeleteSection={() => undefined}
-        onCommit={() => undefined}
       />,
     ));
 
