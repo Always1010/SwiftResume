@@ -39,14 +39,18 @@ interface SidebarProps {
 }
 
 export function Sidebar({ resume, selectedId, onSelect, onSectionsChange }: SidebarProps) {
-  const [newType, setNewType] = useState<SectionType>("projects");
+  const [newTitle, setNewTitle] = useState("");
   const [newCustomMode, setNewCustomMode] = useState<CustomEditorMode>("document");
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   const addSection = () => {
-    const section = createSection(newType, newCustomMode);
+    const title = newTitle.trim();
+    if (!title) return;
+    const section = createSection("custom", newCustomMode);
+    section.title = title;
     onSectionsChange([...resume.sections, section]);
     onSelect(section.id);
+    setNewTitle("");
   };
 
   return (
@@ -153,18 +157,18 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange }: Side
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="add-module">
-        <span className="add-module-label">添加模块</span>
-        <select value={newType} onChange={(event) => setNewType(event.target.value as SectionType)}>
-          {Object.entries(sectionLabels).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-        {newType === "custom" && (
+        <div className="add-module">
+          <label className="add-module-label" htmlFor="new-module-title">添加模块</label>
+          <input
+            id="new-module-title"
+            value={newTitle}
+            placeholder="输入模块名称，如：开源经历"
+            aria-label="新模块名称"
+            onChange={(event) => setNewTitle(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") addSection();
+            }}
+          />
           <div className="custom-mode-options" aria-label="选择自定义模块编辑方式">
             {(Object.keys(customModeLabels) as CustomEditorMode[]).map((mode) => (
               <button
@@ -179,10 +183,10 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange }: Side
               </button>
             ))}
           </div>
-        )}
-        <button type="button" className="primary-button" onClick={addSection}>
-          ＋ 添加{newType === "custom" ? customModeLabels[newCustomMode] : sectionLabels[newType]}
-        </button>
+          <button type="button" className="primary-button" disabled={!newTitle.trim()} onClick={addSection}>
+            ＋ 添加模块
+          </button>
+        </div>
       </div>
     </aside>
   );
