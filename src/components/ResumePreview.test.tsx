@@ -6,8 +6,8 @@ import { ResumeSectionView } from "./ResumePreview";
 
 describe("ResumeSectionView", () => {
   it("renders a custom module as body-only when all heading fields are blank", () => {
-    const section = createSection("custom");
-    if (section.type !== "custom") throw new Error("expected custom section");
+    const section = createSection("content");
+    if (section.type !== "content") throw new Error("expected content section");
     section.title = "个人优势";
     section.entries[0].body = {
       type: "doc",
@@ -21,8 +21,8 @@ describe("ResumeSectionView", () => {
   });
 
   it("renders title, optional subtitle and date in one heading row", () => {
-    const section = createSection("custom");
-    if (section.type !== "custom") throw new Error("expected custom section");
+    const section = createSection("content");
+    if (section.type !== "content") throw new Error("expected content section");
     Object.assign(section.entries[0], { title: "开源项目", subtitle: "维护者", date: "2026" });
 
     const html = renderToStaticMarkup(<ResumeSectionView section={section} />);

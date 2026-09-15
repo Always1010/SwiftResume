@@ -42,7 +42,7 @@ export function getDensityLayout(value: unknown): DensityLayout {
   };
 }
 
-export type SectionType = "education" | "skills" | "projects" | "experience" | "awards" | "custom";
+export type SectionType = "education" | "content";
 
 export interface ResumeProfile {
   name: string;
@@ -76,11 +76,6 @@ export interface EducationSection extends SectionBase {
   items: EducationItem[];
 }
 
-export interface SkillsSection extends SectionBase {
-  type: "skills";
-  items: Array<{ id: string; text: string }>;
-}
-
 export interface RichTextMark {
   type: string;
   attrs?: Record<string, unknown>;
@@ -106,29 +101,12 @@ export interface ContentEntry {
   body: RichTextDocument;
 }
 
-export interface ProjectsSection extends SectionBase {
-  type: "projects";
+export interface ContentSection extends SectionBase {
+  type: "content";
   entries: ContentEntry[];
 }
 
-export interface ExperienceSection extends SectionBase {
-  type: "experience";
-  entries: ContentEntry[];
-}
-
-export interface AwardsSection extends SectionBase {
-  type: "awards";
-  items: Array<{ id: string; name: string; date: string; detail: string }>;
-}
-
-export interface CustomSection extends SectionBase {
-  type: "custom";
-  entries: ContentEntry[];
-}
-
-export type ContentSection = ProjectsSection | ExperienceSection | CustomSection;
-
-export type ResumeSection = EducationSection | SkillsSection | ProjectsSection | ExperienceSection | AwardsSection | CustomSection;
+export type ResumeSection = EducationSection | ContentSection;
 
 export interface ResumeDocument {
   schemaVersion: 2;
@@ -179,6 +157,20 @@ function projectBody(): RichTextDocument {
   };
 }
 
+function skillsBody(): RichTextDocument {
+  return {
+    type: "doc",
+    content: [{
+      type: "bulletList",
+      content: [
+        "熟练掌握 C/C++ 基本语法，熟悉 C++17/20 常用特性。",
+        "熟悉 STL 常用容器、模板编程及常见数据结构与算法。",
+        "熟悉 Linux、网络编程及 HTTP、TCP、UDP 等常见协议。",
+      ].map((value) => ({ type: "listItem", content: [paragraph([text(value)])] })),
+    }],
+  };
+}
+
 export function createContentEntry(): ContentEntry {
   return { id: makeId(), title: "", subtitle: "", date: "", body: createEmptyRichText() };
 }
@@ -213,28 +205,17 @@ export function createDefaultResume(): ResumeDocument {
       },
       {
         id: makeId(),
-        type: "skills",
+        type: "content",
         title: "专业技能",
         enabled: true,
-        items: [
-          { id: makeId(), text: "熟练掌握 C/C++ 基本语法，熟悉 C++17/20 常用特性。" },
-          { id: makeId(), text: "熟悉 STL 常用容器、模板编程及常见数据结构与算法。" },
-          { id: makeId(), text: "熟悉 Linux、网络编程及 HTTP、TCP、UDP 等常见协议。" },
-        ],
+        entries: [{ id: makeId(), title: "", subtitle: "", date: "", body: skillsBody() }],
       },
       {
         id: makeId(),
-        type: "projects",
+        type: "content",
         title: "项目经历",
         enabled: true,
         entries: [{ id: makeId(), title: "轻量级 HTTP 服务器", subtitle: "核心开发", date: "2024.07 – 2024.09", body: projectBody() }],
-      },
-      {
-        id: makeId(),
-        type: "awards",
-        title: "个人荣誉",
-        enabled: true,
-        items: [{ id: makeId(), name: "大学生程序设计竞赛", date: "2024", detail: "省级二等奖" }],
       },
     ],
   };
@@ -253,11 +234,11 @@ export function createBlankResume(): ResumeDocument {
 
 export function createStarterResume(): ResumeDocument {
   const resume = createBlankResume();
-  const objective = createSection("custom") as CustomSection;
-  objective.title = "求职意向";
-  const summary = createSection("custom") as CustomSection;
-  summary.title = "自我评价";
-  return { ...resume, sections: [objective, createSection("experience"), createSection("projects"), createSection("education"), createSection("skills"), summary] };
+  const content = (title: string) => ({ ...(createSection("content") as ContentSection), title });
+  return {
+    ...resume,
+    sections: [content("求职意向"), content("工作经历"), content("项目经历"), createSection("education"), content("专业技能"), content("自我评价")],
+  };
 }
 
 export function duplicateResume(resume: ResumeDocument): ResumeDocument {
@@ -272,15 +253,7 @@ export function createSection(type: SectionType): ResumeSection {
   switch (type) {
     case "education":
       return { id, type, title: "教育背景", enabled: true, items: [{ id: makeId(), school: "", date: "", major: "", degree: "", detail: "" }] };
-    case "skills":
-      return { id, type, title: "专业技能", enabled: true, items: [{ id: makeId(), text: "" }] };
-    case "projects":
-      return { id, type, title: "项目经历", enabled: true, entries: [createContentEntry()] };
-    case "experience":
-      return { id, type, title: "工作经历", enabled: true, entries: [createContentEntry()] };
-    case "awards":
-      return { id, type, title: "个人荣誉", enabled: true, items: [{ id: makeId(), name: "", date: "", detail: "" }] };
-    case "custom":
+    case "content":
       return { id, type, title: "自定义模块", enabled: true, entries: [createContentEntry()] };
   }
 }
@@ -293,7 +266,7 @@ export function duplicateSection(section: ResumeSection): ResumeSection {
   const copy = structuredClone(section);
   copy.id = makeId();
   copy.title = `${copy.title}副本`;
-  if (copy.type === "projects" || copy.type === "experience" || copy.type === "custom") {
+  if (copy.type === "content") {
     copy.entries = copy.entries.map(duplicateEntry);
   } else {
     copy.items = copy.items.map((item) => ({ ...item, id: makeId() })) as typeof copy.items;

@@ -10,11 +10,7 @@ import {
 
 const sectionLabels: Record<SectionType, string> = {
   education: "教育经历",
-  skills: "专业技能",
-  projects: "项目经历",
-  experience: "工作经历",
-  awards: "荣誉奖项",
-  custom: "自定义模块",
+  content: "通用内容",
 };
 
 interface SidebarProps {
@@ -32,7 +28,7 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange, onDele
   const addSection = () => {
     const title = newTitle.trim();
     if (!title) return;
-    const section = createSection("custom");
+    const section = createSection("content");
     section.title = title;
     onSectionsChange([...resume.sections, section]);
     onSelect(section.id);
@@ -81,7 +77,7 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange, onDele
             <span className="drag-handle" title="拖动排序">⋮⋮</span>
             <span className="module-copy">
               <strong>{section.title || sectionLabels[section.type]}</strong>
-              <small>{section.type === "custom" ? "标题行 + 富文本" : sectionLabels[section.type]}{!section.enabled && " · 已隐藏"}</small>
+              <small>{section.type === "content" ? "可选标题行 + 正文" : sectionLabels[section.type]}{!section.enabled && " · 已隐藏"}</small>
             </span>
             <div className="module-actions">
               <button

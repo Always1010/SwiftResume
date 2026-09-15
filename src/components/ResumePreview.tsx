@@ -42,20 +42,8 @@ function sectionItems(section: ResumeSection): PreviewFlowItem[] {
       ),
     }));
   }
-  if (section.type === "skills") {
-    return section.items.filter((item) => item.text.trim()).map((item) => ({
-      id: item.id,
-      content: <ul className="resume-flow-bullet"><li>{item.text}</li></ul>,
-    }));
-  }
-  if (section.type === "projects" || section.type === "experience" || section.type === "custom") {
+  if (section.type === "content") {
     return section.entries.map((entry) => ({ id: entry.id, content: <ContentEntryView entry={entry} /> }));
-  }
-  if (section.type === "awards") {
-    return section.items.map((item) => ({
-      id: item.id,
-      content: <ul className="award-list"><li><span><strong>{item.name}</strong>{item.detail && ` · ${item.detail}`}</span><time>{item.date}</time></li></ul>,
-    }));
   }
   return [];
 }
