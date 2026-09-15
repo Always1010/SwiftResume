@@ -204,6 +204,33 @@ export function createDefaultResume(): ResumeDocument {
   };
 }
 
+export function createBlankResume(): ResumeDocument {
+  const resume = createDefaultResume();
+  return {
+    ...resume,
+    title: "未命名简历",
+    profile: {
+      name: "",
+      headline: "",
+      ageGender: "",
+      location: "",
+      phone: "",
+      email: "",
+      photo: "",
+      details: [],
+    },
+    sections: [],
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export function duplicateResume(resume: ResumeDocument): ResumeDocument {
+  const copy = structuredClone(resume);
+  copy.title = `${copy.title || "未命名简历"} 副本`;
+  copy.updatedAt = new Date().toISOString();
+  return copy;
+}
+
 export function createSection(type: SectionType): ResumeSection {
   const id = makeId();
   switch (type) {

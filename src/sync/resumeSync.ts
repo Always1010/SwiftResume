@@ -19,6 +19,7 @@ export function compareSyncVersion(left: SyncVersion, right: SyncVersion): numbe
 }
 
 interface UseResumeSyncOptions {
+  resumeId: string;
   resume: ResumeDocument;
   ready: boolean;
   enabled: boolean;
@@ -27,7 +28,7 @@ interface UseResumeSyncOptions {
   onSync?: () => void;
 }
 
-export function useResumeSync({ resume, ready, enabled, delayMs, onRemoteResume, onSync }: UseResumeSyncOptions) {
+export function useResumeSync({ resumeId, resume, ready, enabled, delayMs, onRemoteResume, onSync }: UseResumeSyncOptions) {
   const clientIdRef = useRef(crypto.randomUUID());
   const channelRef = useRef<BroadcastChannel | null>(null);
   const resumeRef = useRef(resume);
@@ -48,7 +49,7 @@ export function useResumeSync({ resume, ready, enabled, delayMs, onRemoteResume,
   useEffect(() => {
     if (!ready || !enabled || typeof BroadcastChannel === "undefined") return;
 
-    const channel = new BroadcastChannel(CHANNEL_NAME);
+    const channel = new BroadcastChannel(`${CHANNEL_NAME}:${resumeId}`);
     channelRef.current = channel;
     const baselineClock = Date.parse(resumeRef.current.updatedAt) || 0;
     if (baselineClock > versionRef.current.clock) {
@@ -91,7 +92,7 @@ export function useResumeSync({ resume, ready, enabled, delayMs, onRemoteResume,
       channelRef.current = null;
       if (publishTimerRef.current !== null) window.clearTimeout(publishTimerRef.current);
     };
-  }, [enabled, ready]);
+  }, [enabled, ready, resumeId]);
 
   useEffect(() => {
     if (lastObservedResumeRef.current === resume) return;

@@ -35,8 +35,13 @@ button { cursor: pointer; }
 .brand strong, .brand small { display: block; }
 .brand strong { font-size: 16px; }
 .brand small { margin-top: 2px; color: var(--muted); font-size: 11px; }
-.document-title { justify-self: center; width: min(360px, 80%); border: 1px solid transparent; border-radius: 8px; padding: 8px 10px; color: #324038; background: transparent; text-align: center; font-weight: 650; }
+.document-manager { display: grid; grid-template-columns: minmax(120px, .8fr) minmax(150px, 1.25fr) auto; align-items: center; gap: 6px; justify-self: center; width: min(590px, 96%); }
+.document-manager select { min-width: 0; border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; color: #35423a; background: #f8faf8; font-size: 11px; }
+.document-title { width: 100%; min-width: 0; border: 1px solid transparent; border-radius: 8px; padding: 8px 10px; color: #324038; background: transparent; text-align: center; font-weight: 650; }
 .document-title:hover, .document-title:focus { border-color: var(--border); outline: none; background: #f7faf7; }
+.document-actions { display: flex; gap: 5px; white-space: nowrap; }
+.document-actions .text-button { font-size: 10px; }
+.document-actions .text-button:disabled { cursor: not-allowed; opacity: .35; }
 .topbar-actions { display: flex; align-items: center; gap: 8px; }
 .save-status { margin-right: 5px; color: #708078; font-size: 11px; white-space: nowrap; }
 .save-status.saving { color: #9b7019; }
