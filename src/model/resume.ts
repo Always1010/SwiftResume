@@ -11,6 +11,7 @@ export const RESUME_TEMPLATE_IDS = [
 ] as const;
 export type ResumeTemplateId = typeof RESUME_TEMPLATE_IDS[number];
 export const DEFAULT_RESUME_TEMPLATE: ResumeTemplateId = "classic";
+export const DEFAULT_PROFILE_PHOTO = "./sample/fictional-engineer.png";
 
 export function normalizeResumeTemplateId(value: unknown): ResumeTemplateId {
   return typeof value === "string" && (RESUME_TEMPLATE_IDS as readonly string[]).includes(value)
@@ -152,36 +153,36 @@ function paragraph(content: RichTextNode[]): RichTextNode {
   return { type: "paragraph", content };
 }
 
-function projectBody(): RichTextDocument {
+function bulletList(items: string[]): RichTextNode {
+  return {
+    type: "bulletList",
+    content: items.map((value) => ({ type: "listItem", content: [paragraph([text(value)])] })),
+  };
+}
+
+function projectBody(tools: string, description: string, items: string[]): RichTextDocument {
   return {
     type: "doc",
     content: [
-      paragraph([text("开发工具：", true), text("C++ · CMake · GDB · Postman")]),
-      paragraph([text("项目描述：", true), text("基于 Linux 的高并发 HTTP 服务器，支持静态资源访问与连接管理。")]),
+      paragraph([text("开发工具：", true), text(tools)]),
+      paragraph([text("项目描述：", true), text(description)]),
       paragraph([text("主要内容：", true)]),
-      {
-        type: "bulletList",
-        content: [
-          "使用 epoll 与线程池实现 Reactor 高并发模型。",
-          "实现 GET、POST 请求解析、定时器和异步日志模块。",
-          "完成压力测试与性能分析，在实验环境中稳定处理高并发请求。",
-        ].map((value) => ({ type: "listItem", content: [paragraph([text(value)])] })),
-      },
+      bulletList(items),
     ],
   };
 }
 
-function skillsBody(): RichTextDocument {
+function bulletBody(items: string[]): RichTextDocument {
   return {
     type: "doc",
-    content: [{
-      type: "bulletList",
-      content: [
-        "熟练掌握 C/C++ 基本语法，熟悉 C++17/20 常用特性。",
-        "熟悉 STL 常用容器、模板编程及常见数据结构与算法。",
-        "熟悉 Linux、网络编程及 HTTP、TCP、UDP 等常见协议。",
-      ].map((value) => ({ type: "listItem", content: [paragraph([text(value)])] })),
-    }],
+    content: [bulletList(items)],
+  };
+}
+
+function selfEvaluationBody(): RichTextDocument {
+  return {
+    type: "doc",
+    content: [paragraph([text("具备扎实的后端开发基础和良好的工程实践能力，能够独立完成需求分析、技术设计、功能开发和问题排查。重视代码质量与系统稳定性，面对复杂问题能够主动分析并持续推进解决；具备良好的沟通协作意识，能够与产品、前端和测试人员共同完成项目交付。")])],
   };
 }
 
@@ -202,7 +203,7 @@ export function createDefaultResume(): ResumeDocument {
       location: "现居：上海",
       phone: "138 0000 0000",
       email: "hello@example.com",
-      photo: "",
+      photo: DEFAULT_PROFILE_PHOTO,
       details: [
         { id: makeId(), label: "民族", value: "汉族" },
         { id: makeId(), label: "学历", value: "本科" },
@@ -215,21 +216,106 @@ export function createDefaultResume(): ResumeDocument {
         type: "education",
         title: "教育背景",
         enabled: true,
-        items: [{ id: makeId(), school: "某某大学", date: "2021.09 – 2025.06", major: "计算机科学与技术", degree: "本科", detail: "GPA 3.7/5.0 · 专业前 20%" }],
+        items: [{ id: makeId(), school: "中国深空技术探索大学", date: "2020.09 – 2024.06", major: "计算机科学与技术", degree: "本科", detail: "GPA 3.7/4.0 · 专业前 15%" }],
       },
       {
         id: makeId(),
         type: "content",
         title: "专业技能",
         enabled: true,
-        entries: [{ id: makeId(), title: "", subtitle: "", date: "", body: skillsBody() }],
+        entries: [{
+          id: makeId(), title: "", subtitle: "", date: "", body: bulletBody([
+            "熟练掌握 Java，理解集合、并发编程、JVM 内存模型及常见性能调优方法。",
+            "熟悉 Spring Boot、Spring MVC、MyBatis、Spring Cloud 等开发框架。",
+            "熟悉 MySQL、Redis、RabbitMQ 和 Elasticsearch 等常用数据存储与中间件。",
+            "熟悉 Linux、Docker、Git、Maven，能够完成服务部署和线上问题排查。",
+            "了解微服务架构、分布式事务、限流降级、缓存一致性和高并发系统设计。",
+          ])
+        }],
+      },
+      {
+        id: makeId(),
+        type: "content",
+        title: "工作经历",
+        enabled: true,
+        entries: [
+          {
+            id: makeId(), title: "远星云图科技有限公司", subtitle: "后端开发工程师", date: "2024.07 – 至今", body: bulletBody([
+              "负责企业协作平台的后端功能开发，参与需求评审、技术设计、编码测试及上线部署。",
+              "使用 Spring Boot、MySQL 和 Redis 完成订单、权限和消息通知等核心模块。",
+              "优化批量查询和缓存策略，将部分高频接口的平均响应时间由 420ms 降低至 160ms。",
+              "参与服务监控与告警体系建设，完善异常日志、链路追踪和线上问题处理流程。",
+            ])
+          },
+          {
+            id: makeId(), title: "极光智联软件有限公司", subtitle: "Java 开发实习生", date: "2023.06 – 2023.12", body: bulletBody([
+              "参与内部运营管理系统的接口开发，完成客户、合同和数据报表相关功能。",
+              "根据产品需求编写接口文档、数据库表结构和单元测试，并协助排查数据异常。",
+            ])
+          },
+        ],
       },
       {
         id: makeId(),
         type: "content",
         title: "项目经历",
         enabled: true,
-        entries: [{ id: makeId(), title: "轻量级 HTTP 服务器", subtitle: "核心开发", date: "2024.07 – 2024.09", body: projectBody() }],
+        entries: [
+          {
+            id: makeId(), title: "高并发订单处理平台", subtitle: "核心开发", date: "2024.09 – 2025.02", body: projectBody(
+              "Java · Spring Boot · MySQL · Redis · RabbitMQ · Docker",
+              "面向促销活动场景的订单处理系统，支持库存预扣、订单创建、超时取消和支付状态同步。",
+              [
+                "使用 Redis 和 Lua 脚本实现库存预扣，避免高并发情况下出现超卖问题。",
+                "使用 RabbitMQ 异步处理订单创建和超时关闭，降低核心链路响应时间。",
+                "基于唯一业务标识实现接口幂等，并通过压测验证系统稳定性。",
+              ],
+            )
+          },
+          {
+            id: makeId(), title: "统一日志与监控平台", subtitle: "后端开发", date: "2024.04 – 2024.08", body: projectBody(
+              "Spring Boot · Elasticsearch · Kafka · Prometheus · Grafana",
+              "集中采集多个业务系统的运行日志和指标，为开发人员提供检索、监控和告警能力。",
+              [
+                "设计日志采集、清洗、存储和检索流程，统一不同服务的日志字段。",
+                "使用 Kafka 对日志写入流量进行削峰，并根据查询场景设计 Elasticsearch 索引。",
+                "接入 Prometheus 和 Grafana，展示接口耗时、错误率和服务运行状态。",
+              ],
+            )
+          },
+          {
+            id: makeId(), title: "校园二手交易平台", subtitle: "项目负责人", date: "2023.10 – 2024.03", body: projectBody(
+              "Java · Spring Boot · Vue · MySQL · Redis",
+              "面向校园用户的闲置物品交易平台，提供商品发布、分类检索、收藏和订单管理功能。",
+              [
+                "负责需求分析、后端架构设计和任务拆分，完成用户、商品、订单和评论模块。",
+                "使用 Redis 缓存热门商品，并设计缓存失效与数据更新策略。",
+                "使用 JWT 实现登录认证和接口访问控制，完成服务器部署与项目演示。",
+              ],
+            )
+          },
+        ],
+      },
+      {
+        id: makeId(),
+        type: "content",
+        title: "个人荣誉",
+        enabled: true,
+        entries: [{
+          id: makeId(), title: "", subtitle: "", date: "", body: bulletBody([
+            "获得校级一等奖学金和“三好学生”荣誉称号。",
+            "获得大学生程序设计竞赛校级二等奖。",
+            "获得 2025 年度“最美软件工程师”荣誉称号。",
+            "获得 2026 年度“感动中国十大人物之一”荣誉称号。",
+          ])
+        }],
+      },
+      {
+        id: makeId(),
+        type: "content",
+        title: "自我评价",
+        enabled: true,
+        entries: [{ id: makeId(), title: "", subtitle: "", date: "", body: selfEvaluationBody() }],
       },
     ],
   };
@@ -251,7 +337,7 @@ export function createStarterResume(): ResumeDocument {
   const content = (title: string) => ({ ...(createSection("content") as ContentSection), title });
   return {
     ...resume,
-    sections: [content("求职意向"), content("工作经历"), content("项目经历"), createSection("education"), content("专业技能"), content("自我评价")],
+    sections: [createSection("education"), content("专业技能"), content("工作经历"), content("项目经历"), content("个人荣誉"), content("自我评价")],
   };
 }
 

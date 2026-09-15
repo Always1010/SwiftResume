@@ -2,7 +2,7 @@ import { createTypstCompiler, loadFonts } from "@myriaddreamin/typst.ts";
 import { CompileFormatEnum } from "@myriaddreamin/typst.ts/compiler";
 import * as compilerWrapper from "@myriaddreamin/typst-ts-web-compiler";
 import compilerWasmUrl from "@myriaddreamin/typst-ts-web-compiler/wasm?url";
-import { getDensityLayout, type ContentEntry, type RichTextDocument, type RichTextNode, type ResumeDocument, type ResumeSection, type ResumeTemplateId } from "../model/resume";
+import { DEFAULT_PROFILE_PHOTO, getDensityLayout, type ContentEntry, type RichTextDocument, type RichTextNode, type ResumeDocument, type ResumeSection, type ResumeTemplateId } from "../model/resume";
 
 const asString = (value: string) => JSON.stringify(value);
 const withUnit = (value: number, unit: string) => `${Math.round(value * 100) / 100}${unit}`;
@@ -13,13 +13,19 @@ const extensionCompilerWrapper = {
 };
 
 function photoAssetPath(photo: string): string | null {
+  if (photo === DEFAULT_PROFILE_PHOTO) return "/profile-photo.png";
   const mime = /^data:(image\/(?:png|jpeg|webp|svg\+xml));base64,/.exec(photo)?.[1];
   if (!mime) return null;
   const extension = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/svg+xml": "svg" }[mime];
   return extension ? `/profile-photo.${extension}` : null;
 }
 
-function photoBytes(photo: string): Uint8Array | null {
+async function photoBytes(photo: string): Promise<Uint8Array | null> {
+  if (photo === DEFAULT_PROFILE_PHOTO) {
+    const response = await fetch(new URL(photo, window.location.href));
+    if (!response.ok) throw new Error("无法读取内置示例头像");
+    return new Uint8Array(await response.arrayBuffer());
+  }
   const encoded = photo.split(",", 2)[1];
   if (!encoded) return null;
   const binary = atob(encoded);
@@ -289,7 +295,7 @@ export async function exportTypstPdf(resume: ResumeDocument): Promise<void> {
     compiler.unmapShadow(`/profile-photo.${extension}`);
   }
   const photoPath = photoAssetPath(resume.profile.photo);
-  const bytes = photoBytes(resume.profile.photo);
+  const bytes = await photoBytes(resume.profile.photo);
   if (photoPath && bytes) compiler.mapShadow(photoPath, bytes);
   compiler.addSource("/main.typ", createTypstSource(resume));
   const compilation = await compiler.compile({
