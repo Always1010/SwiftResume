@@ -56,6 +56,13 @@ function bullets(items: string[]) {
   return `#grid(columns: (8pt, 1fr), row-gutter: 2.5pt, ${cells.join(",\n")})\n`;
 }
 
+function typstColor(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  if (/^#[0-9a-f]{6}$/i.test(value)) return `rgb(${asString(value)})`;
+  const rgb = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(value);
+  return rgb ? `rgb(${rgb[1]}, ${rgb[2]}, ${rgb[3]})` : null;
+}
+
 function inlineSource(node: RichTextNode): string {
   if (node.type === "hardBreak") return "#linebreak()";
   let source = node.text !== undefined
@@ -66,12 +73,38 @@ function inlineSource(node: RichTextNode): string {
     else if (mark.type === "italic") source = `#emph[${source}]`;
     else if (mark.type === "underline") source = `#underline[${source}]`;
     else if (mark.type === "strike") source = `#strike[${source}]`;
+    else if (mark.type === "highlight") {
+      const color = typstColor(mark.attrs?.color) ?? `rgb("#fff3a3")`;
+      source = `#highlight(fill: ${color})[${source}]`;
+    } else if (mark.type === "textStyle") {
+      const options: string[] = [];
+      const fontSize = mark.attrs?.fontSize;
+      if (typeof fontSize === "string" && /^(?:[89]|1\d|2[0-4])(?:pt|px)$/.test(fontSize)) options.push(`size: ${fontSize}`);
+      const fontWeight = mark.attrs?.fontWeight;
+      if (typeof fontWeight === "string" && /^(?:400|500|600|700)$/.test(fontWeight)) options.push(`weight: ${fontWeight}`);
+      const color = typstColor(mark.attrs?.color);
+      if (color) options.push(`fill: ${color}`);
+      if (options.length) source = `#text(${options.join(", ")})[${source}]`;
+      const background = typstColor(mark.attrs?.backgroundColor);
+      if (background) source = `#highlight(fill: ${background})[${source}]`;
+    }
     else if (mark.type === "link") {
       const href = typeof mark.attrs?.href === "string" ? mark.attrs.href : "";
       if (/^(https?:|mailto:|tel:)/i.test(href)) source = `#link(${asString(href)})[${source}]`;
     }
   }
   return source;
+}
+
+function firstTextStyleValue(node: RichTextNode, key: string): unknown {
+  for (const mark of node.marks ?? []) {
+    if (mark.type === "textStyle" && mark.attrs?.[key] !== undefined) return mark.attrs[key];
+  }
+  for (const child of node.content ?? []) {
+    const value = firstTextStyleValue(child, key);
+    if (value !== undefined) return value;
+  }
+  return undefined;
 }
 
 function listItemSource(node: RichTextNode): string {
@@ -81,6 +114,15 @@ function listItemSource(node: RichTextNode): string {
   }).join("");
 }
 
+function tableSource(node: RichTextNode): string {
+  const rows = (node.content ?? []).filter((row) => row.type === "tableRow");
+  const columns = Math.max(1, ...rows.map((row) => row.content?.length ?? 0));
+  const cells = rows.flatMap((row) => (row.content ?? []).map((cell) => `[${(cell.content ?? []).map(blockSource).join("")}]`));
+  return cells.length
+    ? `#grid(columns: (${Array.from({ length: columns }, () => "1fr").join(", ")}), column-gutter: 6pt, row-gutter: 3pt, ${cells.join(", ")})\n`
+    : "";
+}
+
 function blockSource(node: RichTextNode): string {
   if (node.type === "bulletList" || node.type === "orderedList") {
     const command = node.type === "orderedList" ? "enum" : "list";
@@ -88,11 +130,26 @@ function blockSource(node: RichTextNode): string {
     return items.length ? `#${command}(${items.join(", ")})\n` : "";
   }
   if (node.type === "doc") return (node.content ?? []).map(blockSource).join("");
+  if (node.type === "table") return tableSource(node);
+  if (node.type === "horizontalRule") return "#line(length: 100%, stroke: 0.35pt)\n";
+  if (node.type === "codeBlock") return `#raw(${asString((node.content ?? []).map((child) => child.text ?? "").join(""))}, block: true)\n`;
   const inline = inlineSource(node);
   if (!inline) return "";
-  if (node.type === "heading") return `#strong[${inline}] #linebreak()\n`;
-  if (node.type === "blockquote") return `#quote(block: true)[${inline}]\n`;
-  return `${inline} #linebreak()\n`;
+  const level = Number(node.attrs?.level ?? 2);
+  let source = node.type === "heading"
+    ? `#text(size: ${level === 1 ? 14 : level === 2 ? 12 : 10.5}pt, weight: "bold")[${inline}] #linebreak()\n`
+    : node.type === "blockquote"
+      ? `#quote(block: true)[${inline}]\n`
+      : `${Number(node.attrs?.indent ?? 0) > 0 ? `#h(${Number(node.attrs?.indent) * 2}em)` : ""}${inline} #linebreak()\n`;
+  const alignment = node.attrs?.textAlign;
+  if (alignment === "center" || alignment === "right" || alignment === "justify") {
+    source = `#align(${alignment === "justify" ? "left" : alignment})[${source}]\n`;
+  }
+  const lineHeight = Number(firstTextStyleValue(node, "lineHeight"));
+  if (Number.isFinite(lineHeight) && lineHeight >= 1 && lineHeight <= 2) {
+    source = `#block[#set par(leading: ${Math.round((lineHeight - 1) * 100) / 100}em)\n${source}]\n`;
+  }
+  return source;
 }
 
 function richTextSource(content: RichTextDocument): string {

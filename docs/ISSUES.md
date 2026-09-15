@@ -129,3 +129,13 @@
 - 解决方案：升级为不兼容的 schema v2，删除三模式及 BlockNote 实现；项目、工作和自定义模块统一为可重复的内容条目，每条由可选标题、补充信息、日期和 Tiptap JSON 正文组成。首行全部留空时只渲染正文，预览与 Typst 直接消费同一数据语义。
 - 验证方式：补充模型、预览和 Typst 测试，执行完整单元测试与正式构建，并在浏览器验证标题日期对齐、纯正文模块、局部加粗及列表编辑。
 - 相关文件：`src/model/resume.ts`、`src/model/contentRichText.ts`、`src/components/EditorPanel.tsx`、`src/components/Sidebar.tsx`、`src/components/ResumePreview.tsx`、`src/components/customEditors/ContentBodyEditor.tsx`、`src/export/typstPdf.ts`、`src/editorModes.css`
+
+## SR-014：统一内容模块后富文本编辑能力严重退化
+
+- 日期：2026-09-16
+- 状态：已解决
+- 现象或修改背景：统一内容模块最初只保留了加粗、斜体、下划线、列表和链接等基础按钮，无法设置字号、字体、字重、颜色、高亮、行高、段落缩进、对齐和表格，较替换前的成熟富文本编辑器明显退化。
+- 原因分析：实现时错误地把“统一内容数据结构”理解成“限制正文编辑能力”，在迁移到 JSON 文档后没有恢复已有的 Tiptap 官方扩展和完整工具栏。
+- 解决方案：保留可选标题日期行与正文的统一结构，恢复 Tiptap 的文字样式、对齐、高亮和表格扩展；列表缩进使用编辑器原生命令，普通段落仅增加可持久化的缩进属性，并同步扩展安全预览和 Typst 导出。
+- 验证方式：补充高级格式 JSON 渲染、安全样式清洗及 Typst 格式转换测试，执行完整单元测试和正式构建。
+- 相关文件：`src/components/customEditors/ContentBodyEditor.tsx`、`src/model/contentRichText.ts`、`src/model/richText.ts`、`src/model/contentRichText.test.ts`、`src/model/richText.test.ts`、`src/export/typstPdf.ts`、`src/export/typstPdf.test.ts`、`src/editorModes.css`
