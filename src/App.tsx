@@ -43,7 +43,6 @@ export function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(true);
   const [backupDirectory, setBackupDirectory] = useState<FileSystemDirectoryHandle | null>(null);
   const [backupStatus, setBackupStatus] = useState<DiskBackupStatus>(() => isDiskBackupSupported() ? "not-configured" : "unsupported");
   const [backupPromptOpen, setBackupPromptOpen] = useState(false);
@@ -384,14 +383,14 @@ export function App() {
           <button type="button" className="primary-button export-button" disabled={exporting} onClick={() => void exportPdf()}>{exporting ? "正在生成…" : "导出 PDF"}</button>
         </div>
       </header>
-      <div className={`workspace ${previewOpen ? "" : "preview-hidden"}`}>
+      <div className={`workspace ${settings.previewOpen ? "" : "preview-hidden"}`}>
         <Sidebar resume={resume} selectedId={selectedId} onSelect={setSelectedId} onSectionsChange={setSections} />
         <EditorPanel resume={resume} selectedId={selectedId} onProfileChange={(value) => dispatch({ type: "update-profile", value })} onSectionChange={updateSection} onDeleteSection={(sectionId) => setSections(resume.sections.filter((section) => section.id !== sectionId))} />
-        {previewOpen ? (
+        {settings.previewOpen ? (
           <section className="preview-panel">
             <div className="preview-toolbar">
               <div className="preview-toolbar-leading">
-                <button type="button" className="preview-collapse-button" onClick={() => setPreviewOpen(false)}><span aria-hidden="true">→</span> 收起预览</button>
+                <button type="button" className="preview-collapse-button" onClick={() => setSettings((current) => ({ ...current, previewOpen: false }))}><span aria-hidden="true">→</span> 收起预览</button>
                 {settings.showOverflowWarning && <span className="page-count-badge">共 {pageCount} 页</span>}
               </div>
               <label className="density-control">
@@ -414,7 +413,7 @@ export function App() {
           </section>
         ) : (
           <aside className="preview-collapsed" aria-label="简历预览已关闭">
-            <button type="button" onClick={() => setPreviewOpen(true)} title="显示简历预览"><span>▣</span><strong>显示预览</strong></button>
+            <button type="button" onClick={() => setSettings((current) => ({ ...current, previewOpen: true }))} title="显示简历预览"><span>▣</span><strong>显示预览</strong></button>
           </aside>
         )}
       </div>

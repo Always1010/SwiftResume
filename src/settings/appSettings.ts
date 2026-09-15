@@ -12,6 +12,7 @@ export interface AppSettings {
   exportEngine: ExportEngine;
   showOverflowWarning: boolean;
   previewZoom: PreviewZoom;
+  previewOpen: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -23,6 +24,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   exportEngine: "typst",
   showOverflowWarning: true,
   previewZoom: 100,
+  previewOpen: true,
 };
 
 const STORAGE_KEY = "swift-resume:settings";
@@ -53,6 +55,9 @@ export function normalizeSettings(value: unknown): AppSettings {
     previewZoom: allowedZooms.has(candidate.previewZoom as PreviewZoom)
       ? candidate.previewZoom as PreviewZoom
       : DEFAULT_SETTINGS.previewZoom,
+    previewOpen: typeof candidate.previewOpen === "boolean"
+      ? candidate.previewOpen
+      : DEFAULT_SETTINGS.previewOpen,
   };
 }
 
