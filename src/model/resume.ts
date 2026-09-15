@@ -124,10 +124,23 @@ export interface AwardsSection extends SectionBase {
 export type CustomEditorMode = "builder" | "document" | "richtext";
 export type CustomNodeType = "title" | "paragraph" | "bullets" | "keyValues";
 
+export type ResumeFontFamily = "sans" | "serif" | "mono";
+export type ResumeFontWeight = 400 | 500 | 600 | 700;
+
+export interface CustomTextStyle {
+  fontSize?: number;
+  fontWeight?: ResumeFontWeight;
+  fontFamily?: ResumeFontFamily;
+  color?: string;
+}
+
+export type SerializedEditorNode = Record<string, unknown>;
+
 interface CustomNodeBase {
   id: string;
   type: CustomNodeType;
   enabled: boolean;
+  styles?: Record<string, CustomTextStyle>;
 }
 
 export interface CustomTitleNode extends CustomNodeBase {
@@ -162,6 +175,8 @@ export interface CustomSection extends SectionBase {
   type: "custom";
   editorMode: CustomEditorMode;
   nodes: CustomContentNode[];
+  documentBlocks: SerializedEditorNode[];
+  hiddenDocumentBlockIds: string[];
   richText: string;
 }
 
@@ -169,6 +184,8 @@ interface LegacyCustomSection extends SectionBase {
   type: "custom";
   editorMode?: CustomEditorMode;
   nodes?: CustomContentNode[];
+  documentBlocks?: SerializedEditorNode[];
+  hiddenDocumentBlockIds?: string[];
   richText?: string;
   items?: Array<{
     id: string;
@@ -334,6 +351,39 @@ export function createCustomNode(type: CustomNodeType): CustomContentNode {
   }
 }
 
+function styledText(text: string, bold = false): SerializedEditorNode {
+  return { type: "text", text, styles: bold ? { bold: true } : {} };
+}
+
+function legacyNodesToDocumentBlocks(nodes: CustomContentNode[]): SerializedEditorNode[] {
+  const blocks: SerializedEditorNode[] = [];
+  for (const node of nodes) {
+    if (node.type === "title") {
+      const content: SerializedEditorNode[] = [styledText(node.title || "标题", true)];
+      if (node.subtitle) content.push(styledText(`　${node.subtitle}`));
+      if (node.date) content.push(styledText(`　${node.date}`));
+      blocks.push({ id: node.id, type: "paragraph", content });
+      continue;
+    }
+    if (node.type === "paragraph") {
+      blocks.push({ id: node.id, type: "paragraph", content: node.text });
+      continue;
+    }
+    if (node.type === "bullets") {
+      node.items.forEach((item) => blocks.push({ id: item.id, type: "bulletListItem", content: item.text }));
+      continue;
+    }
+    node.pairs.forEach((pair) => {
+      blocks.push({
+        id: pair.id,
+        type: "paragraph",
+        content: [styledText(`${pair.label}${pair.label ? "：" : ""}`, true), styledText(pair.value)],
+      });
+    });
+  }
+  return blocks.length ? blocks : [{ type: "paragraph", content: "" }];
+}
+
 export function duplicateCustomNode(node: CustomContentNode): CustomContentNode {
   const copy = structuredClone(node);
   copy.id = makeId();
@@ -392,7 +442,9 @@ export function createSection(type: SectionType, customEditorMode: CustomEditorM
         title: "自定义板块",
         enabled: true,
         editorMode: customEditorMode,
-        nodes: customEditorMode === "richtext" ? [] : [createCustomNode(customEditorMode === "builder" ? "title" : "paragraph")],
+        nodes: customEditorMode === "builder" ? [createCustomNode("title")] : [],
+        documentBlocks: customEditorMode === "document" ? [{ type: "paragraph", content: "" }] : [],
+        hiddenDocumentBlockIds: [],
         richText: customEditorMode === "richtext" ? "<p><br></p>" : "",
       };
   }
@@ -469,10 +521,17 @@ function migrateLegacyCustomSection(section: LegacyCustomSection): CustomSection
     ? section.editorMode
     : "builder";
   if (Array.isArray(section.nodes)) {
+    const nodes = section.nodes;
     return {
       ...section,
       editorMode: mode,
-      nodes: section.nodes,
+      nodes,
+      documentBlocks: Array.isArray(section.documentBlocks)
+        ? section.documentBlocks
+        : mode === "document" ? legacyNodesToDocumentBlocks(nodes) : [],
+      hiddenDocumentBlockIds: Array.isArray(section.hiddenDocumentBlockIds)
+        ? section.hiddenDocumentBlockIds.filter((id): id is string => typeof id === "string")
+        : mode === "document" ? nodes.filter((node) => !node.enabled).map((node) => node.id) : [],
       richText: typeof section.richText === "string" ? section.richText : "",
     };
   }
@@ -509,6 +568,8 @@ function migrateLegacyCustomSection(section: LegacyCustomSection): CustomSection
     enabled: section.enabled,
     editorMode: mode,
     nodes: nodes.length ? nodes : [createCustomNode("paragraph")],
+    documentBlocks: mode === "document" ? legacyNodesToDocumentBlocks(nodes) : [],
+    hiddenDocumentBlockIds: mode === "document" ? nodes.filter((node) => !node.enabled).map((node) => node.id) : [],
     richText: typeof section.richText === "string" ? section.richText : "",
   };
 }

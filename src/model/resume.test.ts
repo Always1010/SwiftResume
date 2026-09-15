@@ -55,7 +55,39 @@ describe("resume model", () => {
     expect(builder.type === "custom" && builder.editorMode).toBe("builder");
     expect(document.type === "custom" && document.editorMode).toBe("document");
     expect(richText.type === "custom" && richText.editorMode).toBe("richtext");
-    expect(richText.type === "custom" && richText.nodes).toEqual([]);
+    if (builder.type === "custom" && document.type === "custom" && richText.type === "custom") {
+      expect(builder.nodes).toHaveLength(1);
+      expect(builder.documentBlocks).toEqual([]);
+      expect(builder.richText).toBe("");
+      expect(document.nodes).toEqual([]);
+      expect(document.documentBlocks).toEqual([{ type: "paragraph", content: "" }]);
+      expect(document.richText).toBe("");
+      expect(richText.nodes).toEqual([]);
+      expect(richText.documentBlocks).toEqual([]);
+      expect(richText.richText).toBe("<p><br></p>");
+    }
+  });
+
+  it("migrates the old document view into independent document blocks", () => {
+    const resume = createDefaultResume();
+    const legacyDocument = createSection("custom", "builder");
+    if (legacyDocument.type !== "custom") throw new Error("expected custom section");
+    legacyDocument.editorMode = "document";
+    legacyDocument.nodes = [
+      { id: "title", type: "title", enabled: true, title: "开源项目", subtitle: "维护者", date: "2026" },
+      { id: "hidden", type: "paragraph", enabled: false, text: "内部备注" },
+    ];
+    delete (legacyDocument as Partial<typeof legacyDocument>).documentBlocks;
+    delete (legacyDocument as Partial<typeof legacyDocument>).hiddenDocumentBlockIds;
+    resume.sections.push(legacyDocument);
+
+    const migrated = normalizeResumeDocument(resume)?.sections.at(-1);
+    expect(migrated?.type).toBe("custom");
+    if (migrated?.type === "custom") {
+      expect(migrated.documentBlocks).toHaveLength(2);
+      expect(migrated.hiddenDocumentBlockIds).toEqual(["hidden"]);
+      expect(migrated.nodes).toHaveLength(2);
+    }
   });
 
   it("migrates legacy custom modules without dropping content", () => {

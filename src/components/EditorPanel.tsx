@@ -1,9 +1,13 @@
-import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { lazy, Suspense, useState, type ChangeEvent, type CSSProperties, type ReactNode } from "react";
+import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type {
   AwardsSection,
   CustomContentNode,
   CustomNodeType,
   CustomSection,
+  CustomTextStyle,
   EducationSection,
   ExperienceSection,
   ProjectsSection,
@@ -13,7 +17,9 @@ import type {
   SkillsSection,
 } from "../model/resume";
 import { createCustomNode, duplicateCustomNode } from "../model/resume";
-import { sanitizeRichText } from "../model/richText";
+
+const FreeDocumentEditor = lazy(() => import("./customEditors/FreeDocumentEditor").then((module) => ({ default: module.FreeDocumentEditor })));
+const MatureRichTextEditor = lazy(() => import("./customEditors/RichTextEditor").then((module) => ({ default: module.MatureRichTextEditor })));
 
 const makeId = () => crypto.randomUUID();
 
@@ -30,10 +36,11 @@ interface FieldProps {
   value: string;
   placeholder?: string;
   multiline?: boolean;
+  inputStyle?: CSSProperties;
   onChange: (value: string) => void;
 }
 
-function Field({ label, value, placeholder, multiline, onChange }: FieldProps) {
+function Field({ label, value, placeholder, multiline, inputStyle, onChange }: FieldProps) {
   const common = {
     value,
     placeholder,
@@ -43,7 +50,7 @@ function Field({ label, value, placeholder, multiline, onChange }: FieldProps) {
   return (
     <label className={`field ${multiline ? "field-wide" : ""}`}>
       <span>{label}</span>
-      {multiline ? <textarea rows={3} {...common} /> : <input {...common} />}
+      {multiline ? <textarea rows={3} style={inputStyle} {...common} /> : <input style={inputStyle} {...common} />}
     </label>
   );
 }
@@ -303,6 +310,62 @@ function updateCustomNode(section: CustomSection, node: CustomContentNode): Cust
   return { ...section, nodes: section.nodes.map((item) => item.id === node.id ? node : item) };
 }
 
+const resumeFontFamilies = {
+  sans: '"Microsoft YaHei", "PingFang SC", Arial, sans-serif',
+  serif: '"Noto Serif CJK SC", "Songti SC", SimSun, serif',
+  mono: '"Cascadia Mono", "Microsoft YaHei", monospace',
+} as const;
+
+function textStyleCss(style: CustomTextStyle | undefined): CSSProperties {
+  return {
+    color: style?.color,
+    fontSize: style?.fontSize ? `${style.fontSize}pt` : undefined,
+    fontWeight: style?.fontWeight,
+    fontFamily: style?.fontFamily ? resumeFontFamilies[style.fontFamily] : undefined,
+  };
+}
+
+function StructuredStyleControl({ node, styleKey, onChange }: {
+  node: CustomContentNode;
+  styleKey: string;
+  onChange: (node: CustomContentNode) => void;
+}) {
+  const style = node.styles?.[styleKey] ?? {};
+  const update = (patch: Partial<CustomTextStyle>) => onChange({
+    ...node,
+    styles: { ...node.styles, [styleKey]: { ...style, ...patch } },
+  });
+  return (
+    <details className="structured-style-control">
+      <summary title="设置该字段的字体、字号和粗细">Aa</summary>
+      <div className="structured-style-popover">
+        <button type="button" aria-label="切换粗体" className={style.fontWeight === 700 ? "active" : ""} onClick={() => update({ fontWeight: style.fontWeight === 700 ? 400 : 700 })}><strong>B</strong></button>
+        <label><span>字号</span><select aria-label="字段字号" value={style.fontSize ?? 11} onChange={(event) => update({ fontSize: Number(event.target.value) })}>{[8, 9, 10, 11, 12, 14, 16, 18, 20, 24].map((size) => <option key={size} value={size}>{size} pt</option>)}</select></label>
+        <label><span>粗细</span><select aria-label="字段字重" value={style.fontWeight ?? 400} onChange={(event) => update({ fontWeight: Number(event.target.value) as CustomTextStyle["fontWeight"] })}><option value="400">常规</option><option value="500">中等</option><option value="600">半粗</option><option value="700">粗体</option></select></label>
+        <label><span>字体</span><select aria-label="字段字体" value={style.fontFamily ?? "sans"} onChange={(event) => update({ fontFamily: event.target.value as CustomTextStyle["fontFamily"] })}><option value="sans">黑体</option><option value="serif">宋体</option><option value="mono">等宽</option></select></label>
+        <label className="style-color"><span>颜色</span><input type="color" value={style.color ?? "#303030"} onChange={(event) => update({ color: event.target.value })} /></label>
+      </div>
+    </details>
+  );
+}
+
+function StyledCustomField({ node, styleKey, label, value, multiline, onValueChange, onChange }: {
+  node: CustomContentNode;
+  styleKey: string;
+  label: string;
+  value: string;
+  multiline?: boolean;
+  onValueChange: (value: string) => void;
+  onChange: (node: CustomContentNode) => void;
+}) {
+  return (
+    <div className={`structured-styled-field ${multiline ? "field-wide" : ""}`}>
+      <Field label={label} value={value} multiline={multiline} inputStyle={textStyleCss(node.styles?.[styleKey])} onChange={onValueChange} />
+      <StructuredStyleControl node={node} styleKey={styleKey} onChange={onChange} />
+    </div>
+  );
+}
+
 function CustomNodeFields({
   node,
   mode,
@@ -324,9 +387,9 @@ function CustomNodeFields({
     }
     return (
       <div className="field-grid">
-        <Field label="标题" value={node.title} onChange={(value) => onChange({ ...node, title: value })} />
-        <Field label="副标题" value={node.subtitle} onChange={(value) => onChange({ ...node, subtitle: value })} />
-        <Field label="时间" value={node.date} onChange={(value) => onChange({ ...node, date: value })} />
+        <StyledCustomField node={node} styleKey="title" label="标题" value={node.title} onValueChange={(value) => onChange({ ...node, title: value })} onChange={onChange} />
+        <StyledCustomField node={node} styleKey="subtitle" label="副标题" value={node.subtitle} onValueChange={(value) => onChange({ ...node, subtitle: value })} onChange={onChange} />
+        <StyledCustomField node={node} styleKey="date" label="时间" value={node.date} onValueChange={(value) => onChange({ ...node, date: value })} onChange={onChange} />
       </div>
     );
   }
@@ -334,7 +397,7 @@ function CustomNodeFields({
   if (node.type === "paragraph") {
     return mode === "document"
       ? <textarea className="document-paragraph-input" rows={3} aria-label="说明段落" placeholder="直接输入一段内容……" value={node.text} onChange={(event) => onChange({ ...node, text: event.target.value })} />
-      : <Field label="说明" value={node.text} multiline onChange={(value) => onChange({ ...node, text: value })} />;
+      : <StyledCustomField node={node} styleKey="text" label="说明" value={node.text} multiline onValueChange={(value) => onChange({ ...node, text: value })} onChange={onChange} />;
   }
 
   if (node.type === "bullets") {
@@ -348,8 +411,10 @@ function CustomNodeFields({
               rows={mode === "document" ? 1 : 2}
               aria-label="要点内容"
               value={item.text}
+              style={textStyleCss(node.styles?.[`item:${item.id}`])}
               onChange={(event) => onChange({ ...node, items: node.items.map((entry) => entry.id === item.id ? { ...entry, text: event.target.value } : entry) })}
             />
+            {mode === "builder" && <StructuredStyleControl node={node} styleKey={`item:${item.id}`} onChange={onChange} />}
             <button type="button" className="icon-button danger" aria-label="删除要点" onClick={() => onChange({ ...node, items: node.items.filter((entry) => entry.id !== item.id) })}>×</button>
           </div>
         ))}
@@ -362,8 +427,8 @@ function CustomNodeFields({
     <div className="custom-key-values">
       {node.pairs.map((pair) => (
         <div className="detail-row" key={pair.id}>
-          <input aria-label="字段名称" placeholder="字段名称" value={pair.label} onChange={(event) => onChange({ ...node, pairs: node.pairs.map((entry) => entry.id === pair.id ? { ...entry, label: event.target.value } : entry) })} />
-          <input aria-label="字段内容" placeholder="字段内容" value={pair.value} onChange={(event) => onChange({ ...node, pairs: node.pairs.map((entry) => entry.id === pair.id ? { ...entry, value: event.target.value } : entry) })} />
+          <div className="structured-inline-field"><input style={textStyleCss(node.styles?.[`label:${pair.id}`])} aria-label="字段名称" placeholder="字段名称" value={pair.label} onChange={(event) => onChange({ ...node, pairs: node.pairs.map((entry) => entry.id === pair.id ? { ...entry, label: event.target.value } : entry) })} /><StructuredStyleControl node={node} styleKey={`label:${pair.id}`} onChange={onChange} /></div>
+          <div className="structured-inline-field"><input style={textStyleCss(node.styles?.[`value:${pair.id}`])} aria-label="字段内容" placeholder="字段内容" value={pair.value} onChange={(event) => onChange({ ...node, pairs: node.pairs.map((entry) => entry.id === pair.id ? { ...entry, value: event.target.value } : entry) })} /><StructuredStyleControl node={node} styleKey={`value:${pair.id}`} onChange={onChange} /></div>
           <button type="button" className="icon-button danger" aria-label="删除字段" onClick={() => onChange({ ...node, pairs: node.pairs.filter((entry) => entry.id !== pair.id) })}>×</button>
         </div>
       ))}
@@ -372,48 +437,55 @@ function CustomNodeFields({
   );
 }
 
+function SortableCustomNode({ node, index, section, onChange }: { node: CustomContentNode; index: number; section: CustomSection; onChange: (value: CustomSection) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: node.id });
+  return (
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={`custom-node builder ${node.enabled ? "" : "node-hidden"} ${isDragging ? "node-dragging" : ""}`}>
+      <div className="custom-node-toolbar">
+        <span>
+          <button type="button" className="custom-node-drag-handle" title="拖动排序" aria-label={`拖动${customNodeLabels[node.type]}`} {...attributes} {...listeners}>⋮⋮</button>
+          <strong>{customNodeLabels[node.type]}</strong>
+        </span>
+        <div>
+          <button type="button" className="icon-button" title={node.enabled ? "从简历中隐藏" : "显示在简历中"} onClick={() => onChange(updateCustomNode(section, { ...node, enabled: !node.enabled }))}>{node.enabled ? "◉" : "○"}</button>
+          <button type="button" className="icon-button" title="复制内容" onClick={() => {
+            const nodes = [...section.nodes];
+            nodes.splice(index + 1, 0, duplicateCustomNode(node));
+            onChange({ ...section, nodes });
+          }}>⧉</button>
+          <button type="button" className="icon-button danger" title="删除内容" onClick={() => onChange({ ...section, nodes: section.nodes.filter((item) => item.id !== node.id) })}>×</button>
+        </div>
+      </div>
+      <div className="custom-node-content">
+        <CustomNodeFields node={node} mode="builder" onChange={(value) => onChange(updateCustomNode(section, value))} />
+      </div>
+    </div>
+  );
+}
+
 function CustomStructuredEditor({ section, onChange }: { section: CustomSection; onChange: (value: CustomSection) => void }) {
   const [newNodeType, setNewNodeType] = useState<CustomNodeType>("paragraph");
-  const mode = section.editorMode === "builder" ? "builder" : "document";
-  const moveNode = (index: number, direction: -1 | 1) => {
-    const target = index + direction;
-    if (target < 0 || target >= section.nodes.length) return;
-    const nodes = [...section.nodes];
-    [nodes[index], nodes[target]] = [nodes[target], nodes[index]];
-    onChange({ ...section, nodes });
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    const from = section.nodes.findIndex((node) => node.id === active.id);
+    const to = section.nodes.findIndex((node) => node.id === over.id);
+    if (from >= 0 && to >= 0) onChange({ ...section, nodes: arrayMove(section.nodes, from, to) });
   };
-
   return (
     <>
-      <div className="custom-mode-switch" aria-label="结构化模块编辑方式">
-        <button type="button" className={mode === "builder" ? "active" : ""} onClick={() => onChange({ ...section, editorMode: "builder" })}>结构搭建</button>
-        <button type="button" className={mode === "document" ? "active" : ""} onClick={() => onChange({ ...section, editorMode: "document" })}>自由文档</button>
-        <span>两种视图共享内容，可随时切换</span>
-      </div>
-      <div className={mode === "document" ? "custom-document-canvas" : "custom-builder-list"}>
-        {section.nodes.map((node, index) => (
-          <div className={`custom-node ${mode} ${node.enabled ? "" : "node-hidden"}`} key={node.id}>
-            <div className="custom-node-toolbar">
-              <span><i>⋮⋮</i>{mode === "builder" && <strong>{customNodeLabels[node.type]}</strong>}</span>
-              <div>
-                <button type="button" className="icon-button" title="上移" disabled={index === 0} onClick={() => moveNode(index, -1)}>↑</button>
-                <button type="button" className="icon-button" title="下移" disabled={index === section.nodes.length - 1} onClick={() => moveNode(index, 1)}>↓</button>
-                <button type="button" className="icon-button" title={node.enabled ? "隐藏内容" : "显示内容"} onClick={() => onChange(updateCustomNode(section, { ...node, enabled: !node.enabled }))}>{node.enabled ? "◉" : "○"}</button>
-                <button type="button" className="icon-button" title="复制内容" onClick={() => {
-                  const nodes = [...section.nodes];
-                  nodes.splice(index + 1, 0, duplicateCustomNode(node));
-                  onChange({ ...section, nodes });
-                }}>⧉</button>
-                <button type="button" className="icon-button danger" title="删除内容" onClick={() => onChange({ ...section, nodes: section.nodes.filter((item) => item.id !== node.id) })}>×</button>
-              </div>
-            </div>
-            <div className="custom-node-content">
-              <CustomNodeFields node={node} mode={mode} onChange={(value) => onChange(updateCustomNode(section, value))} />
-            </div>
+      <div className="editor-mode-notice"><strong>组件搭建（高级）</strong><span>按字段精确控制结构和样式；拖动每个组件左上角的手柄调整顺序。</span></div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={section.nodes.map((node) => node.id)} strategy={verticalListSortingStrategy}>
+          <div className="custom-builder-list">
+            {section.nodes.map((node, index) => <SortableCustomNode key={node.id} node={node} index={index} section={section} onChange={onChange} />)}
+            {!section.nodes.length && <div className="custom-empty-state">还没有内容，可以从下方添加标题、段落、列表或字段。</div>}
           </div>
-        ))}
-        {!section.nodes.length && <div className="custom-empty-state">还没有内容，可以从下方添加标题、段落、列表或字段。</div>}
-      </div>
+        </SortableContext>
+      </DndContext>
       <div className="custom-add-node">
         <select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as CustomNodeType)}>
           {(Object.keys(customNodeLabels) as CustomNodeType[]).map((type) => <option value={type} key={type}>{customNodeLabels[type]}</option>)}
@@ -424,60 +496,10 @@ function CustomStructuredEditor({ section, onChange }: { section: CustomSection;
   );
 }
 
-function RichTextEditor({ section, onChange }: { section: CustomSection; onChange: (value: CustomSection) => void }) {
-  const editorRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    const safeHtml = sanitizeRichText(section.richText);
-    if (editor.innerHTML !== safeHtml) editor.innerHTML = safeHtml;
-  }, [section.id, section.richText]);
-
-  const commit = () => {
-    const editor = editorRef.current;
-    if (editor) onChange({ ...section, richText: sanitizeRichText(editor.innerHTML) });
-  };
-  const applyCommand = (command: string, value?: string) => {
-    editorRef.current?.focus();
-    document.execCommand(command, false, value);
-    commit();
-  };
-
-  return (
-    <>
-      <div className="rich-text-notice">富文本适合自由输入和粘贴；同一份简历可以与其他模块混用。</div>
-      <div className="rich-text-editor-shell">
-        <div className="rich-text-toolbar" aria-label="富文本格式工具">
-          <button type="button" title="加粗" onMouseDown={(event) => event.preventDefault()} onClick={() => applyCommand("bold")}><strong>B</strong></button>
-          <button type="button" title="斜体" onMouseDown={(event) => event.preventDefault()} onClick={() => applyCommand("italic")}><em>I</em></button>
-          <button type="button" title="下划线" onMouseDown={(event) => event.preventDefault()} onClick={() => applyCommand("underline")}><u>U</u></button>
-          <button type="button" title="无序列表" onMouseDown={(event) => event.preventDefault()} onClick={() => applyCommand("insertUnorderedList")}>• 列表</button>
-          <button type="button" title="有序列表" onMouseDown={(event) => event.preventDefault()} onClick={() => applyCommand("insertOrderedList")}>1. 列表</button>
-          <button type="button" title="添加链接" onMouseDown={(event) => event.preventDefault()} onClick={() => {
-            const href = window.prompt("请输入链接地址", "https://");
-            if (href) applyCommand("createLink", href);
-          }}>链接</button>
-          <button type="button" title="清除格式" onMouseDown={(event) => event.preventDefault()} onClick={() => applyCommand("removeFormat")}>清除格式</button>
-        </div>
-        <div
-          ref={editorRef}
-          className="rich-text-surface"
-          contentEditable
-          suppressContentEditableWarning
-          data-placeholder="直接输入或粘贴内容……"
-          onInput={commit}
-          onBlur={commit}
-        />
-      </div>
-    </>
-  );
-}
-
 function CustomEditor({ section, onChange }: { section: CustomSection; onChange: (value: CustomSection) => void }) {
-  return section.editorMode === "richtext"
-    ? <RichTextEditor section={section} onChange={onChange} />
-    : <CustomStructuredEditor section={section} onChange={onChange} />;
+  if (section.editorMode === "document") return <Suspense fallback={<div className="editor-loading">正在加载自由文档编辑器……</div>}><FreeDocumentEditor section={section} onChange={onChange} /></Suspense>;
+  if (section.editorMode === "richtext") return <Suspense fallback={<div className="editor-loading">正在加载富文本编辑器……</div>}><MatureRichTextEditor section={section} onChange={onChange} /></Suspense>;
+  return <CustomStructuredEditor section={section} onChange={onChange} />;
 }
 
 export function EditorPanel({ resume, selectedId, onProfileChange, onSectionChange, onDeleteSection }: EditorPanelProps) {

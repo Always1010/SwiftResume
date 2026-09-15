@@ -10,6 +10,7 @@ import type {
 import { sanitizeRichText } from "../model/richText";
 import { paginatePreviewItems } from "../preview/pagination";
 import type { PreviewZoom } from "../settings/appSettings";
+import { BlockDocumentPreview } from "./customEditors/BlockDocumentPreview";
 
 function SectionHeading({ children }: { children: string }) {
   return <div className="resume-section-heading"><h2>{children}</h2><span /></div>;
@@ -49,22 +50,38 @@ function ExperienceEntry({ item }: { item: ExperienceItem }) {
   );
 }
 
+const customFontFamilies = {
+  sans: '"Microsoft YaHei", "PingFang SC", Arial, sans-serif',
+  serif: '"Noto Serif CJK SC", "Songti SC", SimSun, serif',
+  mono: '"Cascadia Mono", "Microsoft YaHei", monospace',
+};
+
+function customTextStyle(node: CustomContentNode, key: string): CSSProperties {
+  const style = node.styles?.[key];
+  return {
+    color: style?.color,
+    fontSize: style?.fontSize ? `${style.fontSize}pt` : undefined,
+    fontWeight: style?.fontWeight,
+    fontFamily: style?.fontFamily ? customFontFamilies[style.fontFamily] : undefined,
+  };
+}
+
 function CustomNodeView({ node }: { node: CustomContentNode }) {
   if (!node.enabled) return null;
   if (node.type === "title") {
     return (
       <div className="entry-topline custom-title-row">
-        <div><strong>{node.title}</strong>{node.subtitle && <span className="entry-role">{node.subtitle}</span>}</div>
-        <time>{node.date}</time>
+        <div><strong style={customTextStyle(node, "title")}>{node.title}</strong>{node.subtitle && <span style={customTextStyle(node, "subtitle")} className="entry-role">{node.subtitle}</span>}</div>
+        <time style={customTextStyle(node, "date")}>{node.date}</time>
       </div>
     );
   }
-  if (node.type === "paragraph") return node.text ? <p className="custom-paragraph">{node.text}</p> : null;
-  if (node.type === "bullets") return <BulletList bullets={node.items.map((item) => item.text)} />;
+  if (node.type === "paragraph") return node.text ? <p style={customTextStyle(node, "text")} className="custom-paragraph">{node.text}</p> : null;
+  if (node.type === "bullets") return <ul>{node.items.filter((item) => item.text.trim()).map((item) => <li style={customTextStyle(node, `item:${item.id}`)} key={item.id}>{item.text}</li>)}</ul>;
   return (
     <div className="custom-key-value-preview">
       {node.pairs.filter((pair) => pair.label || pair.value).map((pair) => (
-        <div key={pair.id}><span>{pair.label}{pair.label && "："}</span><strong>{pair.value}</strong></div>
+        <div key={pair.id}><span style={customTextStyle(node, `label:${pair.id}`)}>{pair.label}{pair.label && "："}</span><strong style={customTextStyle(node, `value:${pair.id}`)}>{pair.value}</strong></div>
       ))}
     </div>
   );
@@ -111,6 +128,12 @@ function sectionItems(section: ResumeSection): PreviewFlowItem[] {
     return [{
       id: `${section.id}-richtext`,
       content: <div className="resume-rich-text" dangerouslySetInnerHTML={{ __html: sanitizeRichText(section.richText) }} />,
+    }];
+  }
+  if (section.editorMode === "document") {
+    return [{
+      id: `${section.id}-document`,
+      content: <BlockDocumentPreview blocks={section.documentBlocks} hiddenIds={section.hiddenDocumentBlockIds} />,
     }];
   }
   return section.nodes.filter((node) => node.enabled).map((node) => ({

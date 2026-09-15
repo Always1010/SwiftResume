@@ -39,3 +39,33 @@
 - 解决方案：启动时复用 IndexedDB 中持久保存的目录句柄并查询读写权限；权限有效时静默继续，未配置或待授权时显示不可点背景关闭的提醒弹窗，提供选择目录、重新授权原目录和本次稍后处理。
 - 验证方式：执行完整单元测试和正式构建，检查不同备份状态对应的弹窗文案和按钮路径。
 - 相关文件：`src/App.tsx`、`src/components/BackupSetupPrompt.tsx`、`src/styles.css`
+
+## SR-005：组件搭建排序低效且字段排版能力缺失
+
+- 日期：2026-09-15
+- 状态：已解决
+- 现象或修改背景：组件和模块只能通过逐次点击上移、下移调整位置；标题、说明、列表以及键值字段无法分别设置字号、字重、字体和颜色。
+- 原因分析：排序交互依赖离散按钮，结构化节点模型只保存文本内容，没有字段级样式数据。
+- 解决方案：模块列表保留直接拖放，组件列表改用带键盘支持的拖拽排序并删除上下移动按钮；为每个语义字段增加独立文字样式，并同步到实时预览和 Typst 导出。
+- 验证方式：执行类型检查、完整单元测试和正式构建；测试组件样式会生成对应 Typst 字号、字重及颜色参数。
+- 相关文件：`src/components/Sidebar.tsx`、`src/components/EditorPanel.tsx`、`src/components/ResumePreview.tsx`、`src/model/resume.ts`、`src/export/typstPdf.ts`、`src/editorModes.css`
+
+## SR-006：自由文档与组件搭建仅是同一内容的视图切换
+
+- 日期：2026-09-15
+- 状态：已解决
+- 现象或修改背景：自由文档复用了组件搭建的数据和输入框，操作方式与组件搭建没有本质区别；内容块的操作栏持续占位，缺少自然输入、斜杠菜单和块级拖动体验。
+- 原因分析：两种模式共享 `nodes` 模型，自由文档只是为同一组字段切换样式，没有独立的块编辑器和块数据。
+- 解决方案：自由文档改用 BlockNote，提供段落、标题、列表、勾选项、引用、代码、表格、简历快捷块、斜杠菜单和悬停侧边菜单；单独保存块 JSON，并为旧自由文档自动迁移原节点和隐藏状态。
+- 验证方式：执行类型检查、完整单元测试和正式构建；补充三种模式数据隔离、旧自由文档迁移、隐藏块不导出的测试。
+- 相关文件：`src/components/customEditors/FreeDocumentEditor.tsx`、`src/components/customEditors/blockNoteSchema.tsx`、`src/components/customEditors/BlockDocumentPreview.tsx`、`src/model/resume.ts`、`src/export/typstPdf.ts`、`src/editorModes.css`
+
+## SR-007：富文本编辑器能力有限且格式无法稳定进入导出
+
+- 日期：2026-09-15
+- 状态：已解决
+- 现象或修改背景：原富文本依赖浏览器已废弃的 `execCommand`，仅支持少数按钮，没有字号、字体、字重、颜色、对齐、引用和表格等常用能力，部分格式还会被清洗或导出阶段丢弃。
+- 原因分析：手写 `contentEditable` 没有文档模型和扩展体系，富文本白名单及 Typst 转换只覆盖了基础标签。
+- 解决方案：使用 Tiptap 重构为独立的 Word 式富文本编辑器，增加完整固定工具栏；扩展安全清洗、实时预览与 Typst 转换对标题、字号、字重、颜色、高亮、对齐、引用、链接、分隔线、列表和表格的支持。
+- 验证方式：执行类型检查、完整单元测试和正式构建；补充富文本样式白名单、危险标记清理、表格和安全链接保留以及 Typst 格式转换测试。
+- 相关文件：`src/components/customEditors/RichTextEditor.tsx`、`src/model/richText.ts`、`src/model/richText.test.ts`、`src/export/typstPdf.ts`、`src/editorModes.css`
