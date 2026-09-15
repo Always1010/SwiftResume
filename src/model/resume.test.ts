@@ -11,6 +11,7 @@ import {
   moveSection,
   normalizeDensity,
   normalizeResumeDocument,
+  RESUME_TEMPLATE_IDS,
   reorderSection,
 } from "./resume";
 
@@ -19,6 +20,7 @@ describe("resume model", () => {
     const resume = createDefaultResume();
     expect(isResumeDocument(resume)).toBe(true);
     expect(resume.schemaVersion).toBe(2);
+    expect(resume.theme.templateId).toBe("classic");
     const projects = resume.sections.find((section) => section.title === "项目经历");
     expect(projects?.type).toBe("content");
     if (projects?.type === "content") {
@@ -95,6 +97,15 @@ describe("resume model", () => {
   it("rejects obsolete schema v1 documents instead of migrating them", () => {
     const obsolete = { ...createDefaultResume(), schemaVersion: 1 };
     expect(normalizeResumeDocument(obsolete)).toBeNull();
+  });
+
+  it("normalizes missing or unknown template ids to the classic template", () => {
+    const resume = createDefaultResume() as unknown as { theme: { templateId?: string } };
+    delete resume.theme.templateId;
+    expect(normalizeResumeDocument(resume)?.theme.templateId).toBe("classic");
+    resume.theme.templateId = "unknown";
+    expect(normalizeResumeDocument(resume)?.theme.templateId).toBe("classic");
+    expect(RESUME_TEMPLATE_IDS).toHaveLength(9);
   });
 
   it("normalizes density values and interpolates layout continuously", () => {

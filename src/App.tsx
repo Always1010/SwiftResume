@@ -32,6 +32,7 @@ import {
 } from "./storage/diskBackup";
 import { useResumeSync } from "./sync/resumeSync";
 import { usePreviewPublisher } from "./sync/previewSync";
+import { RESUME_TEMPLATES } from "./templates/registry";
 
 export function App() {
   const [resume, dispatch] = useReducer(resumeReducer, undefined, createDefaultResume);
@@ -458,6 +459,12 @@ export function App() {
                 <button type="button" className="preview-collapse-button" onClick={() => setSettings((current) => ({ ...current, previewOpen: false }))}><span aria-hidden="true">→</span> 收起预览</button>
                 {settings.showOverflowWarning && <span className="page-count-badge">共 {pageCount} 页</span>}
               </div>
+              <label className="template-picker">
+                <span>模板</span>
+                <select aria-label="简历模板" value={resume.theme.templateId} onChange={(event) => dispatch({ type: "update-theme", value: { templateId: event.target.value as ResumeDocument["theme"]["templateId"] } })}>
+                  {RESUME_TEMPLATES.map((template) => <option key={template.id} value={template.id}>{template.name}</option>)}
+                </select>
+              </label>
               <label className="density-control">
                 <span>紧凑</span>
                 <input

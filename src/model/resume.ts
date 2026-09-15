@@ -4,6 +4,16 @@ export const MIN_DENSITY = 0;
 export const DEFAULT_DENSITY = 50;
 export const MAX_DENSITY = 100;
 
+export const RESUME_TEMPLATE_IDS = ["classic", "minimal", "executive", "sidebar", "accent", "timeline", "academic", "developer", "compact"] as const;
+export type ResumeTemplateId = typeof RESUME_TEMPLATE_IDS[number];
+export const DEFAULT_RESUME_TEMPLATE: ResumeTemplateId = "classic";
+
+export function normalizeResumeTemplateId(value: unknown): ResumeTemplateId {
+  return typeof value === "string" && (RESUME_TEMPLATE_IDS as readonly string[]).includes(value)
+    ? value as ResumeTemplateId
+    : DEFAULT_RESUME_TEMPLATE;
+}
+
 export interface DensityLayout {
   fontSizePx: number;
   sectionSpacePx: number;
@@ -112,7 +122,7 @@ export interface ResumeDocument {
   schemaVersion: 2;
   title: string;
   profile: ResumeProfile;
-  theme: { accent: string; density: Density };
+  theme: { accent: string; density: Density; templateId: ResumeTemplateId };
   sections: ResumeSection[];
   updatedAt: string;
 }
@@ -180,7 +190,7 @@ export function createDefaultResume(): ResumeDocument {
     schemaVersion: 2,
     title: "我的中文简历",
     updatedAt: new Date().toISOString(),
-    theme: { accent: "#596d82", density: DEFAULT_DENSITY },
+    theme: { accent: "#596d82", density: DEFAULT_DENSITY, templateId: DEFAULT_RESUME_TEMPLATE },
     profile: {
       name: "林同学",
       headline: "后端开发工程师",
@@ -314,5 +324,6 @@ export function normalizeResumeDocument(value: unknown): ResumeDocument | null {
   if (!isResumeDocument(value)) return null;
   const resume = structuredClone(value);
   resume.theme.density = normalizeDensity(resume.theme.density);
+  resume.theme.templateId = normalizeResumeTemplateId(resume.theme.templateId);
   return resume;
 }

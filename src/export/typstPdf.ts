@@ -2,7 +2,7 @@ import { createTypstCompiler, loadFonts } from "@myriaddreamin/typst.ts";
 import { CompileFormatEnum } from "@myriaddreamin/typst.ts/compiler";
 import * as compilerWrapper from "@myriaddreamin/typst-ts-web-compiler";
 import compilerWasmUrl from "@myriaddreamin/typst-ts-web-compiler/wasm?url";
-import { getDensityLayout, type ContentEntry, type RichTextDocument, type RichTextNode, type ResumeDocument, type ResumeSection } from "../model/resume";
+import { getDensityLayout, type ContentEntry, type RichTextDocument, type RichTextNode, type ResumeDocument, type ResumeSection, type ResumeTemplateId } from "../model/resume";
 
 const asString = (value: string) => JSON.stringify(value);
 const withUnit = (value: number, unit: string) => `${Math.round(value * 100) / 100}${unit}`;
@@ -26,34 +26,29 @@ function photoBytes(photo: string): Uint8Array | null {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
-function heading(title: string) {
-  return `
-#v(6pt)
-#grid(
-  columns: (auto, 1fr),
-  column-gutter: 5pt,
-  align: bottom,
-  text(size: 13pt, weight: "bold", ${asString(title)}),
-  line(length: 100%, stroke: 0.45pt),
-)
-#v(3pt)
-`;
+function heading(title: string, templateId: ResumeTemplateId) {
+  const label = asString(templateId === "developer" ? `// ${title}` : title);
+  if (templateId === "minimal") return `#v(8pt)\n#align(center)[#text(size: 11.5pt, weight: "medium", tracking: 1.4pt, ${label})]\n#v(4pt)\n`;
+  if (templateId === "executive") return `#v(7pt)\n#text(size: 12pt, weight: "bold", fill: accent, ${label})\n#line(length: 100%, stroke: 1.2pt + accent)\n#v(3pt)\n`;
+  if (templateId === "sidebar") return `#v(7pt)\n#grid(columns: (4pt, 1fr), column-gutter: 6pt, rect(width: 4pt, height: 13pt, fill: accent), text(size: 12pt, weight: "bold", fill: accent, ${label}))\n#v(3pt)\n`;
+  if (templateId === "accent") return `#v(7pt)\n#grid(columns: (3pt, 1fr), column-gutter: 6pt, rect(width: 3pt, height: 14pt, fill: accent), text(size: 12.5pt, weight: "bold", ${label}))\n#v(3pt)\n`;
+  if (templateId === "timeline") return `#v(7pt)\n#grid(columns: (7pt, auto, 1fr), column-gutter: 5pt, circle(radius: 3pt, fill: accent), text(size: 12pt, weight: "bold", ${label}), line(length: 100%, stroke: .7pt + accent))\n#v(3pt)\n`;
+  if (templateId === "academic") return `#v(7pt)\n#line(length: 100%, stroke: .45pt)\n#text(size: 11.5pt, weight: "bold", tracking: .7pt, ${label})\n#v(3pt)\n`;
+  if (templateId === "developer") return `#v(7pt)\n#text(font: "Noto Sans CJK SC", size: 11.5pt, weight: "bold", fill: accent, ${label})\n#line(length: 100%, stroke: (dash: "dashed", paint: accent, thickness: .45pt))\n#v(3pt)\n`;
+  if (templateId === "compact") return `#v(5pt)\n#block(width: 100%, fill: rgb("#f1f4f2"), inset: (x: 5pt, y: 2.5pt), stroke: (left: 2.5pt + accent))[#text(size: 11pt, weight: "bold", ${label})]\n#v(2pt)\n`;
+  return `#v(6pt)\n#grid(columns: (auto, 1fr), column-gutter: 5pt, align: bottom, text(size: 13pt, weight: "bold", ${label}), line(length: 100%, stroke: 0.45pt))\n#v(3pt)\n`;
 }
 
-function topLine(left: string, right: string, role = "") {
+function topLine(left: string, right: string, role = "", templateId: ResumeTemplateId = "classic") {
+  const date = templateId === "timeline" && right
+    ? `box(fill: accent, radius: 5pt, inset: (x: 4pt, y: 1pt), text(size: 7.5pt, fill: white, ${asString(right)}))`
+    : `text(size: 8pt, fill: ${templateId === "academic" ? `rgb("#333333")` : "accent"}, ${asString(right)})`;
   return `#grid(
   columns: (1fr, auto),
   [#text(weight: "bold", ${asString(left)})${role ? `${left ? " #h(18pt)" : ""} #text(fill: rgb("#68736c"), ${asString(role)})` : ""}],
-  text(size: 8pt, fill: accent, ${asString(right)}),
+  ${date},
 )
 `;
-}
-
-function bullets(items: string[]) {
-  const visible = items.filter((item) => item.trim());
-  if (!visible.length) return "";
-  const cells = visible.flatMap((item) => [`[#text("•")]`, `[#text(${asString(item)})]`]);
-  return `#grid(columns: (8pt, 1fr), row-gutter: 2.5pt, ${cells.join(",\n")})\n`;
 }
 
 function typstColor(value: unknown): string | null {
@@ -156,61 +151,78 @@ function richTextSource(content: RichTextDocument): string {
   return blockSource(content);
 }
 
-function contentEntrySource(entry: ContentEntry): string {
+function contentEntrySource(entry: ContentEntry, templateId: ResumeTemplateId): string {
   const headingSource = entry.title || entry.subtitle || entry.date
-    ? topLine(entry.title, entry.date, entry.subtitle)
+    ? topLine(entry.title, entry.date, entry.subtitle, templateId)
     : "";
   return `${headingSource}${richTextSource(entry.body)}`;
 }
 
-function sectionSource(section: ResumeSection) {
+function sectionSource(section: ResumeSection, templateId: ResumeTemplateId) {
   if (!section.enabled) return "";
   let body = "";
   switch (section.type) {
     case "education":
-      body = section.items.map((item) => `${topLine(item.school, item.date)}#grid(columns: (1fr, auto), text(${asString([item.major, item.degree].filter(Boolean).join(" | "))}), text(${asString(item.detail)}))\n`).join("#v(4pt)\n");
+      body = section.items.map((item) => `${topLine(item.school, item.date, "", templateId)}#grid(columns: (1fr, auto), text(${asString([item.major, item.degree].filter(Boolean).join(" | "))}), text(${asString(item.detail)}))\n`).join("#v(4pt)\n");
       break;
     case "content":
-      body = section.entries.map(contentEntrySource).join("#v(6pt)\n");
+      body = section.entries.map((entry) => contentEntrySource(entry, templateId)).join("#v(6pt)\n");
       break;
   }
-  return `${heading(section.title)}${body}`;
+  return `${heading(section.title, templateId)}${body}`;
+}
+
+function profileSource(resume: ResumeDocument, templateId: ResumeTemplateId, photoPath: string | null) {
+  const details = resume.profile.details.filter((item) => item.label || item.value);
+  const detailCells = details.map((item) => `[#text(size: 8pt, fill: profile-muted, ${asString(`${item.label}：`)}) #text(size: 8pt, weight: "medium", fill: profile-ink, ${asString(item.value)})]`).join(",\n");
+  const detailGrid = detailCells
+    ? `#v(4pt)\n#grid(columns: (1fr, 1fr, 1fr), column-gutter: 10pt, row-gutter: 2pt, ${detailCells})`
+    : "";
+  const contact = [resume.profile.ageGender, resume.profile.location].filter(Boolean).join("    ");
+  const direct = [resume.profile.phone && `手机 ${resume.profile.phone}`, resume.profile.email && `邮箱 ${resume.profile.email}`].filter(Boolean).join("    ");
+  const photo = photoPath ? `image(${asString(photoPath)}, width: 27mm, height: 35mm, fit: "cover")` : "";
+  const textBlock = `[
+    #text(size: 18pt, weight: "bold", fill: profile-ink, ${asString(resume.profile.name || "姓名")})
+    #linebreak()
+    #text(size: 9.5pt, weight: "bold", fill: profile-accent, ${asString(resume.profile.headline)})
+    #v(5pt)
+    #text(fill: profile-ink, ${asString(contact)})
+    #linebreak()
+    #text(fill: profile-ink, ${asString(direct)})
+    ${detailGrid}
+  ]`;
+  const columns = photo ? "(1fr, 27mm)" : "(1fr,)";
+  const grid = `#grid(columns: ${columns}, column-gutter: 14pt, ${textBlock}${photo ? `, ${photo}` : ""})`;
+
+  if (templateId === "minimal") return `#align(center)[${textBlock}]${photo ? `\n#place(top + right, dx: 0pt, dy: 0pt, ${photo})` : ""}\n#line(length: 100%, stroke: .35pt + rgb("#d6d6d6"))`;
+  if (templateId === "executive") return `#block(width: 100%, fill: accent, inset: 13pt)[#let profile-ink = white\n#let profile-muted = rgb("#dce7ee")\n#let profile-accent = white\n${grid}]`;
+  if (templateId === "sidebar") return `#grid(columns: (42mm, 1fr), column-gutter: 12pt, [#block(width: 100%, fill: accent, inset: 10pt)[#let profile-ink = white\n#let profile-muted = rgb("#dce7ee")\n#let profile-accent = white\n${textBlock}]], [${photo ? `${photo}\n#v(4pt)` : ""}#text(size: 8pt, fill: rgb("#666666"), ${asString(resume.profile.headline)})])`;
+  if (templateId === "accent") return `#grid(columns: (4pt, 1fr${photo ? ", 27mm" : ""}), column-gutter: 12pt, rect(width: 4pt, height: 35mm, fill: accent), ${textBlock}${photo ? `, ${photo}` : ""})`;
+  if (templateId === "academic") return `${grid}\n#line(length: 100%, stroke: .9pt)\n#v(1pt)\n#line(length: 100%, stroke: .3pt)`;
+  if (templateId === "developer") return `#block(width: 100%, fill: rgb("#f3f7f5"), stroke: .4pt + accent, inset: 10pt)[${grid}]`;
+  if (templateId === "compact") return `#block(width: 100%, fill: rgb("#f2f4f3"), inset: 9pt)[${grid}]`;
+  if (templateId === "timeline") return `${grid}\n#line(length: 100%, stroke: 1.2pt + accent)`;
+  return grid;
 }
 
 export function createTypstSource(resume: ResumeDocument): string {
   const density = getDensityLayout(resume.theme.density);
-  const details = resume.profile.details
-    .filter((item) => item.label || item.value)
-    .map((item) => `[#text(fill: rgb("#7a8490"), ${asString(`${item.label}：`)}) #text(weight: "medium", ${asString(item.value)})]`)
-    .join(",\n");
+  const templateId = resume.theme.templateId;
   const photoPath = photoAssetPath(resume.profile.photo);
-  const photo = photoPath
-    ? `image(${asString(photoPath)}, width: 27mm, height: 35mm, fit: "cover")`
-    : `rect(width: 27mm, height: 35mm, fill: rgb("#edf1ee"), inset: 0pt)[#align(center + horizon)[#text(size: 7pt, fill: rgb("#98a39c"), "PHOTO")]]`;
+  const pageMargin = templateId === "minimal" || templateId === "academic" ? "(x: 15mm, y: 11mm)" : templateId === "compact" ? "(x: 11mm, y: 9mm)" : "(x: 12.5mm, y: 10.5mm)";
 
-  return `#set page(paper: "a4", margin: (x: 12.5mm, y: 10.5mm))
+  return `// swift-resume-template: ${templateId}
+#set page(paper: "a4", margin: ${pageMargin})
 #set text(font: "Noto Sans CJK SC", lang: "zh", size: ${withUnit(density.typstFontSizePt, "pt")}, fill: rgb("#303030"))
 #set par(leading: ${withUnit(density.typstLeadingEm, "em")}, spacing: ${withUnit(density.typstGapPt, "pt")})
 #set list(indent: 12pt, body-indent: 4pt, spacing: 1pt)
 #let accent = rgb(${asString(resume.theme.accent)})
+#let profile-ink = rgb("#303030")
+#let profile-muted = rgb("#7a8490")
+#let profile-accent = accent
 
-#grid(
-  columns: (1fr, 27mm),
-  column-gutter: 14pt,
-  [
-    #text(size: 18pt, weight: "bold", ${asString(resume.profile.name || "姓名")})
-    #linebreak()
-    #text(size: 9.5pt, weight: "bold", fill: accent, ${asString(resume.profile.headline)})
-    #v(5pt)
-    #text(${asString([resume.profile.ageGender, resume.profile.location].filter(Boolean).join("    "))})
-    #linebreak()
-    #text(${asString([resume.profile.phone && `手机 ${resume.profile.phone}`, resume.profile.email && `邮箱 ${resume.profile.email}`].filter(Boolean).join("    "))})
-  ],
-  ${photo},
-)
-
-${details ? `${heading("基本信息")}#grid(columns: (1fr, 1fr, 1fr), column-gutter: 12pt, row-gutter: 3pt,\n${details}\n)` : ""}
-${resume.sections.map(sectionSource).join("\n")}
+${profileSource(resume, templateId, photoPath)}
+${resume.sections.map((section) => sectionSource(section, templateId)).join("\n")}
 `;
 }
 

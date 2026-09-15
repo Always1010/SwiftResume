@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { getDensityLayout } from "../model/resume";
-import type { ContentEntry, ResumeDocument, ResumeSection } from "../model/resume";
+import type { ContentEntry, ResumeDocument, ResumeSection, ResumeTemplateId } from "../model/resume";
 import { renderContentRichText } from "../model/contentRichText";
 import { paginatePreviewItems } from "../preview/pagination";
 
@@ -48,35 +48,32 @@ function sectionItems(section: ResumeSection): PreviewFlowItem[] {
   return [];
 }
 
-export function ResumeProfileView({ resume }: { resume: ResumeDocument }) {
+function ResumeProfileContent({ resume }: { resume: ResumeDocument }) {
   const details = resume.profile.details.filter((item) => item.label || item.value);
   return (
-    <>
-      <header className="resume-header">
-        <div className="identity">
-          <h1>{resume.profile.name || "姓名"}</h1>
-          {resume.profile.headline && <p className="headline">{resume.profile.headline}</p>}
-          <div className="contact-row">
-            {resume.profile.ageGender && <span>{resume.profile.ageGender}</span>}
-            {resume.profile.location && <span>{resume.profile.location}</span>}
-          </div>
-          <div className="contact-row">
-            {resume.profile.phone && <span>手机 {resume.profile.phone}</span>}
-            {resume.profile.email && <span>邮箱 {resume.profile.email}</span>}
-          </div>
+    <header className="resume-header">
+      <div className="identity">
+        <h1>{resume.profile.name || "姓名"}</h1>
+        {resume.profile.headline && <p className="headline">{resume.profile.headline}</p>}
+        <div className="contact-row primary-contact-row">
+          {resume.profile.ageGender && <span>{resume.profile.ageGender}</span>}
+          {resume.profile.location && <span>{resume.profile.location}</span>}
         </div>
-        <div className="resume-photo">{resume.profile.photo ? <img src={resume.profile.photo} alt="个人照片" /> : <span>PHOTO</span>}</div>
-      </header>
-      {details.length > 0 && (
-        <section className="resume-flow-section">
-          <SectionHeading>基本信息</SectionHeading>
-          <div className="detail-grid">{details.map((detail) => (
-            <div key={detail.id}><span>{detail.label}：</span><strong>{detail.value}</strong></div>
-          ))}</div>
-        </section>
-      )}
-    </>
+        <div className="contact-row">
+          {resume.profile.phone && <span>手机 {resume.profile.phone}</span>}
+          {resume.profile.email && <span>邮箱 {resume.profile.email}</span>}
+        </div>
+        {details.length > 0 && <div className="profile-detail-grid">{details.map((detail) => (
+          <div key={detail.id}><span>{detail.label}：</span><strong>{detail.value}</strong></div>
+        ))}</div>}
+      </div>
+      <div className={`resume-photo ${resume.profile.photo ? "" : "empty"}`}>{resume.profile.photo && <img src={resume.profile.photo} alt="个人照片" />}</div>
+    </header>
   );
+}
+
+export function ResumeProfileView({ resume }: { resume: ResumeDocument }) {
+  return <ResumeProfileContent resume={resume} />;
 }
 
 export function ResumeSectionView({ section }: { section: ResumeSection }) {
@@ -98,40 +95,8 @@ function buildFlowItems(resume: ResumeDocument): PreviewFlowItem[] {
   const items: PreviewFlowItem[] = [{
     id: "resume-header",
     className: "resume-flow-header",
-    content: (
-      <header className="resume-header">
-        <div className="identity">
-          <h1>{resume.profile.name || "姓名"}</h1>
-          {resume.profile.headline && <p className="headline">{resume.profile.headline}</p>}
-          <div className="contact-row">
-            {resume.profile.ageGender && <span>{resume.profile.ageGender}</span>}
-            {resume.profile.location && <span>{resume.profile.location}</span>}
-          </div>
-          <div className="contact-row">
-            {resume.profile.phone && <span>手机 {resume.profile.phone}</span>}
-            {resume.profile.email && <span>邮箱 {resume.profile.email}</span>}
-          </div>
-        </div>
-        <div className="resume-photo">{resume.profile.photo ? <img src={resume.profile.photo} alt="个人照片" /> : <span>PHOTO</span>}</div>
-      </header>
-    ),
+    content: <ResumeProfileContent resume={resume} />,
   }];
-
-  const details = resume.profile.details.filter((item) => item.label || item.value);
-  if (details.length) {
-    items.push({
-      id: "profile-details",
-      className: "resume-flow-section",
-      content: (
-        <section>
-          <SectionHeading>基本信息</SectionHeading>
-          <div className="detail-grid">{details.map((detail) => (
-            <div key={detail.id}><span>{detail.label}：</span><strong>{detail.value}</strong></div>
-          ))}</div>
-        </section>
-      ),
-    });
-  }
 
   resume.sections.filter((section) => section.enabled).forEach((section) => {
     const contentItems = sectionItems(section);
@@ -154,10 +119,12 @@ function buildFlowItems(resume: ResumeDocument): PreviewFlowItem[] {
 interface ResumePreviewProps {
   resume: ResumeDocument;
   zoom: number;
+  templateId?: ResumeTemplateId;
   onPageCountChange?: (pageCount: number) => void;
 }
 
-export function ResumePreview({ resume, zoom, onPageCountChange }: ResumePreviewProps) {
+export function ResumePreview({ resume, zoom, templateId, onPageCountChange }: ResumePreviewProps) {
+  const activeTemplateId = templateId ?? resume.theme.templateId;
   const measureRef = useRef<HTMLDivElement>(null);
   const flowItems = useMemo(() => buildFlowItems(resume), [resume]);
   const [pages, setPages] = useState<number[][]>(() => [flowItems.map((_, index) => index)]);
@@ -199,7 +166,7 @@ export function ResumePreview({ resume, zoom, onPageCountChange }: ResumePreview
       observer.disconnect();
       page.querySelectorAll("img").forEach((image) => image.removeEventListener("load", measure));
     };
-  }, [flowItems]);
+  }, [activeTemplateId, flowItems]);
 
   useLayoutEffect(() => onPageCountChange?.(pages.length), [onPageCountChange, pages.length]);
 
@@ -223,13 +190,13 @@ export function ResumePreview({ resume, zoom, onPageCountChange }: ResumePreview
         <div className="resume-pages">
           {pages.map((pageItems, pageIndex) => (
             <div className="resume-page-wrap" key={`${pageIndex}-${pageItems.join("-")}`}>
-              <div className="resume-page" style={pageStyle}>{pageItems.map(renderItem)}</div>
+              <div className={`resume-page resume-template-${activeTemplateId}`} data-template={activeTemplateId} data-page-index={pageIndex} style={pageStyle}>{pageItems.map(renderItem)}</div>
               <span className="resume-page-number">第 {pageIndex + 1} 页</span>
             </div>
           ))}
         </div>
       </div>
-      <div ref={measureRef} aria-hidden="true" className="resume-page resume-measure-page" style={pageStyle}>
+      <div ref={measureRef} aria-hidden="true" className={`resume-page resume-measure-page resume-template-${activeTemplateId}`} data-template={activeTemplateId} data-page-index="0" style={pageStyle}>
         {flowItems.map((_, index) => renderItem(index))}
       </div>
     </div>
