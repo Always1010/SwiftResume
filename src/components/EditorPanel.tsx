@@ -203,7 +203,7 @@ function ContentSectionEditor({ section, onChange }: { section: ContentSection; 
               <Field label={labels.subtitle} value={entry.subtitle} placeholder={labels.subtitlePlaceholder} onChange={(subtitle) => replaceEntry({ ...entry, subtitle })} />
               <Field label="时间（选填）" value={entry.date} placeholder="例如：2024.07 – 2024.09" onChange={(date) => replaceEntry({ ...entry, date })} />
             </div>
-            <div className="content-body-label"><span>正文</span><small>支持局部加粗、列表、下划线和链接</small></div>
+            <div className="content-body-label"><span>正文</span><small>支持高级文字格式、行高、缩进、对齐和表格</small></div>
             <ContentBodyEditor entryId={entry.id} content={entry.body} onChange={(body) => replaceEntry({ ...entry, body })} />
           </article>
         ))}

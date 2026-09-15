@@ -32,4 +32,12 @@ describe("rich text helpers", () => {
     expect(html).not.toContain("onclick");
     expect(html).not.toContain("target");
   });
+
+  it("keeps supported paragraph indentation and line height", () => {
+    const html = sanitizeRichText('<p data-indent="2" style="margin-left: 4em; line-height: 1.6; padding-left: 99px">缩进正文</p>');
+    expect(html).toContain("margin-left: 4em");
+    expect(html).toContain("line-height: 1.6");
+    expect(html).not.toContain("padding-left");
+    expect(html).not.toContain("data-indent");
+  });
 });

@@ -49,6 +49,8 @@ function sanitizeStyle(element: Element, value: string): string {
   if (/^(?:left|center|right|justify)$/.test(textAlign)) safe.push(`text-align: ${textAlign}`);
   const lineHeight = probe.style.lineHeight;
   if (/^(?:1|1\.2|1\.4|1\.5|1\.6|1\.8|2)$/.test(lineHeight)) safe.push(`line-height: ${lineHeight}`);
+  const marginLeft = probe.style.marginLeft;
+  if (element.tagName === "P" && /^(?:2|4|6|8|10|12)em$/.test(marginLeft)) safe.push(`margin-left: ${marginLeft}`);
   if ((element.tagName === "TD" || element.tagName === "TH") && /^\d+(?:\.\d+)?px$/.test(probe.style.width)) safe.push(`width: ${probe.style.width}`);
   return safe.join("; ");
 }

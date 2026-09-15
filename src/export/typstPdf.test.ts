@@ -78,4 +78,47 @@ describe("Typst source generator", () => {
     expect(source).toContain("2026");
     expect(source).toContain("稳定维护");
   });
+
+  it("exports advanced rich text formatting and tables", () => {
+    const resume = createDefaultResume();
+    const project = resume.sections.find((section) => section.type === "projects");
+    if (!project || project.type !== "projects") throw new Error("缺少项目模块");
+    project.entries[0].body = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          attrs: { indent: 2, textAlign: "right" },
+          content: [{
+            type: "text",
+            text: "高级格式",
+            marks: [{
+              type: "textStyle",
+              attrs: { fontSize: "14pt", fontWeight: "600", color: "#123456", lineHeight: "1.6" },
+            }, { type: "highlight", attrs: { color: "#fff3a3" } }],
+          }],
+        },
+        {
+          type: "table",
+          content: [{
+            type: "tableRow",
+            content: [
+              { type: "tableCell", content: [{ type: "paragraph", content: [{ type: "text", text: "甲" }] }] },
+              { type: "tableCell", content: [{ type: "paragraph", content: [{ type: "text", text: "乙" }] }] },
+            ],
+          }],
+        },
+      ],
+    };
+
+    const source = createTypstSource(resume);
+    expect(source).toContain("#h(4em)");
+    expect(source).toContain("#align(right)");
+    expect(source).toContain("size: 14pt");
+    expect(source).toContain("weight: 600");
+    expect(source).toContain('rgb("#123456")');
+    expect(source).toContain('highlight(fill: rgb("#fff3a3"))');
+    expect(source).toContain("leading: 0.6em");
+    expect(source).toContain("#grid(columns: (1fr, 1fr)");
+  });
 });
