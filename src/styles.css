@@ -59,6 +59,8 @@ button { cursor: pointer; }
 .danger, .danger-text { color: #b34a4a !important; }
 
 .workspace { display: grid; grid-template-columns: 285px minmax(390px, 440px) minmax(760px, 1fr); height: calc(100vh - 66px); gap: 1px; background: var(--border); }
+.workspace.preview-hidden { grid-template-columns: 285px minmax(560px, 1fr) 52px; }
+.workspace.preview-hidden .editor { padding-inline: clamp(24px, 8vw, 110px); }
 .panel { min-width: 0; overflow-y: auto; background: var(--panel); }
 .sidebar { display: flex; flex-direction: column; padding: 21px 16px 16px; }
 .panel-heading, .editor-title, .subheading-row { display: flex; align-items: center; justify-content: space-between; }
@@ -123,6 +125,13 @@ button { cursor: pointer; }
 .density-switch button.active { color: white; background: var(--green); }
 .accent-picker { display: flex; align-items: center; gap: 6px; color: #718078; font-size: 10px; }
 .accent-picker input { width: 27px; height: 27px; border: 0; padding: 0; background: transparent; }
+.preview-close-button { display: grid; width: 29px; height: 29px; flex: none; place-items: center; border: 1px solid var(--border); border-radius: 8px; padding: 0; color: #758078; background: white; font-size: 18px; line-height: 1; }
+.preview-close-button:hover { border-color: #c6a6a6; color: #a74747; background: #fff7f7; }
+.preview-collapsed { display: flex; align-items: stretch; justify-content: center; overflow: hidden; background: #f6f9f6; }
+.preview-collapsed button { display: flex; width: 100%; align-items: center; justify-content: flex-start; gap: 9px; border: 0; padding: 18px 14px; color: var(--green); background: transparent; writing-mode: vertical-rl; }
+.preview-collapsed button:hover { background: #e9f2ec; }
+.preview-collapsed span { font-size: 17px; }
+.preview-collapsed strong { font-size: 11px; letter-spacing: .08em; }
 .preview-scroller { overflow: auto; padding: 27px 34px 70px; }
 .preview-zoom-stage { width: max-content; margin: 0 auto; zoom: var(--preview-zoom); }
 
@@ -186,6 +195,7 @@ button { cursor: pointer; }
 
 @media (max-width: 1350px) {
   .workspace { grid-template-columns: 245px 390px minmax(690px, 1fr); }
+  .workspace.preview-hidden { grid-template-columns: 245px minmax(520px, 1fr) 52px; }
   .topbar { grid-template-columns: 245px minmax(160px, 1fr) auto; }
   .preview-scroller { padding-inline: 20px; }
 }
