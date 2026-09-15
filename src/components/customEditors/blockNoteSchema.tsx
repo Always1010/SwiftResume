@@ -40,4 +40,3 @@ export const resumeBlockNoteSchema = BlockNoteSchema.create({
 
 export type ResumeBlock = typeof resumeBlockNoteSchema.Block;
 export type ResumePartialBlock = typeof resumeBlockNoteSchema.PartialBlock;
-

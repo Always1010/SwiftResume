@@ -261,6 +261,7 @@ export function ResumePreview({ resume, zoom, onPageCountChange }: ResumePreview
   } as CSSProperties;
   const renderItem = (index: number) => {
     const item = flowItems[index];
+    if (!item) return null;
     return <div key={item.id} data-preview-flow-item className={item.className}>{item.content}</div>;
   };
 
