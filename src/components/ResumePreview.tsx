@@ -60,11 +60,11 @@ function ResumeProfileContent({ resume }: { resume: ResumeDocument }) {
           {resume.profile.location && <span>{resume.profile.location}</span>}
         </div>
         <div className="contact-row">
-          {resume.profile.phone && <span>手机 {resume.profile.phone}</span>}
-          {resume.profile.email && <span>邮箱 {resume.profile.email}</span>}
+          {resume.profile.phone && <span>手机：{resume.profile.phone}</span>}
+          {resume.profile.email && <span>邮箱：{resume.profile.email}</span>}
         </div>
         {details.length > 0 && <div className="profile-detail-grid">{details.map((detail) => (
-          <div key={detail.id}><span>{detail.label}：</span><strong>{detail.value}</strong></div>
+          <div key={detail.id}><span className="profile-detail-label">{detail.label}：</span><span className="profile-detail-value">{detail.value}</span></div>
         ))}</div>}
       </div>
       <div className={`resume-photo ${resume.profile.photo ? "" : "empty"}`}>{resume.profile.photo && <img src={resume.profile.photo} alt="个人照片" />}</div>

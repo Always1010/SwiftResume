@@ -10,6 +10,9 @@ describe("Typst source generator", () => {
     expect(source).toContain("银河级高并发陨石订单处理平台");
     expect(source).toContain("开发工具：");
     expect(source).toContain("#list(");
+    expect(source).toContain("手机：138 0000 0000");
+    expect(source).toContain("邮箱：backend007@example.com");
+    expect(source).not.toContain('weight: "medium", fill: profile-ink');
     expect(source).toContain('image("/profile-photo.png"');
     expect(source).toContain(resume.theme.accent);
     expect(source).not.toContain("基本信息");
