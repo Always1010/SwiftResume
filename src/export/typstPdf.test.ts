@@ -12,6 +12,8 @@ describe("Typst source generator", () => {
     expect(source).toContain("#list(");
     expect(source).toContain("手机：138 0000 0000");
     expect(source).toContain("邮箱：backend007@example.com");
+    expect(source).toContain("学历：本科");
+    expect(source).not.toContain("profile-muted");
     expect(source).not.toContain('weight: "medium", fill: profile-ink');
     expect(source).toContain('image("/profile-photo.png"');
     expect(source).toContain(resume.theme.accent);

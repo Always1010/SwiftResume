@@ -65,7 +65,7 @@ function ResumeProfileContent({ resume }: { resume: ResumeDocument }) {
           {resume.profile.email && <span>邮箱：{resume.profile.email}</span>}
         </div>
         {details.length > 0 && <div className="profile-detail-grid">{details.map((detail) => (
-          <div key={detail.id}><span className="profile-detail-label">{detail.label}：</span><span className="profile-detail-value">{detail.value}</span></div>
+          <div key={detail.id}>{detail.label}：{detail.value}</div>
         ))}</div>}
       </div>
       <div

@@ -11,7 +11,9 @@ describe("ResumeSectionView", () => {
     expect(html).toContain("求职状态");
     expect(html).toContain("手机：138 0000 0000");
     expect(html).toContain("邮箱：backend007@example.com");
-    expect(html).toContain('<span class="profile-detail-value">本科</span>');
+    expect(html).toContain("学历：本科");
+    expect(html).not.toContain("profile-detail-label");
+    expect(html).not.toContain("profile-detail-value");
     expect(html).not.toContain("<strong>本科</strong>");
     expect(html).not.toContain("基本信息");
     expect(html).toContain("profile-detail-grid");
