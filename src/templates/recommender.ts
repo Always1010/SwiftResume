@@ -1,7 +1,7 @@
 import type { ResumeDocument } from "../model/resume";
 import { RESUME_TEMPLATES, type ResumeTemplateDefinition, type ResumeTemplateFamily } from "./registry";
 
-export type CareerScene = "business" | "tech" | "academic" | "creative" | "general";
+export type CareerScene = "business" | "tech" | "academic" | "creative" | "campus" | "public" | "general";
 export type VisualTone = "restrained" | "modern" | "expressive";
 export type LayoutPreference = "single" | "sidebar" | "structured";
 
@@ -23,6 +23,8 @@ const SCENE_FAMILIES: Record<CareerScene, readonly ResumeTemplateFamily[]> = {
   tech: ["tech", "modern", "minimal"],
   academic: ["academic", "classic", "minimal"],
   creative: ["creative", "editorial", "modern"],
+  campus: ["campus", "minimal", "modern"],
+  public: ["public", "classic", "business"],
   general: ["minimal", "modern", "classic", "business"],
 };
 

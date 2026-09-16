@@ -3,6 +3,7 @@ import { CompileFormatEnum } from "@myriaddreamin/typst.ts/compiler";
 import * as compilerWrapper from "@myriaddreamin/typst-ts-web-compiler";
 import compilerWasmUrl from "@myriaddreamin/typst-ts-web-compiler/wasm?url";
 import { DEFAULT_PROFILE_PHOTO, getDensityLayout, type ContentEntry, type RichTextDocument, type RichTextNode, type ResumeDocument, type ResumeSection, type ResumeTemplateId } from "../model/resume";
+import { getResumeTemplate } from "../templates/registry";
 
 const asString = (value: string) => JSON.stringify(value);
 const withUnit = (value: number, unit: string) => `${Math.round(value * 100) / 100}${unit}`;
@@ -256,7 +257,8 @@ function profileSource(resume: ResumeDocument, templateId: ResumeTemplateId, pho
 
 export function createTypstSource(resume: ResumeDocument): string {
   const density = getDensityLayout(resume.theme.density);
-  const templateId = resume.theme.templateId;
+  const selectedTemplateId = resume.theme.templateId;
+  const templateId = getResumeTemplate(selectedTemplateId).renderBase;
   const photoPath = photoAssetPath(resume.profile.photo);
   const pageMargin = ["minimal", "academic", "diplomat", "folio"].includes(templateId)
     ? "(x: 15mm, y: 11mm)"
@@ -264,7 +266,7 @@ export function createTypstSource(resume: ResumeDocument): string {
       ? "(x: 11mm, y: 9mm)"
       : "(x: 12.5mm, y: 10.5mm)";
 
-  return `// swift-resume-template: ${templateId}
+  return `// swift-resume-template: ${selectedTemplateId}
 #set page(paper: "a4", margin: ${pageMargin})
 #set text(font: "Noto Sans CJK SC", lang: "zh", size: ${withUnit(density.typstFontSizePt, "pt")}, fill: rgb("#303030"))
 #set par(leading: ${withUnit(density.typstLeadingEm, "em")}, spacing: ${withUnit(density.typstGapPt, "pt")})

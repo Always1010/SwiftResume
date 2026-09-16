@@ -680,6 +680,58 @@ body.template-thumbnail-body { width: 360px; min-width: 0; height: 510px; overfl
 .resume-template-folio .resume-section-heading::before { content: "0" counter(folio-section); color: var(--resume-accent); font-size: 9px; font-weight: 800; }
 .resume-template-folio .resume-section-heading h2 { font-size: 16px; font-weight: 500; letter-spacing: .08em; }
 .resume-template-folio .resume-section-heading span { height: 1px; background: #111; }
+
+/* Catalog variants let proven layout systems support distinct visual editions. */
+.resume-page.resume-variant-ink { color: #171a18; filter: saturate(.32); }
+.resume-page.resume-variant-ink .identity h1, .resume-page.resume-variant-ink .resume-section-heading h2 { color: #111; }
+.resume-page.resume-variant-ink .resume-section-heading span { background: #252a27; }
+.resume-page.resume-variant-ink .resume-photo { filter: grayscale(1); }
+
+.resume-page.resume-variant-soft { background: #fbfcfb; }
+.resume-page.resume-variant-soft .resume-header { border-radius: 12px; background: color-mix(in srgb, var(--resume-accent), white 93%); }
+.resume-page.resume-variant-soft .resume-section-heading h2 { font-weight: 650; }
+.resume-page.resume-variant-soft .resume-photo { border-radius: 10px; }
+
+.resume-page.resume-variant-sharp { border-top: 4px solid var(--resume-accent); }
+.resume-page.resume-variant-sharp .resume-header { border-radius: 0; }
+.resume-page.resume-variant-sharp .identity h1 { font-weight: 900; letter-spacing: -.045em; }
+.resume-page.resume-variant-sharp .resume-section-heading h2 { text-transform: uppercase; letter-spacing: .08em; }
+.resume-page.resume-variant-sharp .resume-photo { border-radius: 0; }
+
+.resume-page.resume-variant-airy { padding: 14mm 16mm 12mm; }
+.resume-page.resume-variant-airy .resume-header { min-height: 39mm; align-items: center; }
+.resume-page.resume-variant-airy .resume-flow-section { margin-top: calc(var(--section-space) * 1.25); }
+.resume-page.resume-variant-airy .resume-flow-entry { margin-top: calc(var(--entry-space) * 1.12); }
+
+.resume-page.resume-variant-compact { padding: 8mm 10mm; }
+.resume-page.resume-variant-compact .resume-header { padding-block: 3mm; }
+.resume-page.resume-variant-compact .resume-flow-section { margin-top: calc(var(--section-space) * .72); }
+.resume-page.resume-variant-compact .resume-flow-entry { margin-top: calc(var(--entry-space) * .68); }
+.resume-page.resume-variant-compact .resume-section-heading { margin-bottom: 4px; }
+
+.resume-page.resume-variant-bordered { border: 1px solid color-mix(in srgb, var(--resume-accent), #3a423d 45%); box-shadow: inset 0 0 0 4px white, inset 0 0 0 5px color-mix(in srgb, var(--resume-accent), white 55%), 0 8px 30px rgba(42, 55, 46, .16); }
+.resume-page.resume-variant-bordered .resume-header { padding: 5mm; border: 1px solid color-mix(in srgb, var(--resume-accent), white 52%); }
+.resume-page.resume-variant-bordered .resume-section-heading { border-bottom: 1px solid color-mix(in srgb, var(--resume-accent), white 58%); }
+
+.resume-page.resume-variant-colorblock .resume-header { padding: 6mm; color: white; background: var(--resume-accent); }
+.resume-page.resume-variant-colorblock .identity h1, .resume-page.resume-variant-colorblock .headline, .resume-page.resume-variant-colorblock .contact-row, .resume-page.resume-variant-colorblock .profile-detail-label, .resume-page.resume-variant-colorblock .profile-detail-value { color: white; }
+.resume-page.resume-variant-colorblock .resume-photo { border: 2px solid rgba(255, 255, 255, .78); }
+.resume-page.resume-variant-colorblock .resume-section-heading h2 { color: var(--resume-accent); }
+
+.resume-page.resume-variant-serif { font-family: Georgia, "Noto Serif CJK SC", SimSun, serif; }
+.resume-page.resume-variant-serif .identity h1 { font-weight: 600; letter-spacing: .035em; }
+.resume-page.resume-variant-serif .headline { font-style: italic; font-weight: 500; }
+.resume-page.resume-variant-serif .resume-section-heading h2 { font-weight: 600; letter-spacing: .1em; }
+
+.resume-page.resume-variant-grid { background-color: #fbfcfb; background-image: linear-gradient(color-mix(in srgb, var(--resume-accent), transparent 94%) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--resume-accent), transparent 95%) 1px, transparent 1px); background-size: 18px 18px; }
+.resume-page.resume-variant-grid .resume-header, .resume-page.resume-variant-grid .resume-flow-section { padding: 5mm; border: 1px solid color-mix(in srgb, var(--resume-accent), white 68%); background: rgba(255, 255, 255, .9); }
+.resume-page.resume-variant-grid .resume-flow-section { padding: 7px 9px; }
+
+.resume-page.resume-variant-round .resume-header { padding: 6mm; border-radius: 18px; background: color-mix(in srgb, var(--resume-accent), white 91%); }
+.resume-page.resume-variant-round .resume-flow-section { padding: 9px 11px; border: 1px solid color-mix(in srgb, var(--resume-accent), white 78%); border-radius: 14px; background: white; }
+.resume-page.resume-variant-round .resume-section-heading h2, .resume-page.resume-variant-round .entry-topline time { border-radius: 999px; }
+.resume-page.resume-variant-round .resume-photo { border-radius: 16px; }
+
 .resume-editor-canvas .profile-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 12px; }
 .resume-editor-canvas .profile-detail-grid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 

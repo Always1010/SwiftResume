@@ -129,7 +129,7 @@ describe("resume model", () => {
     expect(normalizeResumeDocument(resume)?.theme.templateId).toBe("classic");
     resume.theme.templateId = "unknown";
     expect(normalizeResumeDocument(resume)?.theme.templateId).toBe("classic");
-    expect(RESUME_TEMPLATE_IDS).toHaveLength(29);
+    expect(RESUME_TEMPLATE_IDS).toHaveLength(100);
   });
 
   it("adds non-destructive photo settings to older documents without changing their photo", () => {

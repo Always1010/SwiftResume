@@ -14,6 +14,8 @@ const SCENES: readonly { value: CareerScene; label: string; detail: string }[] =
   { value: "tech", label: "技术研发", detail: "开发、工程、数据、产品" },
   { value: "academic", label: "学术教育", detail: "科研、教师、深造申请" },
   { value: "creative", label: "设计创意", detail: "设计、媒体、品牌、内容" },
+  { value: "campus", label: "校招实习", detail: "应届、实习、奖学金申请" },
+  { value: "public", label: "公共事业", detail: "公务、事业单位、国企、医疗" },
   { value: "general", label: "通用求职", detail: "校招、运营、行政、综合岗位" },
 ] as const;
 
