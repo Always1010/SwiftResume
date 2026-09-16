@@ -7,7 +7,7 @@ describe("Typst source generator", () => {
     const resume = createDefaultResume();
     const source = createTypstSource(resume);
     expect(source).toContain("教育背景");
-    expect(source).toContain("高并发订单处理平台");
+    expect(source).toContain("银河级高并发陨石订单处理平台");
     expect(source).toContain("开发工具：");
     expect(source).toContain("#list(");
     expect(source).toContain('image("/profile-photo.png"');
@@ -21,7 +21,7 @@ describe("Typst source generator", () => {
       resume.theme.templateId = templateId;
       const source = createTypstSource(resume);
       expect(source).toContain(`swift-resume-template: ${templateId}`);
-      expect(source).toContain("民族");
+      expect(source).toContain("求职状态");
       expect(source).not.toContain("基本信息");
       return source;
     });
