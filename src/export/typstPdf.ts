@@ -200,12 +200,12 @@ function sectionSource(section: ResumeSection, templateId: ResumeTemplateId) {
 
 function profileSource(resume: ResumeDocument, templateId: ResumeTemplateId, photoPath: string | null) {
   const details = resume.profile.details.filter((item) => item.label || item.value);
-  const detailCells = details.map((item) => `[#text(size: 8pt, fill: profile-muted, ${asString(`${item.label}：`)}) #text(size: 8pt, weight: "medium", fill: profile-ink, ${asString(item.value)})]`).join(",\n");
+  const detailCells = details.map((item) => `[#text(size: 8pt, fill: profile-muted, ${asString(`${item.label}：`)}) #text(size: 8pt, fill: profile-ink, ${asString(item.value)})]`).join(",\n");
   const detailGrid = detailCells
     ? `#v(4pt)\n#grid(columns: (1fr, 1fr, 1fr), column-gutter: 10pt, row-gutter: 2pt, ${detailCells})`
     : "";
   const contact = [resume.profile.ageGender, resume.profile.location].filter(Boolean).join("    ");
-  const direct = [resume.profile.phone && `手机 ${resume.profile.phone}`, resume.profile.email && `邮箱 ${resume.profile.email}`].filter(Boolean).join("    ");
+  const direct = [resume.profile.phone && `手机：${resume.profile.phone}`, resume.profile.email && `邮箱：${resume.profile.email}`].filter(Boolean).join("    ");
   const photo = photoPath ? `image(${asString(photoPath)}, width: 27mm, height: 35mm, fit: "cover")` : "";
   const textBlock = `[
     #text(size: 18pt, weight: "bold", fill: profile-ink, ${asString(resume.profile.name || "姓名")})
