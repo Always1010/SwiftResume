@@ -3,17 +3,9 @@ import type { ContentEntry, ContentSection, EducationSection, ProfilePhotoCrop, 
 import { createContentEntry, DEFAULT_PROFILE_PHOTO_CROP } from "../model/resume";
 import { createCroppedPhoto, drawCroppedPhoto, loadPhotoImage } from "../model/profilePhoto";
 import { ContentBodyEditor } from "./customEditors/ContentBodyEditor";
+import { PhotoBackgroundPicker } from "./PhotoBackgroundPicker";
 
 const makeId = () => crypto.randomUUID();
-
-const PHOTO_BACKGROUNDS = [
-  { label: "透明", value: "transparent" },
-  { label: "白色", value: "#FFFFFF" },
-  { label: "蓝色", value: "#438EDB" },
-  { label: "浅蓝", value: "#DCEEFF" },
-  { label: "红色", value: "#D94141" },
-  { label: "浅灰", value: "#F2F4F7" },
-] as const;
 
 interface EditorPanelProps {
   resume: ResumeDocument;
@@ -160,8 +152,6 @@ function ProfileEditor({ profile, onChange }: { profile: ResumeProfile; onChange
     onChange({ ...profile, photo, photoSource: cropSource ?? profile.photoSource, photoCrop: crop });
     setCropSource(null);
   };
-  const customBackground = /^#[0-9a-f]{6}$/i.test(profile.photoBackground) ? profile.photoBackground : "#FFFFFF";
-
   return (
     <>
       <div className="editor-title"><div><span className="eyebrow">固定模块</span><h2>个人信息</h2></div></div>
@@ -185,24 +175,7 @@ function ProfileEditor({ profile, onChange }: { profile: ResumeProfile; onChange
             {profile.photo && <button type="button" className="text-button danger-text" onClick={removePhoto}>移除</button>}
           </div>
           <div className="photo-background-control">
-            <span>照片底色</span>
-            <div className="photo-background-options">
-              {PHOTO_BACKGROUNDS.map((option) => (
-                <button
-                  type="button"
-                  key={option.value}
-                  className={`${option.value === "transparent" ? "transparent-grid" : ""} ${profile.photoBackground === option.value ? "selected" : ""}`}
-                  style={option.value === "transparent" ? undefined : { backgroundColor: option.value }}
-                  aria-label={`${option.label}背景`}
-                  title={option.label}
-                  onClick={() => update("photoBackground", option.value)}
-                />
-              ))}
-              <label className="photo-custom-color" title="自定义背景色">
-                <input type="color" value={customBackground} aria-label="自定义照片背景色" onChange={(event) => update("photoBackground", event.target.value.toUpperCase())} />
-                <span>自定义</span>
-              </label>
-            </div>
+            <PhotoBackgroundPicker value={profile.photoBackground} label="照片底色" onChange={(value) => update("photoBackground", value)} />
             <p className="photo-background-hint">如需更换人像底色，请上传带透明背景的图片；底色只会显示在图片的透明区域。</p>
           </div>
         </div>
