@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { getDensityLayout } from "../model/resume";
 import type { ContentEntry, ResumeDocument, ResumeSection, ResumeTemplateId } from "../model/resume";
+import { getResumeTemplate } from "../templates/registry";
 import { renderContentRichText } from "../model/contentRichText";
 import { paginatePreviewItems } from "../preview/pagination";
 
@@ -130,6 +131,8 @@ interface ResumePreviewProps {
 
 export function ResumePreview({ resume, zoom, templateId, onPageCountChange }: ResumePreviewProps) {
   const activeTemplateId = templateId ?? resume.theme.templateId;
+  const activeTemplate = getResumeTemplate(activeTemplateId);
+  const templateClasses = `resume-template-${activeTemplate.renderBase} resume-variant-${activeTemplate.styleVariant} resume-template-${activeTemplateId}`;
   const measureRef = useRef<HTMLDivElement>(null);
   const flowItems = useMemo(() => buildFlowItems(resume), [resume]);
   const [pages, setPages] = useState<number[][]>(() => [flowItems.map((_, index) => index)]);
@@ -195,13 +198,13 @@ export function ResumePreview({ resume, zoom, templateId, onPageCountChange }: R
         <div className="resume-pages">
           {pages.map((pageItems, pageIndex) => (
             <div className="resume-page-wrap" key={`${pageIndex}-${pageItems.join("-")}`}>
-              <div className={`resume-page resume-template-${activeTemplateId}`} data-template={activeTemplateId} data-page-index={pageIndex} style={pageStyle}>{pageItems.map(renderItem)}</div>
+              <div className={`resume-page ${templateClasses}`} data-template={activeTemplateId} data-page-index={pageIndex} style={pageStyle}>{pageItems.map(renderItem)}</div>
               <span className="resume-page-number">第 {pageIndex + 1} 页</span>
             </div>
           ))}
         </div>
       </div>
-      <div ref={measureRef} aria-hidden="true" className={`resume-page resume-measure-page resume-template-${activeTemplateId}`} data-template={activeTemplateId} data-page-index="0" style={pageStyle}>
+      <div ref={measureRef} aria-hidden="true" className={`resume-page resume-measure-page ${templateClasses}`} data-template={activeTemplateId} data-page-index="0" style={pageStyle}>
         {flowItems.map((_, index) => renderItem(index))}
       </div>
     </div>

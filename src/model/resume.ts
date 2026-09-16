@@ -8,6 +8,16 @@ export const RESUME_TEMPLATE_IDS = [
   "classic", "minimal", "executive", "sidebar", "accent", "timeline", "academic", "developer", "compact",
   "newspaper", "swiss", "magazine", "blueprint", "japanese", "archive", "nordic", "bauhaus", "index",
   "monochrome", "gradient", "terminal", "ledger", "diplomat", "studio", "ribbon", "capsule", "split", "metro", "folio",
+  "boardroom", "consultant", "finance", "corporate", "strategy", "banking",
+  "pure", "whitespace", "zen", "linen", "quiet", "contour",
+  "urban", "horizon", "modular", "signal",
+  "code-grid", "data-lab", "circuit", "cloud", "system", "engineer", "cyber",
+  "research", "thesis", "scholar", "lecture", "laboratory", "journal", "citation", "campus-faculty", "doctoral",
+  "editorial", "broadsheet", "column", "headline", "gazette", "typecraft",
+  "canvas", "mosaic", "prism", "poster", "gallery",
+  "heritage", "serif", "ivory", "gentleman", "manuscript", "seal", "copper", "tradition",
+  "freshman", "graduate", "internship", "campus", "youth", "starter", "bright", "club", "scholarship", "first-job",
+  "civil-service", "institution", "legal", "medical", "teacher", "public-sector", "policy", "formal", "administration", "state-owned",
 ] as const;
 export type ResumeTemplateId = typeof RESUME_TEMPLATE_IDS[number];
 export type ResumeCreationTemplate = "default" | "blank";
