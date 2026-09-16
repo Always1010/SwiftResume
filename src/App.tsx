@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { BackupSetupPrompt } from "./components/BackupSetupPrompt";
 import { HistoryPanel } from "./components/HistoryPanel";
 import { NewResumeDialog } from "./components/NewResumeDialog";
+import { PhotoBackgroundPicker } from "./components/PhotoBackgroundPicker";
 import { ResumeEditorCanvas } from "./components/ResumeEditorCanvas";
 import { ResumePreview } from "./components/ResumePreview";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -483,6 +484,12 @@ export function App() {
                 <output>{resume.theme.density}</output>
               </label>
               <label className="accent-picker" title="强调色"><span>配色</span><input type="color" value={resume.theme.accent} onChange={(event) => dispatch({ type: "update-theme", value: { accent: event.target.value } })} /></label>
+              <PhotoBackgroundPicker
+                compact
+                value={resume.profile.photoBackground}
+                disabled={!resume.profile.photo}
+                onChange={(photoBackground) => dispatch({ type: "update-profile", value: { ...resume.profile, photoBackground } })}
+              />
             </div>
             <ResumePreview resume={resume} zoom={settings.previewZoom} onPageCountChange={handlePageCount} />
           </section>

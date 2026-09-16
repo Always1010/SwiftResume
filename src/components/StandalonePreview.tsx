@@ -4,12 +4,23 @@ import type { ResumeDocument } from "../model/resume";
 import { loadResumeById, saveResumeById } from "../storage/resumeStorage";
 import { usePreviewSubscriber } from "../sync/previewSync";
 import { getResumeTemplate } from "../templates/registry";
+import { PhotoBackgroundPicker } from "./PhotoBackgroundPicker";
 import { ResumePreview } from "./ResumePreview";
 import { TemplateGallery } from "./TemplateGallery";
 
 const PAPER_WIDTH_PX = 794;
 const MIN_ZOOM = 50;
 const MAX_ZOOM = 140;
+
+interface DraftAppearance {
+  theme: ResumeDocument["theme"];
+  photoBackground: string;
+}
+
+const appearanceFromResume = (resume: ResumeDocument): DraftAppearance => ({
+  theme: resume.theme,
+  photoBackground: resume.profile.photoBackground,
+});
 
 export function StandalonePreview({ resumeId }: { resumeId: string }) {
   const [resume, setResume] = useState<ResumeDocument | null>(null);
@@ -22,13 +33,13 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
   const [savingStyle, setSavingStyle] = useState(false);
   const [styleDirty, setStyleDirty] = useState(false);
   const [styleError, setStyleError] = useState("");
-  const [draftTheme, setDraftTheme] = useState<ResumeDocument["theme"] | null>(null);
+  const [draftAppearance, setDraftAppearance] = useState<DraftAppearance | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const styleDirtyRef = useRef(false);
 
   const acceptResume = useCallback((document: ResumeDocument) => {
     setResume(document);
-    if (!styleDirtyRef.current) setDraftTheme(document.theme);
+    if (!styleDirtyRef.current) setDraftAppearance(appearanceFromResume(document));
   }, []);
   const publishCommittedResume = usePreviewSubscriber(resumeId, acceptResume);
 
@@ -42,7 +53,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
       if (!active) return;
       if (document) {
         setResume(document);
-        if (!styleDirtyRef.current) setDraftTheme(document.theme);
+        if (!styleDirtyRef.current) setDraftAppearance(appearanceFromResume(document));
       }
       else setError("找不到这份简历，它可能已经被删除。");
     }).catch(() => active && setError("读取简历失败，请返回编辑页面后重试。"));
@@ -64,8 +75,12 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
 
   const zoom = fitWidth ? fitZoom : manualZoom;
   const title = useMemo(() => resume?.title || "独立预览", [resume?.title]);
-  const previewResume = useMemo(() => resume && draftTheme ? { ...resume, theme: draftTheme } : resume, [draftTheme, resume]);
-  const selectedTemplate = draftTheme ? getResumeTemplate(draftTheme.templateId) : null;
+  const previewResume = useMemo(() => resume && draftAppearance ? {
+    ...resume,
+    theme: draftAppearance.theme,
+    profile: { ...resume.profile, photoBackground: draftAppearance.photoBackground },
+  } : resume, [draftAppearance, resume]);
+  const selectedTemplate = draftAppearance ? getResumeTemplate(draftAppearance.theme.templateId) : null;
   useEffect(() => { document.title = `${title} · SwiftResume 预览`; }, [title]);
 
   const adjustZoom = (delta: number) => {
@@ -73,22 +88,31 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
     setManualZoom((current) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, current + delta)));
   };
   const updatePageCount = useCallback((value: number) => setPageCount(value), []);
-  const updateDraftTheme = (change: Partial<ResumeDocument["theme"]>) => {
-    if (!resume || !draftTheme) return;
-    const next = { ...draftTheme, ...change };
-    const dirty = next.templateId !== resume.theme.templateId
-      || next.density !== resume.theme.density
-      || next.accent !== resume.theme.accent;
+  const updateDraftAppearance = (change: { theme?: Partial<ResumeDocument["theme"]>; photoBackground?: string }) => {
+    if (!resume || !draftAppearance) return;
+    const next: DraftAppearance = {
+      theme: { ...draftAppearance.theme, ...change.theme },
+      photoBackground: change.photoBackground ?? draftAppearance.photoBackground,
+    };
+    const dirty = next.theme.templateId !== resume.theme.templateId
+      || next.theme.density !== resume.theme.density
+      || next.theme.accent !== resume.theme.accent
+      || next.photoBackground !== resume.profile.photoBackground;
     styleDirtyRef.current = dirty;
     setStyleDirty(dirty);
     setStyleError("");
-    setDraftTheme(next);
+    setDraftAppearance(next);
   };
   const saveCurrentStyle = async () => {
-    if (!resume || !draftTheme || !styleDirty) return;
+    if (!resume || !draftAppearance || !styleDirty) return;
     setSavingStyle(true);
     setStyleError("");
-    const nextResume: ResumeDocument = { ...resume, theme: draftTheme, updatedAt: new Date().toISOString() };
+    const nextResume: ResumeDocument = {
+      ...resume,
+      theme: draftAppearance.theme,
+      profile: { ...resume.profile, photoBackground: draftAppearance.photoBackground },
+      updatedAt: new Date().toISOString(),
+    };
     try {
       await saveResumeById(resumeId, nextResume);
       styleDirtyRef.current = false;
@@ -136,18 +160,24 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
         </div>
       </header>
       <div className="standalone-preview-workspace">
-        {draftTheme && previewResume && <TemplateGallery selectedId={draftTheme.templateId} resume={previewResume} onSelect={(templateId) => updateDraftTheme({ templateId })} />}
+        {draftAppearance && previewResume && <TemplateGallery selectedId={draftAppearance.theme.templateId} resume={previewResume} onSelect={(templateId) => updateDraftAppearance({ theme: { templateId } })} />}
         <section className="standalone-preview-main">
-          {draftTheme && (
+          {draftAppearance && (
             <div className="standalone-appearance-bar">
               <div className="standalone-template-summary"><strong>{selectedTemplate?.name}</strong><span>{selectedTemplate?.description}</span></div>
               <label className="density-control">
                 <span>紧凑</span>
-                <input aria-label="独立预览排版密度" type="range" min="0" max="100" step="1" value={draftTheme.density} onChange={(event) => updateDraftTheme({ density: Number(event.target.value) })} />
+                <input aria-label="独立预览排版密度" type="range" min="0" max="100" step="1" value={draftAppearance.theme.density} onChange={(event) => updateDraftAppearance({ theme: { density: Number(event.target.value) } })} />
                 <span>宽松</span>
-                <output>{draftTheme.density}</output>
+                <output>{draftAppearance.theme.density}</output>
               </label>
-              <label className="accent-picker" title="强调色"><span>配色</span><input aria-label="独立预览配色" type="color" value={draftTheme.accent} onChange={(event) => updateDraftTheme({ accent: event.target.value })} /></label>
+              <label className="accent-picker" title="强调色"><span>配色</span><input aria-label="独立预览配色" type="color" value={draftAppearance.theme.accent} onChange={(event) => updateDraftAppearance({ theme: { accent: event.target.value } })} /></label>
+              <PhotoBackgroundPicker
+                compact
+                value={draftAppearance.photoBackground}
+                disabled={!resume?.profile.photo}
+                onChange={(photoBackground) => updateDraftAppearance({ photoBackground })}
+              />
               {styleError && <span className="standalone-style-error">{styleError}</span>}
             </div>
           )}
