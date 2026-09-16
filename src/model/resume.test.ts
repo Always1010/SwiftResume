@@ -23,6 +23,9 @@ describe("resume model", () => {
     expect(resume.schemaVersion).toBe(3);
     expect(resume.theme.templateId).toBe("classic");
     expect(resume.profile.photo).toBe(DEFAULT_PROFILE_PHOTO);
+    expect(resume.profile.photoSource).toBe(DEFAULT_PROFILE_PHOTO);
+    expect(resume.profile.photoBackground).toBe("transparent");
+    expect(resume.profile.photoCrop).toEqual({ zoom: 1, offsetX: 0, offsetY: 0 });
     const education = resume.sections.find((section) => section.title === "教育背景");
     expect(education?.type).toBe("education");
     if (education?.type === "education") {
@@ -127,6 +130,19 @@ describe("resume model", () => {
     resume.theme.templateId = "unknown";
     expect(normalizeResumeDocument(resume)?.theme.templateId).toBe("classic");
     expect(RESUME_TEMPLATE_IDS).toHaveLength(29);
+  });
+
+  it("adds non-destructive photo settings to older documents without changing their photo", () => {
+    const legacy = createDefaultResume() as unknown as { profile: Record<string, unknown> };
+    const originalPhoto = legacy.profile.photo;
+    delete legacy.profile.photoSource;
+    delete legacy.profile.photoBackground;
+    delete legacy.profile.photoCrop;
+    const normalized = normalizeResumeDocument(legacy);
+    expect(normalized?.profile.photo).toBe(originalPhoto);
+    expect(normalized?.profile.photoSource).toBe(originalPhoto);
+    expect(normalized?.profile.photoBackground).toBe("transparent");
+    expect(normalized?.profile.photoCrop).toEqual({ zoom: 1, offsetX: 0, offsetY: 0 });
   });
 
   it("normalizes density values and interpolates layout continuously", () => {

@@ -17,6 +17,13 @@ describe("ResumeSectionView", () => {
     expect(html).toContain("profile-detail-grid");
   });
 
+  it("renders the configured profile photo background color", () => {
+    const resume = createDefaultResume();
+    resume.profile.photoBackground = "#D94141";
+    const html = renderToStaticMarkup(<ResumeProfileView resume={resume} />);
+    expect(html).toContain("background-color:#D94141");
+  });
+
   it("renders a custom module as body-only when all heading fields are blank", () => {
     const section = createSection("content");
     if (section.type !== "content") throw new Error("expected content section");

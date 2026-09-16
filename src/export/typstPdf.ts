@@ -206,7 +206,10 @@ function profileSource(resume: ResumeDocument, templateId: ResumeTemplateId, pho
     : "";
   const contact = [resume.profile.ageGender, resume.profile.location].filter(Boolean).join("    ");
   const direct = [resume.profile.phone && `手机：${resume.profile.phone}`, resume.profile.email && `邮箱：${resume.profile.email}`].filter(Boolean).join("    ");
-  const photo = photoPath ? `image(${asString(photoPath)}, width: 27mm, height: 35mm, fit: "cover")` : "";
+  const photoImage = photoPath ? `image(${asString(photoPath)}, width: 27mm, height: 35mm, fit: "cover")` : "";
+  const photo = photoImage && /^#[0-9a-f]{6}$/i.test(resume.profile.photoBackground)
+    ? `block(width: 27mm, height: 35mm, fill: rgb(${asString(resume.profile.photoBackground)}), ${photoImage})`
+    : photoImage;
   const textBlock = `[
     #text(size: 18pt, weight: "bold", fill: profile-ink, ${asString(resume.profile.name || "姓名")})
     #linebreak()
