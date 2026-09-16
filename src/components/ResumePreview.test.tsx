@@ -7,7 +7,7 @@ import { ResumeProfileView, ResumeSectionView } from "./ResumePreview";
 describe("ResumeSectionView", () => {
   it("keeps extended personal details inside the profile header without a basic-info section", () => {
     const html = renderToStaticMarkup(<ResumeProfileView resume={createDefaultResume()} />);
-    expect(html).toContain("民族");
+    expect(html).toContain("学历");
     expect(html).toContain("求职状态");
     expect(html).not.toContain("基本信息");
     expect(html).toContain("profile-detail-grid");

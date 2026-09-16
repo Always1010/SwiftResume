@@ -10,6 +10,7 @@ export const RESUME_TEMPLATE_IDS = [
   "monochrome", "gradient", "terminal", "ledger", "diplomat", "studio", "ribbon", "capsule", "split", "metro", "folio",
 ] as const;
 export type ResumeTemplateId = typeof RESUME_TEMPLATE_IDS[number];
+export type ResumeCreationTemplate = "default" | "blank";
 export const DEFAULT_RESUME_TEMPLATE: ResumeTemplateId = "classic";
 export const DEFAULT_PROFILE_PHOTO = "./sample/fictional-engineer.png";
 
@@ -166,7 +167,7 @@ function projectBody(tools: string, description: string, items: string[]): RichT
     content: [
       paragraph([text("开发工具：", true), text(tools)]),
       paragraph([text("项目描述：", true), text(description)]),
-      paragraph([text("主要内容：", true)]),
+      paragraph([text("主要工作：", true)]),
       bulletList(items),
     ],
   };
@@ -182,7 +183,7 @@ function bulletBody(items: string[]): RichTextDocument {
 function selfEvaluationBody(): RichTextDocument {
   return {
     type: "doc",
-    content: [paragraph([text("具备扎实的后端开发基础和良好的工程实践能力，能够独立完成需求分析、技术设计、功能开发和问题排查。重视代码质量与系统稳定性，面对复杂问题能够主动分析并持续推进解决；具备良好的沟通协作意识，能够与产品、前端和测试人员共同完成项目交付。")])],
+    content: [paragraph([text("具备扎实的后端开发基础和良好的工程实践能力，能够独立完成需求分析、技术设计、功能开发、问题排查和会议纪要阅读。重视代码质量与系统稳定性，提交代码前通常会认真检查，提交代码后会更加认真地检查。面对复杂问题能够主动分析并持续推进解决，在确实无法解决时也能准确找到最了解该问题的同事。具备良好的沟通协作意识，能够与产品、前端和测试人员友好交流，并在需求发生第六次变化后继续保持基本礼貌。")])],
   };
 }
 
@@ -193,21 +194,20 @@ export function createContentEntry(): ContentEntry {
 export function createDefaultResume(): ResumeDocument {
   return {
     schemaVersion: 3,
-    title: "我的中文简历",
+    title: "搞笑反差示例简历",
     updatedAt: new Date().toISOString(),
     theme: { accent: "#596d82", density: DEFAULT_DENSITY, templateId: DEFAULT_RESUME_TEMPLATE },
     profile: {
-      name: "林同学",
-      headline: "后端开发工程师",
+      name: "林同学（BACKEND-007）",
+      headline: "后端开发工程师｜擅长把线上事故解释成预期之外的压力测试",
       ageGender: "24岁 · 男",
-      location: "现居：上海",
+      location: "现居：X省",
       phone: "138 0000 0000",
-      email: "hello@example.com",
+      email: "backend007@example.com",
       photo: DEFAULT_PROFILE_PHOTO,
       details: [
-        { id: makeId(), label: "民族", value: "汉族" },
         { id: makeId(), label: "学历", value: "本科" },
-        { id: makeId(), label: "求职状态", value: "在职，考虑机会" },
+        { id: makeId(), label: "求职状态", value: "在职，服务器允许的话可以随时到岗" },
       ],
     },
     sections: [
@@ -216,7 +216,7 @@ export function createDefaultResume(): ResumeDocument {
         type: "education",
         title: "教育背景",
         enabled: true,
-        items: [{ id: makeId(), school: "中国深空技术探索大学", date: "2020.09 – 2024.06", major: "计算机科学与技术", degree: "本科", detail: "GPA 3.7/4.0 · 专业前 15%" }],
+        items: [{ id: makeId(), school: "X省理工学院", date: "2020.09 – 2024.06", major: "计算机科学与技术", degree: "本科", detail: "GPA 3.7/4.0，专业前 15%；主修数据结构、操作系统、计算机网络、数据库原理，以及《如何在截止日期前假装一切尽在掌握》" }],
       },
       {
         id: makeId(),
@@ -226,10 +226,13 @@ export function createDefaultResume(): ResumeDocument {
         entries: [{
           id: makeId(), title: "", subtitle: "", date: "", body: bulletBody([
             "熟练掌握 Java，理解集合、并发编程、JVM 内存模型及常见性能调优方法。",
-            "熟悉 Spring Boot、Spring MVC、MyBatis、Spring Cloud 等开发框架。",
-            "熟悉 MySQL、Redis、RabbitMQ 和 Elasticsearch 等常用数据存储与中间件。",
-            "熟悉 Linux、Docker、Git、Maven，能够完成服务部署和线上问题排查。",
-            "了解微服务架构、分布式事务、限流降级、缓存一致性和高并发系统设计。",
+            "熟悉 Spring Boot、Spring MVC、MyBatis、Spring Cloud，能够熟练创建项目并解决创建项目后出现的问题。",
+            "熟悉 MySQL，掌握数据库设计、索引优化、慢查询分析，以及在执行没有条件的更新语句之前反复确认三次。",
+            "熟悉 Redis，能够处理缓存穿透、缓存击穿和同事突然把缓存全部清空。",
+            "熟悉 RabbitMQ、Elasticsearch 等中间件，知道消息可能丢、可能重复，也可能只是测试人员没刷新页面。",
+            "熟悉 Linux、Docker、Git、Maven，能够在服务器上使用命令行表现出经验丰富的样子。",
+            "了解微服务、分布式事务、限流降级和高并发系统设计，也了解服务拆得太多之后没人知道请求去了哪里。",
+            "具备良好的数据结构与算法基础，能够在业务代码中熟练使用 HashMap，并努力寻找使用其他数据结构的机会。",
           ])
         }],
       },
@@ -240,17 +243,22 @@ export function createDefaultResume(): ResumeDocument {
         enabled: true,
         entries: [
           {
-            id: makeId(), title: "远星云图科技有限公司", subtitle: "后端开发工程师", date: "2024.07 – 至今", body: bulletBody([
-              "负责企业协作平台的后端功能开发，参与需求评审、技术设计、编码测试及上线部署。",
-              "使用 Spring Boot、MySQL 和 Redis 完成订单、权限和消息通知等核心模块。",
-              "优化批量查询和缓存策略，将部分高频接口的平均响应时间由 420ms 降低至 160ms。",
-              "参与服务监控与告警体系建设，完善异常日志、链路追踪和线上问题处理流程。",
+            id: makeId(), title: "银河系第三旋臂深空技术探索有限公司", subtitle: "后端开发工程师", date: "2024.07 – 至今", body: bulletBody([
+              "负责星际协作平台的后端开发与日常维护，保证地球端、月球端和产品经理端的数据基本一致。",
+              "使用 Spring Boot、MySQL 和 Redis 完成航线订单、空间站权限及跨行星消息通知模块。",
+              "优化批量查询与缓存策略，将高频接口平均响应时间由 12 秒降低至 180ms，用户终于不再以为系统正在思考人生。",
+              "设计服务监控和告警体系，使开发人员能够在用户发现故障前 3 秒收到告警。",
+              "参与线上问题排查，曾用一下午确认某个严重故障的根本原因是网线没有插紧。",
+              "编写接口文档和技术方案，确保半年后的自己至少有 20% 的概率看懂当时的设计。",
             ])
           },
           {
-            id: makeId(), title: "极光智联软件有限公司", subtitle: "Java 开发实习生", date: "2023.06 – 2023.12", body: bulletBody([
-              "参与内部运营管理系统的接口开发，完成客户、合同和数据报表相关功能。",
-              "根据产品需求编写接口文档、数据库表结构和单元测试，并协助排查数据异常。",
+            id: makeId(), title: "海平面以下数据存储技术探索有限公司", subtitle: "Java 开发实习生", date: "2023.06 – 2023.12", body: bulletBody([
+              "参与深海数据管理系统开发，负责客户、合同、海底机房和防水键盘相关接口。",
+              "设计数据备份策略，将重要数据同时保存三份，其中两份用于备份，另一份用于备份前两份。",
+              "协助排查数据异常，最终发现测试环境、预发布环境和生产环境使用了三个完全不同的数据库。",
+              "整理历史代码，将一个 2,800 行的方法拆分成 38 个暂时没人敢修改的小方法。",
+              "编写日常运维工具，把需要两小时的人工操作缩短为五分钟，以及十五分钟的操作确认。",
             ])
           },
         ],
@@ -262,35 +270,44 @@ export function createDefaultResume(): ResumeDocument {
         enabled: true,
         entries: [
           {
-            id: makeId(), title: "高并发订单处理平台", subtitle: "核心开发", date: "2024.09 – 2025.02", body: projectBody(
+            id: makeId(), title: "银河级高并发陨石订单处理平台", subtitle: "核心开发", date: "2024.09 – 2025.02", body: projectBody(
               "Java · Spring Boot · MySQL · Redis · RabbitMQ · Docker",
-              "面向促销活动场景的订单处理系统，支持库存预扣、订单创建、超时取消和支付状态同步。",
+              "面向星际矿产促销活动的订单系统，支持陨石查询、库存预扣、订单创建、超时取消和跨星球支付状态同步。",
               [
-                "使用 Redis 和 Lua 脚本实现库存预扣，避免高并发情况下出现超卖问题。",
-                "使用 RabbitMQ 异步处理订单创建和超时关闭，降低核心链路响应时间。",
-                "基于唯一业务标识实现接口幂等，并通过压测验证系统稳定性。",
+                "使用 Redis 和 Lua 脚本实现库存预扣，避免同一颗陨石同时出售给八个星球。",
+                "使用 RabbitMQ 异步处理订单创建和超时关闭，让用户在等待结果时至少可以看到一个转圈动画。",
+                "基于唯一业务标识实现接口幂等，避免通信延迟导致用户收到十七颗重复陨石。",
+                "对订单表进行索引优化和冷热数据拆分，其中真正发热的数据被转移至恒温机房。",
+                "使用 Docker 完成本地服务编排，并通过模拟银河购物节验证系统稳定性。",
+                "压测期间系统成功承受每秒十万次请求，开发人员只承受了每秒三次心理冲击。",
               ],
             )
           },
           {
-            id: makeId(), title: "统一日志与监控平台", subtitle: "后端开发", date: "2024.04 – 2024.08", body: projectBody(
+            id: makeId(), title: "全宇宙统一日志与责任追踪平台", subtitle: "后端开发", date: "2024.04 – 2024.08", body: projectBody(
               "Spring Boot · Elasticsearch · Kafka · Prometheus · Grafana",
-              "集中采集多个业务系统的运行日志和指标，为开发人员提供检索、监控和告警能力。",
+              "集中采集不同星球业务系统的日志和运行指标，为开发人员提供检索、监控、告警以及快速证明这个问题不是我引起的能力。",
               [
-                "设计日志采集、清洗、存储和检索流程，统一不同服务的日志字段。",
-                "使用 Kafka 对日志写入流量进行削峰，并根据查询场景设计 Elasticsearch 索引。",
-                "接入 Prometheus 和 Grafana，展示接口耗时、错误率和服务运行状态。",
+                "统一不同服务的日志字段，解决每个开发人员都认为自己命名最合理的问题。",
+                "使用 Kafka 对日志流量进行削峰，避免大量错误日志把日志平台本身打出错误日志。",
+                "根据服务名称、日志级别和时间范围设计 Elasticsearch 索引。",
+                "接入 Prometheus 和 Grafana，展示接口耗时、错误率、服务状态及开发人员血压趋势。",
+                "配置分级告警规则：普通问题发送消息，严重问题拨打电话，特别严重的问题自动播放起床铃声。",
+                "将平均故障定位时间从两小时缩短至十分钟，其中八分钟用于确认是否可以重启服务。",
               ],
             )
           },
           {
-            id: makeId(), title: "校园二手交易平台", subtitle: "项目负责人", date: "2023.10 – 2024.03", body: projectBody(
+            id: makeId(), title: "X省校园闲置火箭零件交易平台", subtitle: "项目负责人", date: "2023.10 – 2024.03", body: projectBody(
               "Java · Spring Boot · Vue · MySQL · Redis",
-              "面向校园用户的闲置物品交易平台，提供商品发布、分类检索、收藏和订单管理功能。",
+              "为校园用户提供闲置火箭零件、实验器材和未使用课程教材的发布、检索、收藏及订单管理功能。",
               [
-                "负责需求分析、后端架构设计和任务拆分，完成用户、商品、订单和评论模块。",
-                "使用 Redis 缓存热门商品，并设计缓存失效与数据更新策略。",
-                "使用 JWT 实现登录认证和接口访问控制，完成服务器部署与项目演示。",
+                "负责需求分析、后端架构设计和任务拆分，同时负责提醒组员查看任务。",
+                "完成用户认证、商品发布、收藏、订单、评论和火箭发动机禁止包邮模块。",
+                "使用 Redis 缓存热门商品，避免同一枚二手螺丝被连续查询十万次。",
+                "使用 JWT 实现登录认证和接口访问控制。",
+                "编写部署文档并完成服务器部署，证明项目不仅可以在组长的电脑上运行。",
+                "答辩当天成功运行全部核心功能，仅有天气组件显示火星沙尘暴预警。",
               ],
             )
           },
@@ -303,10 +320,13 @@ export function createDefaultResume(): ResumeDocument {
         enabled: true,
         entries: [{
           id: makeId(), title: "", subtitle: "", date: "", body: bulletBody([
-            "获得校级一等奖学金和“三好学生”荣誉称号。",
-            "获得大学生程序设计竞赛校级二等奖。",
-            "获得 2025 年度“最美软件工程师”荣誉称号。",
-            "获得 2026 年度“感动中国十大人物之一”荣誉称号。",
+            "获得 X省理工学院一等奖学金及“服务器关机前最后离开机房的学生”荣誉称号。",
+            "获得校级程序设计竞赛二等奖，一等奖因数组下标从 1 开始而遗憾错失。",
+            "连续三年保持个人电脑桌面文件数量不超过 400 个。",
+            "参与开源项目维护，累计提交多个功能优化，以及两个由自己引入后又亲自修复的问题。",
+            "获得 2025 年度“最能让服务稳定运行的软件工程师”称号。",
+            "入选 2026 年度“银河系十大感动中间件人物”候选名单。",
+            "曾在没有重启服务的情况下成功解决线上故障，相关事迹至今仍在部门内部流传。",
           ])
         }],
       },
@@ -332,13 +352,8 @@ export function createBlankResume(): ResumeDocument {
   };
 }
 
-export function createStarterResume(): ResumeDocument {
-  const resume = createBlankResume();
-  const content = (title: string) => ({ ...(createSection("content") as ContentSection), title });
-  return {
-    ...resume,
-    sections: [createSection("education"), content("专业技能"), content("工作经历"), content("项目经历"), content("个人荣誉"), content("自我评价")],
-  };
+export function createResumeFromTemplate(template: ResumeCreationTemplate): ResumeDocument {
+  return template === "default" ? createDefaultResume() : createBlankResume();
 }
 
 export function duplicateResume(resume: ResumeDocument): ResumeDocument {

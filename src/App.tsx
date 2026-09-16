@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { BackupSetupPrompt } from "./components/BackupSetupPrompt";
 import { HistoryPanel } from "./components/HistoryPanel";
+import { NewResumeDialog } from "./components/NewResumeDialog";
 import { ResumeEditorCanvas } from "./components/ResumeEditorCanvas";
 import { ResumePreview } from "./components/ResumePreview";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { exportTypstPdf } from "./export/typstPdf";
-import { createDefaultResume, createStarterResume, duplicateResume, normalizeResumeDocument, resumeReducer, type ResumeDocument, type ResumeSection } from "./model/resume";
+import { createDefaultResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, resumeReducer, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
 import {
   activateResume,
@@ -46,6 +47,7 @@ export function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [newResumeOpen, setNewResumeOpen] = useState(false);
   const [backupDirectory, setBackupDirectory] = useState<FileSystemDirectoryHandle | null>(null);
   const [backupStatus, setBackupStatus] = useState<DiskBackupStatus>(() => isDiskBackupSupported() ? "not-configured" : "unsupported");
   const [backupPromptOpen, setBackupPromptOpen] = useState(false);
@@ -216,8 +218,9 @@ export function App() {
     setEditingId(null);
     setSaveState("saved");
   };
-  const createResume = () => {
-    void addResume(createStarterResume()).catch((error) => {
+  const createResume = (template: ResumeCreationTemplate) => {
+    setNewResumeOpen(false);
+    void addResume(createResumeFromTemplate(template)).catch((error) => {
       setSaveState("error");
       window.alert(error instanceof Error ? error.message : "新建简历失败");
     });
@@ -418,7 +421,7 @@ export function App() {
           </select>
           <input className="document-title" aria-label="简历文件名" value={resume.title} onChange={(event) => dispatch({ type: "update-title", value: event.target.value })} />
           <div className="document-actions">
-            <button type="button" className="icon-button" title="新建简历" aria-label="新建简历" onClick={createResume}>＋</button>
+            <button type="button" className="icon-button" title="新建简历" aria-label="新建简历" onClick={() => setNewResumeOpen(true)}>＋</button>
             <button type="button" className="icon-button" title="创建当前简历的副本" aria-label="创建当前简历的副本" onClick={copyResume}>⧉</button>
             <button type="button" className="icon-button danger-text" title="删除当前简历" aria-label="删除当前简历" disabled={!library || library.resumes.length <= 1} onClick={() => void removeCurrentResume().catch((error) => window.alert(error instanceof Error ? error.message : "删除失败"))}>×</button>
           </div>
@@ -512,6 +515,7 @@ export function App() {
         onRestoreAsNew={restoreHistoryAsNew}
         onReplaceResume={replaceResumeFromHistory}
       />}
+      {newResumeOpen && <NewResumeDialog onSelect={createResume} onClose={() => setNewResumeOpen(false)} />}
       {backupPromptOpen && backupStatus !== "unsupported" && <BackupSetupPrompt
         status={backupStatus}
         directoryName={backupDirectory?.name ?? ""}

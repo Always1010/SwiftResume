@@ -3,8 +3,8 @@ import {
   DEFAULT_PROFILE_PHOTO,
   createBlankResume,
   createDefaultResume,
+  createResumeFromTemplate,
   createSection,
-  createStarterResume,
   duplicateResume,
   duplicateSection,
   getDensityLayout,
@@ -26,13 +26,13 @@ describe("resume model", () => {
     const education = resume.sections.find((section) => section.title === "教育背景");
     expect(education?.type).toBe("education");
     if (education?.type === "education") {
-      expect(education.items[0].school).toBe("中国深空技术探索大学");
+      expect(education.items[0].school).toBe("X省理工学院");
     }
     const projects = resume.sections.find((section) => section.title === "项目经历");
     expect(projects?.type).toBe("content");
     if (projects?.type === "content") {
       expect(projects.entries).toHaveLength(3);
-      expect(projects.entries[0].title).toBe("高并发订单处理平台");
+      expect(projects.entries[0].title).toBe("银河级高并发陨石订单处理平台");
       expect(JSON.stringify(projects.entries[0].body)).toContain("开发工具");
       expect(JSON.stringify(projects.entries[0].body)).toContain("bulletList");
     }
@@ -59,19 +59,15 @@ describe("resume model", () => {
     expect(copy.title).toContain("副本");
   });
 
-  it("creates a content-free starter resume with a complete module structure", () => {
-    const starter = createStarterResume();
-    expect(starter.profile.name).toBe("");
-    expect(starter.sections.map((section) => section.title)).toEqual([
-      "教育背景",
-      "专业技能",
-      "工作经历",
-      "项目经历",
-      "个人荣誉",
-      "自我评价",
-    ]);
-    expect(JSON.stringify(starter)).not.toContain("某某大学");
-    expect(JSON.stringify(starter)).not.toContain("高并发订单处理平台");
+  it("creates exactly the default example and blank creation templates", () => {
+    const example = createResumeFromTemplate("default");
+    const blank = createResumeFromTemplate("blank");
+    expect(example.title).toBe("搞笑反差示例简历");
+    expect(example.profile.name).toBe("林同学（BACKEND-007）");
+    expect(JSON.stringify(example)).toContain("银河系第三旋臂深空技术探索有限公司");
+    expect(blank.title).toBe("未命名简历");
+    expect(blank.profile.name).toBe("");
+    expect(blank.sections).toEqual([]);
   });
 
   it("creates one neutral content entry for every custom module", () => {
@@ -95,15 +91,15 @@ describe("resume model", () => {
     }
   });
 
-  it("uses only education and generic content sections in starter documents", () => {
-    const starter = createStarterResume();
-    expect(new Set(starter.sections.map((section) => section.type))).toEqual(new Set(["education", "content"]));
-    const skills = starter.sections.find((section) => section.title === "专业技能");
+  it("uses only education and generic content sections in the default template", () => {
+    const resume = createResumeFromTemplate("default");
+    expect(new Set(resume.sections.map((section) => section.type))).toEqual(new Set(["education", "content"]));
+    const skills = resume.sections.find((section) => section.title === "专业技能");
     expect(skills?.type).toBe("content");
     if (skills?.type === "content") {
       expect(skills.entries[0]).toMatchObject({ title: "", subtitle: "", date: "" });
     }
-    const honors = starter.sections.find((section) => section.title === "个人荣誉");
+    const honors = resume.sections.find((section) => section.title === "个人荣誉");
     expect(honors?.type).toBe("content");
     if (honors?.type === "content") {
       expect(honors.entries[0]).toMatchObject({ title: "", subtitle: "", date: "" });
