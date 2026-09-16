@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { exportTypstPdf } from "../export/typstPdf";
 import type { ResumeDocument } from "../model/resume";
 import { loadResumeById, saveResumeById } from "../storage/resumeStorage";
@@ -11,12 +11,19 @@ import { TemplateGallery } from "./TemplateGallery";
 const PAPER_WIDTH_PX = 794;
 const MIN_ZOOM = 50;
 const MAX_ZOOM = 140;
+export const MIN_TEMPLATE_GALLERY_WIDTH = 220;
+export const DEFAULT_TEMPLATE_GALLERY_WIDTH = 340;
+export const MAX_TEMPLATE_GALLERY_WIDTH = 860;
+const TEMPLATE_GALLERY_WIDTH_KEY = "swift-resume-template-gallery-width";
 const STYLE_SAVE_DELAY_MS = 180;
 
 interface AppearanceChange {
   theme?: Partial<ResumeDocument["theme"]>;
   photoBackground?: string;
 }
+
+export const clampTemplateGalleryWidth = (width: number, availableWidth = MAX_TEMPLATE_GALLERY_WIDTH) =>
+  Math.min(Math.max(MIN_TEMPLATE_GALLERY_WIDTH, availableWidth), Math.max(MIN_TEMPLATE_GALLERY_WIDTH, Math.min(MAX_TEMPLATE_GALLERY_WIDTH, width)));
 
 export function updateResumeAppearance(resume: ResumeDocument, change: AppearanceChange, updatedAt?: string): ResumeDocument {
   const nextUpdatedAt = updatedAt ?? new Date(Math.max(Date.now(), (Date.parse(resume.updatedAt) || 0) + 1)).toISOString();
@@ -31,6 +38,16 @@ export function updateResumeAppearance(resume: ResumeDocument, change: Appearanc
   };
 }
 
+function readTemplateGalleryWidth() {
+  if (typeof window === "undefined") return DEFAULT_TEMPLATE_GALLERY_WIDTH;
+  try {
+    const stored = Number(window.localStorage.getItem(TEMPLATE_GALLERY_WIDTH_KEY));
+    return Number.isFinite(stored) && stored > 0 ? clampTemplateGalleryWidth(stored) : DEFAULT_TEMPLATE_GALLERY_WIDTH;
+  } catch {
+    return DEFAULT_TEMPLATE_GALLERY_WIDTH;
+  }
+}
+
 export function StandalonePreview({ resumeId }: { resumeId: string }) {
   const [resume, setResume] = useState<ResumeDocument | null>(null);
   const [error, setError] = useState("");
@@ -41,7 +58,11 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
   const [exporting, setExporting] = useState(false);
   const [styleSyncState, setStyleSyncState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [styleError, setStyleError] = useState("");
+  const [galleryWidth, setGalleryWidth] = useState(readTemplateGalleryWidth);
+  const [galleryMaxWidth, setGalleryMaxWidth] = useState(MAX_TEMPLATE_GALLERY_WIDTH);
+  const [resizingGallery, setResizingGallery] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
+  const workspaceRef = useRef<HTMLDivElement>(null);
   const resumeRef = useRef<ResumeDocument | null>(null);
   const styleSaveTimerRef = useRef<number | null>(null);
 
@@ -90,6 +111,48 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
     observer.observe(viewport);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    const workspace = workspaceRef.current;
+    if (!workspace) return;
+    const update = () => {
+      const nextMax = Math.min(MAX_TEMPLATE_GALLERY_WIDTH, Math.max(MIN_TEMPLATE_GALLERY_WIDTH, workspace.clientWidth - 8));
+      setGalleryMaxWidth(nextMax);
+      setGalleryWidth((current) => clampTemplateGalleryWidth(current, nextMax));
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(workspace);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(TEMPLATE_GALLERY_WIDTH_KEY, String(Math.round(galleryWidth)));
+    } catch {
+      // The resizer still works when browser storage is unavailable.
+    }
+  }, [galleryWidth]);
+
+  useEffect(() => {
+    if (!resizingGallery) return;
+    const updateWidth = (clientX: number) => {
+      const left = workspaceRef.current?.getBoundingClientRect().left ?? 0;
+      setGalleryWidth(clampTemplateGalleryWidth(clientX - left, galleryMaxWidth));
+    };
+    const handlePointerMove = (event: PointerEvent) => updateWidth(event.clientX);
+    const stopResizing = () => setResizingGallery(false);
+    document.body.classList.add("resizing-template-gallery");
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopResizing);
+    window.addEventListener("pointercancel", stopResizing);
+    return () => {
+      document.body.classList.remove("resizing-template-gallery");
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopResizing);
+      window.removeEventListener("pointercancel", stopResizing);
+    };
+  }, [galleryMaxWidth, resizingGallery]);
 
   const zoom = fitWidth ? fitZoom : manualZoom;
   const title = useMemo(() => resume?.title || "独立预览", [resume?.title]);
@@ -156,8 +219,41 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
           <button type="button" className="secondary-button" onClick={() => window.close()}>关闭页面</button>
         </div>
       </header>
-      <div className="standalone-preview-workspace">
+      <div
+        ref={workspaceRef}
+        className="standalone-preview-workspace"
+        style={{ "--template-gallery-width": `${galleryWidth}px` } as CSSProperties}
+      >
         {previewResume && <TemplateGallery selectedId={previewResume.theme.templateId} resume={previewResume} onSelect={(templateId) => updateAppearance({ theme: { templateId } })} />}
+        <div
+          className={`template-gallery-resizer ${resizingGallery ? "active" : ""}`}
+          role="separator"
+          aria-label="调整模板中心宽度"
+          aria-orientation="vertical"
+          aria-valuemin={MIN_TEMPLATE_GALLERY_WIDTH}
+          aria-valuemax={Math.round(galleryMaxWidth)}
+          aria-valuenow={Math.round(galleryWidth)}
+          tabIndex={0}
+          title="拖动调整模板中心宽度，双击恢复默认宽度"
+          onPointerDown={(event) => {
+            event.preventDefault();
+            setResizingGallery(true);
+          }}
+          onDoubleClick={() => setGalleryWidth(clampTemplateGalleryWidth(DEFAULT_TEMPLATE_GALLERY_WIDTH, galleryMaxWidth))}
+          onKeyDown={(event) => {
+            const step = event.shiftKey ? 50 : 20;
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+              event.preventDefault();
+              setGalleryWidth((current) => clampTemplateGalleryWidth(current + (event.key === "ArrowLeft" ? -step : step), galleryMaxWidth));
+            } else if (event.key === "Home") {
+              event.preventDefault();
+              setGalleryWidth(MIN_TEMPLATE_GALLERY_WIDTH);
+            } else if (event.key === "End") {
+              event.preventDefault();
+              setGalleryWidth(galleryMaxWidth);
+            }
+          }}
+        ><span aria-hidden="true" /></div>
         <section className="standalone-preview-main">
           {previewResume && (
             <div className="standalone-appearance-bar">
