@@ -58,6 +58,14 @@ describe("Typst source generator", () => {
     expect(createTypstSource(resume)).toContain('image("/profile-photo.png"');
   });
 
+  it("places a selected solid color behind transparent profile photos", () => {
+    const resume = createDefaultResume();
+    resume.profile.photoBackground = "#438EDB";
+    const source = createTypstSource(resume);
+    expect(source).toContain('fill: rgb("#438EDB")');
+    expect(source).toContain('image("/profile-photo.png"');
+  });
+
   it("exports optional headings and rich text marks from neutral custom modules", () => {
     const resume = createDefaultResume();
     resume.sections.push({

@@ -120,13 +120,37 @@ button { cursor: pointer; }
 .inline-field { display: grid; grid-template-columns: 12px 1fr 28px; align-items: start; gap: 5px; }
 .inline-field textarea { min-height: 58px; }
 .bullet-dot { padding-top: 8px; color: var(--green); }
-.photo-control { display: flex; gap: 15px; margin: 19px 0; padding: 14px; border-radius: 10px; background: #f4f7f4; }
+.photo-control { display: flex; align-items: flex-start; gap: 15px; margin: 19px 0; padding: 14px; border-radius: 10px; background: #f4f7f4; }
 .photo-thumb { display: grid; width: 68px; height: 88px; flex: none; place-items: center; overflow: hidden; border-radius: 7px; color: #91a097; background: #dde5df; font-size: 10px; }
 .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-control-body { min-width: 0; flex: 1; }
 .photo-control strong { font-size: 13px; }
 .photo-control p { margin: 5px 0 9px; color: var(--muted); font-size: 10px; }
+.photo-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .file-button { display: inline-block; }
 .file-button input { display: none; }
+.photo-background-control { margin-top: 13px; border-top: 1px solid #dce5de; padding-top: 11px; }
+.photo-background-control > span { display: block; margin-bottom: 8px; color: #5f6d64; font-size: 11px; font-weight: 700; }
+.photo-background-options { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.photo-background-options > button { width: 25px; height: 25px; border: 2px solid white; border-radius: 50%; padding: 0; box-shadow: 0 0 0 1px #c8d1cb; }
+.photo-background-options > button:hover, .photo-background-options > button.selected { box-shadow: 0 0 0 2px var(--green); }
+.transparent-grid { background-color: white; background-image: linear-gradient(45deg, #dfe5e1 25%, transparent 25%), linear-gradient(-45deg, #dfe5e1 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #dfe5e1 75%), linear-gradient(-45deg, transparent 75%, #dfe5e1 75%); background-position: 0 0, 0 5px, 5px -5px, -5px 0; background-size: 10px 10px; }
+.photo-custom-color { display: inline-flex; align-items: center; gap: 4px; color: #68756d; cursor: pointer; font-size: 9px; }
+.photo-custom-color input { width: 27px; height: 27px; border: 0; padding: 0; background: transparent; cursor: pointer; }
+.photo-background-control .photo-background-hint { margin: 8px 0 0; line-height: 1.5; }
+.photo-crop-overlay { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(19, 28, 23, .52); }
+.photo-crop-dialog { width: min(620px, calc(100vw - 48px)); max-height: calc(100vh - 48px); overflow-y: auto; border-radius: 15px; padding: 20px; background: white; box-shadow: 0 24px 70px rgba(12, 28, 18, .3); }
+.photo-crop-heading { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 15px; }
+.photo-crop-heading h3 { margin: 3px 0 0; font-size: 19px; }
+.photo-crop-stage { position: relative; width: 270px; aspect-ratio: 3 / 4; margin: 0 auto 18px; overflow: hidden; border-radius: 10px; box-shadow: 0 0 0 1px rgba(33, 49, 39, .18), 0 8px 25px rgba(26, 42, 32, .12); }
+.photo-crop-stage canvas { display: block; width: 100%; height: 100%; }
+.photo-crop-guide { position: absolute; pointer-events: none; inset: 9% 13%; border: 1px dashed rgba(255, 255, 255, .78); border-radius: 48% 48% 44% 44%; box-shadow: 0 0 0 1px rgba(0, 0, 0, .14); }
+.photo-crop-controls { display: grid; gap: 11px; }
+.photo-crop-controls label { display: grid; grid-template-columns: 65px 1fr 45px; align-items: center; gap: 10px; color: #56645b; font-size: 11px; font-weight: 650; }
+.photo-crop-controls input { width: 100%; accent-color: var(--green); }
+.photo-crop-controls output { color: #718078; text-align: right; font-size: 10px; font-weight: 500; }
+.photo-crop-error { margin: 12px 0 0; color: #b54242; font-size: 11px; }
+.photo-crop-actions { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
 .subheading-row { margin: 20px 0 10px; }
 .subheading-row h3 { margin: 0; font-size: 13px; }
 .detail-row { display: grid; grid-template-columns: .65fr 1.35fr 28px; gap: 7px; margin-bottom: 8px; }

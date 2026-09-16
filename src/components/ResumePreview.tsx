@@ -67,7 +67,12 @@ function ResumeProfileContent({ resume }: { resume: ResumeDocument }) {
           <div key={detail.id}><span className="profile-detail-label">{detail.label}：</span><span className="profile-detail-value">{detail.value}</span></div>
         ))}</div>}
       </div>
-      <div className={`resume-photo ${resume.profile.photo ? "" : "empty"}`}>{resume.profile.photo && <img src={resume.profile.photo} alt="个人照片" />}</div>
+      <div
+        className={`resume-photo ${resume.profile.photo ? "" : "empty"}`}
+        style={{ backgroundColor: resume.profile.photoBackground }}
+      >
+        {resume.profile.photo && <img src={resume.profile.photo} alt="个人照片" />}
+      </div>
     </header>
   );
 }

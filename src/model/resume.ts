@@ -13,6 +13,15 @@ export type ResumeTemplateId = typeof RESUME_TEMPLATE_IDS[number];
 export type ResumeCreationTemplate = "default" | "blank";
 export const DEFAULT_RESUME_TEMPLATE: ResumeTemplateId = "classic";
 export const DEFAULT_PROFILE_PHOTO = "./sample/fictional-engineer.png";
+export const DEFAULT_PHOTO_BACKGROUND = "transparent";
+
+export interface ProfilePhotoCrop {
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+export const DEFAULT_PROFILE_PHOTO_CROP: ProfilePhotoCrop = { zoom: 1, offsetX: 0, offsetY: 0 };
 
 export function normalizeResumeTemplateId(value: unknown): ResumeTemplateId {
   return typeof value === "string" && (RESUME_TEMPLATE_IDS as readonly string[]).includes(value)
@@ -68,6 +77,9 @@ export interface ResumeProfile {
   phone: string;
   email: string;
   photo: string;
+  photoSource: string;
+  photoBackground: string;
+  photoCrop: ProfilePhotoCrop;
   details: Array<{ id: string; label: string; value: string }>;
 }
 
@@ -205,6 +217,9 @@ export function createDefaultResume(): ResumeDocument {
       phone: "138 0000 0000",
       email: "backend007@example.com",
       photo: DEFAULT_PROFILE_PHOTO,
+      photoSource: DEFAULT_PROFILE_PHOTO,
+      photoBackground: DEFAULT_PHOTO_BACKGROUND,
+      photoCrop: { ...DEFAULT_PROFILE_PHOTO_CROP },
       details: [
         { id: makeId(), label: "学历", value: "本科" },
         { id: makeId(), label: "求职状态", value: "在职，服务器允许的话可以随时到岗" },
@@ -346,7 +361,10 @@ export function createBlankResume(): ResumeDocument {
   return {
     ...resume,
     title: "未命名简历",
-    profile: { name: "", headline: "", ageGender: "", location: "", phone: "", email: "", photo: "", details: [] },
+    profile: {
+      name: "", headline: "", ageGender: "", location: "", phone: "", email: "", photo: "",
+      photoSource: "", photoBackground: DEFAULT_PHOTO_BACKGROUND, photoCrop: { ...DEFAULT_PROFILE_PHOTO_CROP }, details: [],
+    },
     sections: [],
     updatedAt: new Date().toISOString(),
   };
@@ -428,6 +446,24 @@ export function isResumeDocument(value: unknown): value is ResumeDocument {
 export function normalizeResumeDocument(value: unknown): ResumeDocument | null {
   if (!isResumeDocument(value)) return null;
   const resume = structuredClone(value);
+  const legacyProfile = resume.profile as ResumeProfile & {
+    photoSource?: unknown;
+    photoBackground?: unknown;
+    photoCrop?: Partial<ProfilePhotoCrop>;
+  };
+  resume.profile.photoSource = typeof legacyProfile.photoSource === "string" ? legacyProfile.photoSource : resume.profile.photo;
+  resume.profile.photoBackground = typeof legacyProfile.photoBackground === "string"
+    && (legacyProfile.photoBackground === DEFAULT_PHOTO_BACKGROUND || /^#[0-9a-f]{6}$/i.test(legacyProfile.photoBackground))
+    ? legacyProfile.photoBackground
+    : DEFAULT_PHOTO_BACKGROUND;
+  const zoom = Number(legacyProfile.photoCrop?.zoom);
+  const offsetX = Number(legacyProfile.photoCrop?.offsetX);
+  const offsetY = Number(legacyProfile.photoCrop?.offsetY);
+  resume.profile.photoCrop = {
+    zoom: Number.isFinite(zoom) ? Math.min(3, Math.max(1, zoom)) : DEFAULT_PROFILE_PHOTO_CROP.zoom,
+    offsetX: Number.isFinite(offsetX) ? Math.min(100, Math.max(-100, offsetX)) : DEFAULT_PROFILE_PHOTO_CROP.offsetX,
+    offsetY: Number.isFinite(offsetY) ? Math.min(100, Math.max(-100, offsetY)) : DEFAULT_PROFILE_PHOTO_CROP.offsetY,
+  };
   resume.theme.density = normalizeDensity(resume.theme.density);
   resume.theme.templateId = normalizeResumeTemplateId(resume.theme.templateId);
   return resume;
