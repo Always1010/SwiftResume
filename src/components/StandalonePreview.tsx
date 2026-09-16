@@ -136,7 +136,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
         </div>
       </header>
       <div className="standalone-preview-workspace">
-        {draftTheme && <TemplateGallery selectedId={draftTheme.templateId} onSelect={(templateId) => updateDraftTheme({ templateId })} />}
+        {draftTheme && previewResume && <TemplateGallery selectedId={draftTheme.templateId} resume={previewResume} onSelect={(templateId) => updateDraftTheme({ templateId })} />}
         <section className="standalone-preview-main">
           {draftTheme && (
             <div className="standalone-appearance-bar">
