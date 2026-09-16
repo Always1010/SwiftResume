@@ -219,7 +219,8 @@ body.standalone-preview-body { min-width: 900px; overflow: hidden; background: #
 .standalone-preview-brand strong { font-size: 14px; }
 .standalone-preview-brand div span { max-width: 360px; overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
 .standalone-preview-actions { display: flex; align-items: center; gap: 8px; }
-.save-style-button { min-width: 102px; }
+.standalone-sync-status { min-width: 76px; color: #66766c; font-size: 10px; font-weight: 700; text-align: center; }
+.standalone-sync-status.error { color: #b54242; }
 .standalone-zoom-control { display: grid; grid-template-columns: 30px 50px 30px; height: 34px; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: white; }
 .standalone-zoom-control button { border: 0; color: #536159; background: transparent; font-size: 16px; }
 .standalone-zoom-control button:hover { color: var(--green); background: #f0f6f2; }
