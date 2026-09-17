@@ -1,4 +1,5 @@
 import { MODULE_PRESETS, SCENARIOS } from "./contentPresets";
+import { SCENARIO_EXAMPLES } from "./scenarioExamples";
 
 export type Density = number;
 
@@ -392,36 +393,50 @@ export function createResumeFromTemplate(template: ResumeCreationTemplate, withE
   if (template === "default") return createDefaultResume();
   const resume = createBlankResume();
   if (template === "blank") return resume;
-  const starters = {
-    graduate: { title: "应届生简历", modules: ["education", "project", "work", "skills"] },
-    experienced: { title: "工作经验简历", modules: ["work", "project", "skills", "education"] },
-    "career-change": { title: "转行求职简历", modules: ["summary", "skills", "project", "work", "education"] },
+  const titles = {
+    graduate: "应届生简历",
+    experienced: "工作经验简历",
+    "career-change": "转行求职简历",
   } as const;
-  const starter = starters[template];
-  resume.title = starter.title;
+  resume.title = titles[template];
   const scene = SCENARIOS.find((item) => item.id === template)!;
   resume.theme = { ...resume.theme, templateId: scene.style, accent: template === "experienced" ? "#26466b" : "#247352" };
-  resume.sections = starter.modules.map((purpose) => createQuickSection(purpose, withExamples ? "example" : "blank"));
-  if (withExamples) {
-    resume.profile = { ...resume.profile, name: "【示例】林晨", headline: scene.role, location: "杭州", phone: "【填写你的手机】", email: "linchen@example.com" };
-    if (template === "graduate") {
-      const work = resume.sections.find((s) => s.type === "content" && s.purpose === "work") as ContentSection;
-      work.title = "实习经历";
-      work.entries[0] = { ...work.entries[0], subtitle: "前端开发实习生", date: "2025.07 – 2025.09", body: presetBody(["协助开发活动管理页面，完成列表筛选、表单校验与接口联调。", "整理测试反馈，复现并修复边界状态问题，参与上线前的回归验证。"], true) };
-    } else if (template === "experienced") {
-      const education = resume.sections.find((s) => s.type === "education") as EducationSection;
-      education.items[0].date = "2019.09 – 2023.06";
-      const project = resume.sections.find((s) => s.type === "content" && s.purpose === "project") as ContentSection;
-      project.entries[0] = { ...project.entries[0], title: "【示例】商家订单工作台", subtitle: "前端负责人", date: "2024.03 – 2025.12", body: presetBody(["项目背景：商家处理订单需要在多个页面间切换，异常订单缺乏集中入口。", "我的职责：负责前端方案设计、任务拆分和核心页面交付。", "实施行动：统一订单状态与筛选规则，封装列表和表单组件，补充核心流程测试。", "项目结果：交付统一工作台，与业务方复盘处理流程，并持续跟踪异常订单反馈。"])};
-    } else {
-      const work = resume.sections.find((s) => s.type === "content" && s.purpose === "work") as ContentSection;
-      work.entries[0] = { ...work.entries[0], subtitle: "用户运营", body: presetBody(["负责用户反馈整理与活动运营，将零散反馈归类为业务场景和需求问题。", "访谈一线同事与用户，梳理需求优先级，与产品和研发协作改进报名流程。", "建立活动复盘记录，通过参与、转化和反馈数据提出下一轮改进建议。"], true) };
-      const skills = resume.sections.find((s) => s.type === "content" && s.purpose === "skills") as ContentSection;
-      skills.entries[0] = { ...skills.entries[0], title: "【示例】可迁移能力", body: presetBody(["需求分析：通过访谈与反馈归类识别用户问题，整理需求清单与业务流程。", "数据分析：使用 Excel 整理活动数据，对比不同渠道和用户阶段的表现。", "协作交付：能撰写流程说明、绘制原型，并与研发沟通验收标准。"], true) };
-      const project = resume.sections.find((s) => s.type === "content" && s.purpose === "project") as ContentSection;
-      project.entries[0] = { ...project.entries[0], title: "【示例】活动报名流程优化", subtitle: "需求分析与原型设计", date: "2025.09 – 2026.03", body: presetBody(["项目背景：用户频繁询问报名进度，运营人员需要逐条查询与回复。", "我的职责：整理用户反馈，绘制现状流程并确定报名状态查询需求。", "实施行动：设计状态查询原型，编写异常场景和验收清单，与研发评估方案。", "项目结果：形成完整需求文档与可交互原型，通过内部走查完善提示与异常流程。"])};
-    }
+  const example = SCENARIO_EXAMPLES[template];
+  if (!withExamples) {
+    resume.sections = example.sections.map((section) => ({
+      ...createQuickSection(section.type === "education" ? "education" : section.purpose, "blank"),
+      title: section.title,
+    }));
+    return resume;
   }
+  resume.profile = {
+    ...resume.profile, name: example.name, headline: scene.role, location: "杭州",
+    phone: "【填写你的手机】", email: example.email,
+    details: [
+      ...example.details.map((detail) => ({ ...detail, id: makeId() })),
+      { id: makeId(), label: "示例说明", value: "人物、机构、经历及数据均为虚构，请替换为真实信息" },
+    ],
+  };
+  resume.sections = example.sections.map((section): ResumeSection => {
+    const base = { id: makeId(), title: section.title, enabled: true };
+    if (section.type === "education") {
+      return { ...base, type: "education", items: section.items.map((item) => ({ ...item, id: makeId() })) };
+    }
+    return {
+      ...base, type: "content", purpose: section.purpose,
+      entries: section.entries.map((entry) => ({
+        id: makeId(), title: entry.title, subtitle: entry.subtitle, date: entry.date,
+        body: entry.background ? {
+          type: "doc",
+          content: [
+            paragraph([text(template === "career-change" ? "方法与工具：" : "技术栈：", true), text(entry.tools ?? "")]),
+            paragraph([text("项目背景：", true), text(entry.background)]),
+            bulletList(entry.lines),
+          ],
+        } : presetBody(entry.lines, entry.list),
+      })),
+    };
+  });
   return resume;
 }
 
