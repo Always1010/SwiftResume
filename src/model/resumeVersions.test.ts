@@ -4,11 +4,12 @@ import { compareVersions, exportRecord, jobVersion } from "./resumeVersions";
 it("creates independent targeted versions and freezes the downloaded content", () => {
   const original = createDefaultResume();
   original.lastExport = exportRecord(original, "原简历.pdf");
-  const version = jobVersion(original, " A公司 ", " 后端工程师 ");
+  const version = jobVersion(original, " A公司 ", " 后端工程师 ", " 内推岗位 ");
   version.profile.phone = "新手机";
   expect(original.profile.phone).not.toBe("新手机");
   expect(version.lastExport).toBeUndefined();
   expect(version.title).toBe("A公司 · 后端工程师");
+  expect(version.target?.notes).toBe("内推岗位");
   expect(original.lastExport.snapshot).not.toHaveProperty("lastExport");
   expect(compareVersions(original, version).map((d) => d.label)).toContain("个人信息");
 });
