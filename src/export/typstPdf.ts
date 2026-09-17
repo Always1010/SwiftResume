@@ -211,7 +211,7 @@ function profileSource(resume: ResumeDocument, templateId: ResumeTemplateId, pho
   const photo = photoImage && /^#[0-9a-f]{6}$/i.test(resume.profile.photoBackground)
     ? `block(width: 27mm, height: 35mm, fill: rgb(${asString(resume.profile.photoBackground)}), ${photoImage})`
     : photoImage;
-  const textBlock = `[
+  const profileContent = `
     #text(size: 18pt, weight: "bold", fill: profile-ink, ${asString(resume.profile.name || "姓名")})
     #linebreak()
     #text(size: 9.5pt, weight: "bold", fill: profile-accent, ${asString(resume.profile.headline)})
@@ -220,13 +220,15 @@ function profileSource(resume: ResumeDocument, templateId: ResumeTemplateId, pho
     #linebreak()
     #text(fill: profile-ink, ${asString(direct)})
     ${detailGrid}
-  ]`;
+  `;
+  // Code arguments need a content block; markup bodies already provide one.
+  const textBlock = `[${profileContent}]`;
   const columns = photo ? "(1fr, 27mm)" : "(1fr,)";
   const grid = `#grid(columns: ${columns}, column-gutter: 14pt, ${textBlock}${photo ? `, ${photo}` : ""})`;
 
-  if (templateId === "minimal") return `#align(center)[${textBlock}]${photo ? `\n#place(top + right, dx: 0pt, dy: 0pt, ${photo})` : ""}\n#line(length: 100%, stroke: .35pt + rgb("#d6d6d6"))`;
+  if (templateId === "minimal") return `#align(center)[${profileContent}]${photo ? `\n#place(top + right, dx: 0pt, dy: 0pt, ${photo})` : ""}\n#line(length: 100%, stroke: .35pt + rgb("#d6d6d6"))`;
   if (templateId === "executive") return `#block(width: 100%, fill: accent, inset: 13pt)[#let profile-ink = white\n#let profile-accent = white\n${grid}]`;
-  if (templateId === "sidebar") return `#grid(columns: (42mm, 1fr), column-gutter: 12pt, [#block(width: 100%, fill: accent, inset: 10pt)[#let profile-ink = white\n#let profile-accent = white\n${textBlock}]], [${photo ? `${photo}\n#v(4pt)` : ""}#text(size: 8pt, fill: rgb("#666666"), ${asString(resume.profile.headline)})])`;
+  if (templateId === "sidebar") return `#grid(columns: (42mm, 1fr), column-gutter: 12pt, [#block(width: 100%, fill: accent, inset: 10pt)[#let profile-ink = white\n#let profile-accent = white\n${profileContent}]], [${photo ? `#${photo}\n#v(4pt)` : ""}#text(size: 8pt, fill: rgb("#666666"), ${asString(resume.profile.headline)})])`;
   if (templateId === "accent") return `#grid(columns: (4pt, 1fr${photo ? ", 27mm" : ""}), column-gutter: 12pt, rect(width: 4pt, height: 35mm, fill: accent), ${textBlock}${photo ? `, ${photo}` : ""})`;
   if (templateId === "academic") return `${grid}\n#line(length: 100%, stroke: .9pt)\n#v(1pt)\n#line(length: 100%, stroke: .3pt)`;
   if (templateId === "developer") return `#block(width: 100%, fill: rgb("#f3f7f5"), stroke: .4pt + accent, inset: 10pt)[${grid}]`;
@@ -245,11 +247,11 @@ function profileSource(resume: ResumeDocument, templateId: ResumeTemplateId, pho
   if (templateId === "gradient") return `#block(width: 100%, radius: 10pt, fill: rgb("#edf3f6"), stroke: .45pt + accent, inset: 11pt)[${grid}]`;
   if (templateId === "terminal") return `#block(width: 100%, radius: 4pt, fill: rgb("#101b17"), inset: 11pt)[#let profile-ink = rgb("#d9fbe7")\n#let profile-accent = rgb("#63d594")\n${grid}]`;
   if (templateId === "ledger") return `#block(width: 100%, stroke: .55pt + rgb("#78867e"), inset: 8pt)[${grid}]`;
-  if (templateId === "diplomat") return `#line(length: 100%, stroke: .4pt + rgb("#827353"))\n#v(4pt)\n#align(center)[${textBlock}]${photo ? `\n#place(top + right, ${photo})` : ""}\n#v(4pt)\n#line(length: 100%, stroke: 1pt + rgb("#827353"))`;
+  if (templateId === "diplomat") return `#line(length: 100%, stroke: .4pt + rgb("#827353"))\n#v(4pt)\n#align(center)[${profileContent}]${photo ? `\n#place(top + right, ${photo})` : ""}\n#v(4pt)\n#line(length: 100%, stroke: 1pt + rgb("#827353"))`;
   if (templateId === "studio") return `#block(width: 100%, fill: white, stroke: (left: 6pt + rgb("#252525"), bottom: 4pt + accent), inset: 10pt)[${grid}]`;
   if (templateId === "ribbon") return `${grid}\n#block(width: 100%, height: 4pt, fill: accent)[]`;
   if (templateId === "capsule") return `#block(width: 100%, radius: 14pt, fill: rgb("#f0f5f2"), inset: 11pt)[${grid}]`;
-  if (templateId === "split") return `#grid(columns: (1fr, 1fr), column-gutter: 0pt, [#block(width: 100%, fill: accent, inset: 10pt)[#let profile-ink = white\n#let profile-accent = white\n${textBlock}]], [#block(width: 100%, fill: rgb("#202725"), inset: 10pt)[${photo || `#text(fill: white, ${asString(resume.profile.headline)})`}]])`;
+  if (templateId === "split") return `#grid(columns: (1fr, 1fr), column-gutter: 0pt, [#block(width: 100%, fill: accent, inset: 10pt)[#let profile-ink = white\n#let profile-accent = white\n${profileContent}]], [#block(width: 100%, fill: rgb("#202725"), inset: 10pt)[${photo ? `#${photo}` : `#text(fill: white, ${asString(resume.profile.headline)})`}]])`;
   if (templateId === "metro") return `#block(width: 100%, fill: rgb("#f5f6f5"), stroke: (left: 4pt + accent), inset: 10pt)[${grid}]`;
   if (templateId === "folio") return `#block(width: 100%, inset: (bottom: 9pt), stroke: (bottom: .55pt + black))[${grid}]`;
   return grid;
