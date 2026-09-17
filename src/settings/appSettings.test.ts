@@ -18,7 +18,8 @@ describe("app settings", () => {
       previewZoom: 80,
       previewOpen: false,
     });
-    expect(settings).toMatchObject({ liveSync: false, diskBackupEnabled: false, syncDelayMs: 300, exportEngine: "browser", previewZoom: 80, previewOpen: false });
+    expect(settings).not.toHaveProperty("exportEngine");
+    expect(settings).toMatchObject({ liveSync: false, diskBackupEnabled: false, syncDelayMs: 300, previewZoom: 80, previewOpen: false });
   });
 
   it("falls back for unsupported values", () => {

@@ -1,9 +1,10 @@
-import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { getDensityLayout } from "../model/resume";
+import { lazy, Suspense, useState, type ReactNode } from "react";
+import { useTypstPreview } from "../export/useTypstPreview";
 import type { ContentEntry, ResumeDocument, ResumeSection, ResumeTemplateId } from "../model/resume";
-import { getResumeTemplate } from "../templates/registry";
 import { renderContentRichText } from "../model/contentRichText";
-import { paginatePreviewItems } from "../preview/pagination";
+import "../typstPreview.css";
+
+const PdfCanvasPreview = lazy(() => import("./PdfCanvasPreview"));
 
 function SectionHeading({ children }: { children: string }) {
   return <div className="resume-section-heading"><h2>{children}</h2><span /></div>;
@@ -97,132 +98,25 @@ export function ResumeSectionView({ section }: { section: ResumeSection }) {
   );
 }
 
-function buildFlowItems(resume: ResumeDocument): PreviewFlowItem[] {
-  const items: PreviewFlowItem[] = [{
-    id: "resume-header",
-    className: "resume-flow-header",
-    content: <ResumeProfileContent resume={resume} />,
-  }];
-
-  resume.sections.filter((section) => section.enabled).forEach((section) => {
-    const contentItems = sectionItems(section);
-    items.push({
-      id: `${section.id}-heading`,
-      className: "resume-flow-section",
-      keepWithNext: contentItems.length > 0,
-      content: <SectionHeading>{section.title}</SectionHeading>,
-    });
-    contentItems.forEach((item, index) => items.push({
-      ...item,
-      id: `${section.id}-${item.id}`,
-      className: index === 0 ? "resume-flow-entry first" : "resume-flow-entry",
-    }));
-  });
-
-  return items;
-}
-
 interface ResumePreviewProps {
   resume: ResumeDocument;
   zoom: number | "fit";
   templateId?: ResumeTemplateId;
   onPageCountChange?: (pageCount: number) => void;
+  thumbnail?: boolean;
 }
 
-export function ResumePreview({ resume, zoom, templateId, onPageCountChange }: ResumePreviewProps) {
-  const activeTemplateId = templateId ?? resume.theme.templateId;
-  const activeTemplate = getResumeTemplate(activeTemplateId);
-  const templateClasses = `resume-template-${activeTemplate.renderBase} resume-variant-${activeTemplate.styleVariant} resume-template-${activeTemplateId}`;
-  const measureRef = useRef<HTMLDivElement>(null);
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const [fitZoom, setFitZoom] = useState(1);
-  const flowItems = useMemo(() => buildFlowItems(resume), [resume]);
-  const [pages, setPages] = useState<number[][]>(() => [flowItems.map((_, index) => index)]);
-
-  useLayoutEffect(() => {
-    const scroller = scrollerRef.current;
-    if (zoom !== "fit" || !scroller) return;
-    const update = () => {
-      const style = window.getComputedStyle(scroller);
-      const width = scroller.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-      setFitZoom(Math.min(1, Math.max(0.1, (width - 2) / 794)));
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(scroller);
-    return () => observer.disconnect();
-  }, [zoom]);
-
-  useLayoutEffect(() => {
-    const page = measureRef.current;
-    if (!page) return;
-
-    let frame = 0;
-    const measure = () => {
-      window.cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(() => {
-        const styles = window.getComputedStyle(page);
-        const pageHeight = page.clientHeight
-          - Number.parseFloat(styles.paddingTop)
-          - Number.parseFloat(styles.paddingBottom);
-        const elements = Array.from(page.querySelectorAll<HTMLElement>("[data-preview-flow-item]"));
-        const measured = elements.map((element, index) => {
-          const itemStyles = window.getComputedStyle(element);
-          return {
-            height: element.getBoundingClientRect().height
-              + Number.parseFloat(itemStyles.marginTop)
-              + Number.parseFloat(itemStyles.marginBottom),
-            keepWithNext: flowItems[index]?.keepWithNext,
-          };
-        });
-        const nextPages = paginatePreviewItems(measured, pageHeight);
-        setPages((current) => JSON.stringify(current) === JSON.stringify(nextPages) ? current : nextPages);
-      });
-    };
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(page);
-    page.querySelectorAll("img").forEach((image) => image.addEventListener("load", measure));
-    void document.fonts?.ready.then(measure);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      observer.disconnect();
-      page.querySelectorAll("img").forEach((image) => image.removeEventListener("load", measure));
-    };
-  }, [activeTemplateId, flowItems]);
-
-  useLayoutEffect(() => onPageCountChange?.(pages.length), [onPageCountChange, pages.length]);
-
-  const density = getDensityLayout(resume.theme.density);
-  const pageStyle = {
-    "--resume-accent": resume.theme.accent,
-    "--section-space": `${density.sectionSpacePx}px`,
-    "--entry-space": `${density.entrySpacePx}px`,
-    "--body-line": density.bodyLine,
-    fontSize: `${density.fontSizePx}px`,
-  } as CSSProperties;
-  const renderItem = (index: number) => {
-    const item = flowItems[index];
-    if (!item) return null;
-    return <div key={item.id} data-preview-flow-item className={item.className}>{item.content}</div>;
-  };
-
-  return (
-    <div ref={scrollerRef} className="preview-scroller">
-      <div className="preview-zoom-stage" style={{ "--preview-zoom": zoom === "fit" ? fitZoom : zoom / 100 } as CSSProperties}>
-        <div className="resume-pages">
-          {pages.map((pageItems, pageIndex) => (
-            <div className="resume-page-wrap" key={`${pageIndex}-${pageItems.join("-")}`}>
-              <div className={`resume-page ${templateClasses}`} data-template={activeTemplateId} data-page-index={pageIndex} style={pageStyle}>{pageItems.map(renderItem)}</div>
-              <span className="resume-page-number">第 {pageIndex + 1} 页</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div ref={measureRef} aria-hidden="true" className={`resume-page resume-measure-page ${templateClasses}`} data-template={activeTemplateId} data-page-index="0" style={pageStyle}>
-        {flowItems.map((_, index) => renderItem(index))}
-      </div>
+// HTML above is used only for editable content blocks, never for final pages.
+export function ResumePreview({ resume, zoom, templateId, onPageCountChange, thumbnail = false }: ResumePreviewProps) {
+  const document = templateId ? { ...resume, theme: { ...resume.theme, templateId } } : resume;
+  const { blob, updating, error, retry } = useTypstPreview(document);
+  const [thumbnailImage, setThumbnailImage] = useState<{ blob: Blob; source: string } | null>(null);
+  return <div className={`preview-scroller typst-preview ${thumbnail ? "typst-thumbnail" : ""}`} aria-busy={updating && !error}>
+    <div className="typst-preview-status" role={error ? "alert" : "status"}>
+      {error ? <><span>预览更新失败：{error}{blob && "。下方仍为上次生成的版本。"}</span>{!thumbnail && <button type="button" onClick={retry}>重新生成</button>}</> : updating ? (blob ? "正在更新排版 · 下方为上次生成的版本…" : "正在生成预览…") : "预览与下载、打印使用同一份 PDF"}
     </div>
-  );
+    {blob && (thumbnail && thumbnailImage?.blob === blob
+      ? <img className="typst-thumbnail-image" src={thumbnailImage.source} alt="Typst PDF 首页" />
+      : <Suspense fallback={<p role="status">正在打开 PDF…</p>}><PdfCanvasPreview blob={blob} zoom={zoom} onPageCountChange={onPageCountChange} thumbnail={thumbnail} onThumbnailReady={thumbnail ? (source) => setThumbnailImage({ blob, source }) : undefined} /></Suspense>)}
+  </div>;
 }

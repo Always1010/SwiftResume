@@ -11,7 +11,7 @@ export function TemplateThumbnailCapture({ templateId }: { templateId: ResumeTem
 
   return (
     <main className="template-thumbnail-capture" aria-label={`${templateId}模板缩略图生成页`}>
-      <ResumePreview resume={resume} zoom={42} templateId={templateId} />
+      <ResumePreview resume={resume} zoom={42} templateId={templateId} thumbnail />
     </main>
   );
 }

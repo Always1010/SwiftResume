@@ -1,0 +1,22 @@
+.typst-preview.preview-scroller { display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; padding: 0; overflow: hidden; }
+.typst-preview-status { flex: none; min-height: 32px; padding: 7px 12px; color: #52685b; background: #f7faf8; font-size: 12px; line-height: 1.5; }
+.typst-preview-status[role="alert"] { color: #9a3827; }
+.typst-preview-status button { margin-left: 8px; }
+.typst-preview > .pdf-reader { flex: 1; height: auto; min-height: 0; }
+.standalone-preview-viewport:has(> .typst-preview) { padding: 0; overflow: hidden; }
+.template-compare-paper .typst-preview { height: 100%; }
+.template-thumbnail-frame .typst-preview { position: absolute; inset: 0; }
+.typst-thumbnail .typst-preview-status { font-size: 10px; }
+.typst-thumbnail[aria-busy="false"] .typst-preview-status:not([role="alert"]) { display: none; }
+.typst-thumbnail .pdf-reader { display: block; overflow: hidden; }
+.typst-thumbnail .pdf-page-viewport { padding: 4px; height: 100%; overflow: hidden; }
+.typst-thumbnail-image { display: block; width: calc(100% - 8px); height: auto; margin: 4px; flex: none; }
+.template-thumbnail-frame .typst-thumbnail-image { width: calc(100% - 8px); height: auto; object-fit: contain; }
+.scene-thumbnail .typst-preview { height: 100%; }
+.scene-full-preview > .typst-preview { height: 65vh; }
+.template-thumbnail-capture .typst-preview { height: 510px; }
+/* Never print the HTML editor or a low-resolution preview canvas as a resume. */
+@media print {
+  body #root { display: none !important; }
+  body::after { display: block; padding: 24mm; content: "请在 SwiftResume 中选择“导出 PDF”，再点击“打印 PDF”打印正式文件。"; font: 14pt sans-serif; color: black; }
+}
