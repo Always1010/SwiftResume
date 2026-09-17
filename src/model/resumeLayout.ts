@@ -2,6 +2,7 @@ import type { ResumeProfile } from "./resume";
 
 // Shared by the editable HTML and the PDF layout.
 export const PROFILE_LAYOUT = { firstColumnEm: 13, columnGapEm: 1.9, rowGapPx: 5 };
+export const EDUCATION_LAYOUT = { maxLeftPercent: 45, columnGapPx: 12 };
 
 export interface ProfileInfoRow { id: string; left: string; right?: string }
 

@@ -443,7 +443,9 @@ body.template-thumbnail-body { width: 360px; min-width: 0; height: 510px; overfl
 .entry-topline time { flex: none; color: var(--resume-accent); font-size: 10px; }
 .entry-role { margin-left: 26px; color: #69736c; }
 .entry-role.solo { margin-left: 0; }
-.education-detail { display: flex; justify-content: space-between; color: #515b54; }
+.education-detail { display: grid; align-items: start; color: #515b54; }
+.education-detail > span { min-width: 0; overflow-wrap: anywhere; }
+.education-detail > span:last-child { text-align: right; white-space: pre-wrap; }
 .resume-entry p { margin: 2px 0; }
 .resume-entry b { font-weight: 750; }
 .resume-page ul { margin: 3px 0 0; padding-left: 18px; }

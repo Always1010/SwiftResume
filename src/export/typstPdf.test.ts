@@ -51,15 +51,26 @@ describe("Typst source generator", () => {
     expect(source).not.toContain("spacing: 1pt");
   });
 
-  it("gives education details a bounded share instead of squeezing the major column", () => {
+  it("keeps education metadata together and right-aligns long details in the remaining width", () => {
     const resume = createDefaultResume();
     const education = resume.sections.find((section) => section.type === "education")!;
     if (education.type !== "education") throw new Error("expected education");
     education.items[0].detail = "较长的课程与成绩说明".repeat(20);
     const source = createTypstSource(resume);
-    expect(source).toContain("#grid(columns: (2fr, 3fr), column-gutter: 8pt");
+    expect(source).toContain("calc.min(measure(major).width, size.width * 0.45)");
+    expect(source).toContain("columns: (major-width, 1fr), column-gutter: 9pt, align: (left, right)");
     expect(source).toContain(education.items[0].detail);
     expect(source).toContain(education.items[0].major);
+  });
+
+  it.each(["GPA 3.7/4.0", "", "绩点优秀\n主修计算机网络"])("preserves short, empty and multiline education details: %s", (detail) => {
+    const resume = createDefaultResume();
+    const education = resume.sections.find((section) => section.type === "education")!;
+    if (education.type !== "education") throw new Error("expected education");
+    education.items[0].detail = detail;
+    const source = createTypstSource(resume);
+    expect(source).toContain(`text(${JSON.stringify(detail)})`);
+    expect(source).toContain(JSON.stringify([education.items[0].major, education.items[0].degree].filter(Boolean).join(" | ")));
   });
 
   it("contains active resume modules and selected theme", () => {

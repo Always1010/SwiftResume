@@ -4,7 +4,7 @@ import * as compilerWrapper from "@myriaddreamin/typst-ts-web-compiler";
 import compilerWasmUrl from "@myriaddreamin/typst-ts-web-compiler/wasm?url";
 import { DEFAULT_PROFILE_PHOTO, getDensityLayout, type ContentEntry, type RichTextDocument, type RichTextNode, type ResumeDocument, type ResumeSection, type ResumeTemplateId } from "../model/resume";
 import { getResumeTemplate } from "../templates/registry";
-import { PROFILE_LAYOUT, profileInfoRows } from "../model/resumeLayout";
+import { EDUCATION_LAYOUT, PROFILE_LAYOUT, profileInfoRows } from "../model/resumeLayout";
 
 const asString = (value: string) => JSON.stringify(value);
 const withUnit = (value: number, unit: string) => `${Math.round(value * 100) / 100}${unit}`;
@@ -191,7 +191,11 @@ function sectionSource(section: ResumeSection, templateId: ResumeTemplateId) {
   let body = "";
   switch (section.type) {
     case "education":
-      body = section.items.map((item) => `${topLine(item.school, item.date, "", templateId)}#grid(columns: (2fr, 3fr), column-gutter: 8pt, text(${asString([item.major, item.degree].filter(Boolean).join(" | "))}), text(${asString(item.detail)}))\n`).join("#v(4pt)\n");
+      body = section.items.map((item) => `${topLine(item.school, item.date, "", templateId)}#layout(size => {
+  let major = text(${asString([item.major, item.degree].filter(Boolean).join(" | "))})
+  let major-width = calc.min(measure(major).width, size.width * ${EDUCATION_LAYOUT.maxLeftPercent / 100})
+  grid(columns: (major-width, 1fr), column-gutter: ${EDUCATION_LAYOUT.columnGapPx * .75}pt, align: (left, right), major, text(${asString(item.detail)}))
+})\n`).join("#v(4pt)\n");
       break;
     case "content":
       body = section.entries.map((entry) => contentEntrySource(entry, templateId)).join("#v(6pt)\n");
