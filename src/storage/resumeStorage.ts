@@ -1,4 +1,4 @@
-import { createDefaultResume, normalizeResumeDocument, type ResumeDocument } from "../model/resume";
+import { createBlankResume, normalizeResumeDocument, type ResumeDocument } from "../model/resume";
 
 const DATABASE = "swift-resume";
 const STORE = "documents";
@@ -22,6 +22,7 @@ export interface ResumeLibrary {
 export interface ResumeWorkspace {
   library: ResumeLibrary;
   resume: ResumeDocument;
+  firstRun?: boolean;
 }
 
 const makeId = () => crypto.randomUUID();
@@ -89,7 +90,7 @@ export async function loadResumeWorkspace(): Promise<ResumeWorkspace> {
     }
 
     const legacy = await getValue<unknown>(database, LEGACY_DOCUMENT_KEY);
-    const resume = normalizeResumeDocument(legacy) ?? createDefaultResume();
+    const resume = normalizeResumeDocument(legacy) ?? createBlankResume();
     const id = makeId();
     const library: ResumeLibrary = {
       version: 1,
@@ -97,7 +98,7 @@ export async function loadResumeWorkspace(): Promise<ResumeWorkspace> {
       resumes: [createResumeSummary(id, resume)],
     };
     await saveResumeWorkspace(id, resume, library, database);
-    return { library, resume };
+    return { library, resume, firstRun: storedLibrary === undefined && legacy === undefined };
   } finally {
     database.close();
   }
