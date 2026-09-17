@@ -11,6 +11,8 @@ export interface ResumeSummary {
   title: string;
   createdAt: string;
   updatedAt: string;
+  company?: string;
+  role?: string;
 }
 
 export interface ResumeLibrary {
@@ -28,16 +30,16 @@ export interface ResumeWorkspace {
 const makeId = () => crypto.randomUUID();
 
 export function createResumeSummary(id: string, resume: ResumeDocument, createdAt = resume.updatedAt): ResumeSummary {
-  return { id, title: resume.title, createdAt, updatedAt: resume.updatedAt };
+  return { id, title: resume.title, createdAt, updatedAt: resume.updatedAt, company: resume.target?.company, role: resume.target?.role };
 }
 
 export function updateResumeSummary(library: ResumeLibrary, resumeId: string, resume: ResumeDocument): ResumeLibrary {
   const current = library.resumes.find((item) => item.id === resumeId);
-  if (current?.title === resume.title && current.updatedAt === resume.updatedAt) return library;
+  if (current?.title === resume.title && current.updatedAt === resume.updatedAt && current.company === resume.target?.company && current.role === resume.target?.role) return library;
   return {
     ...library,
     resumes: library.resumes.map((item) =>
-      item.id === resumeId ? { ...item, title: resume.title, updatedAt: resume.updatedAt } : item,
+      item.id === resumeId ? createResumeSummary(resumeId, resume, item.createdAt) : item,
     ),
   };
 }
