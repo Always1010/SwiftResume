@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { BackupSetupPrompt } from "./components/BackupSetupPrompt";
 import { HistoryPanel } from "./components/HistoryPanel";
+import { ResumeLibraryDialog } from "./components/ResumeLibraryDialog";
 import { NewResumeDialog } from "./components/NewResumeDialog";
 import { PhotoBackgroundPicker } from "./components/PhotoBackgroundPicker";
 import { ResumeEditorCanvas } from "./components/ResumeEditorCanvas";
@@ -42,7 +43,6 @@ import {
 } from "./storage/diskBackup";
 import { useResumeSync } from "./sync/resumeSync";
 import { usePreviewPublisher } from "./sync/previewSync";
-import { RESUME_TEMPLATES } from "./templates/registry";
 
 export function App() {
   const [editHistory, dispatchHistory] = useReducer(resumeHistoryReducer, undefined, () => createResumeHistory(createBlankResume()));
@@ -64,6 +64,7 @@ export function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const [newResumeOpen, setNewResumeOpen] = useState(false);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [modulesOpen, setModulesOpen] = useState(() => window.innerWidth >= 1500);
@@ -253,7 +254,7 @@ export function App() {
       setSaveState("saved");
     } catch (error) {
       setSaveState("error");
-      window.alert(error instanceof Error ? error.message : "切换简历失败");
+      throw error;
     }
   };
   const addResume = async (document: ResumeDocument) => {
@@ -291,33 +292,51 @@ export function App() {
     dispatchHistory({ type: "edit", action: { type: "replace", value: clearResumeContent(resume) }, time: Date.now() });
     setSelectedId("profile"); setEditingId("profile");
   };
-  const copyResume = () => {
-    void addResume(duplicateResume(resume)).catch((error) => {
-      setSaveState("error");
-      window.alert(error instanceof Error ? error.message : "复制简历失败");
-    });
+  const copyResume = async (id: string) => {
+    const document = id === activeResumeId ? resume : await loadResumeById(id);
+    if (!document) throw new Error("找不到要复制的简历");
+    await addResume(duplicateResume(document));
   };
-  const removeCurrentResume = async () => {
-    const currentLibrary = libraryRef.current;
-    if (!currentLibrary || currentLibrary.resumes.length <= 1) return;
-    if (!window.confirm(`确定删除“${resume.title}”吗？此操作不会删除手动导出的备份。`)) return;
-    const remaining = currentLibrary.resumes.filter((item) => item.id !== activeResumeId);
-    const nextId = remaining[0].id;
-    const target = await loadResumeById(nextId);
-    if (!target) throw new Error("无法读取下一份简历");
-    const nextLibrary: ResumeLibrary = { ...currentLibrary, activeResumeId: nextId, resumes: remaining };
-    await deleteResume(activeResumeId, nextLibrary);
-    libraryRef.current = nextLibrary;
-    setLibrary(nextLibrary);
-    dispatch({ type: "replace", value: target });
-    setSelectedId("profile");
-    setEditingId(null);
+  const renameResume = async (id: string, title: string) => {
+    if (id === activeResumeId) {
+      const current = await persistCurrentResume();
+      if (!current) throw new Error("简历库尚未就绪");
+      const document = { ...resume, title, updatedAt: new Date().toISOString() };
+      const next = updateResumeSummary(current, id, document);
+      await saveDocuments([{ id, resume: document }], next);
+      libraryRef.current = next; setLibrary(next);
+      dispatch({ type: "update-title", value: title });
+      return;
+    }
+    const current = await persistCurrentResume();
+    const document = await loadResumeById(id);
+    if (!current || !document) throw new Error("找不到要重命名的简历");
+    const renamed = { ...document, title, updatedAt: new Date().toISOString() };
+    const next = updateResumeSummary(current, id, renamed);
+    await saveDocuments([{ id, resume: renamed }], next);
+    libraryRef.current = next; setLibrary(next);
+  };
+  const removeLibraryResume = async (id: string) => {
+    const summary = libraryRef.current?.resumes.find((item) => item.id === id);
+    if (!summary || !libraryRef.current || libraryRef.current.resumes.length <= 1) return;
+    if (!window.confirm(`确定删除“${summary.title}”吗？此操作不会删除手动导出的备份。`)) return;
+    const current = await persistCurrentResume();
+    if (!current) throw new Error("简历库尚未就绪");
+    const remaining = current.resumes.filter((item) => item.id !== id);
+    const nextId = id === activeResumeId ? remaining[0].id : activeResumeId;
+    const target = id === activeResumeId ? await loadResumeById(nextId) : null;
+    if (id === activeResumeId && !target) throw new Error("无法读取下一份简历");
+    const nextLibrary: ResumeLibrary = { ...current, activeResumeId: nextId, resumes: remaining };
+    await deleteResume(id, nextLibrary);
+    libraryRef.current = nextLibrary; setLibrary(nextLibrary);
+    if (target) { dispatch({ type: "replace", value: target }); setSelectedId("profile"); setEditingId(null); }
   };
   const importFile = async (file: File | undefined) => {
     if (!file) return;
     try {
       if (file.size > 100 * 1024 * 1024) throw new Error("备份文件超过 100MB，请分批导入");
       setImportBatch(parseBackupValue(JSON.parse(await file.text())));
+      setLibraryOpen(false);
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "导入失败");
     }
@@ -481,50 +500,34 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <div className="brand"><span className="brand-mark">S</span><div><strong>SwiftResume</strong><small>模块化简历工作台</small></div></div>
-        <div className="document-manager">
-          <select aria-label="切换简历" value={activeResumeId} disabled={!library} onChange={(event) => void switchResume(event.target.value)}>
-            {library?.resumes.map((item) => <option key={item.id} value={item.id}>{item.title || "未命名简历"}</option>)}
-          </select>
-          <input className="document-title" aria-label="简历文件名" value={resume.title} onChange={(event) => dispatch({ type: "update-title", value: event.target.value })} />
-          <div className="document-actions">
-            <button type="button" className="icon-button" title="新建简历" aria-label="新建简历" onClick={() => setNewResumeOpen(true)}>＋</button>
-            <button type="button" className="icon-button" title="创建当前简历的副本" aria-label="创建当前简历的副本" onClick={copyResume}>⧉</button>
-            <button type="button" className="icon-button danger-text" title="删除当前简历" aria-label="删除当前简历" disabled={!library || library.resumes.length <= 1} onClick={() => void removeCurrentResume().catch((error) => window.alert(error instanceof Error ? error.message : "删除失败"))}>×</button>
-          </div>
+      <header className="topbar workspace-topbar">
+        <div className="brand"><span className="brand-mark">S</span><strong>SwiftResume</strong></div>
+        <div className="current-document">
+          <button type="button" className="document-switcher" aria-label={`我的简历：${resume.title || "未命名简历"}`} aria-haspopup="dialog" aria-expanded={libraryOpen} disabled={!library} onClick={() => setLibraryOpen(true)}><span>{resume.title || "未命名简历"}</span><span aria-hidden="true">⌄</span></button>
+          <span role="status" className={`save-status ${saveState}`}>{saveState === "saved" ? "● 已自动保存" : saveState === "saving" ? "● 保存中" : "● 保存失败"}</span>
         </div>
         <div className="topbar-actions">
-          <span className={`save-status ${saveState}`}>{saveState === "saved" ? "● 已自动保存" : saveState === "saving" ? "● 保存中" : "● 保存失败"}</span>
-          <details className="file-menu">
-            <summary className="secondary-button">文件与备份</summary>
-            <div className="file-menu-content">
-          <span className={`disk-status ${backupStatus}`} title={backupDirectory ? `备份目录：${backupDirectory.name}` : "尚未选择本地备份目录"}>
-            {backupStatus === "ready" ? "● 磁盘已备份" : backupStatus === "saving" ? "● 磁盘备份中" : backupStatus === "permission-required" ? "● 磁盘待授权" : backupStatus === "error" ? "● 磁盘备份失败" : backupStatus === "unsupported" ? "磁盘备份不支持" : "磁盘未配置"}
-          </span>
-          <span className={`sync-status ${settings.liveSync && syncSupported ? "active" : ""}`} title={syncSupported ? "多个 SwiftResume 页面实时同步" : "当前浏览器不支持多页面同步"}>
-            <span />{settings.liveSync && syncSupported ? "多页同步" : "同步关闭"}
-          </span>
-          <button type="button" className="secondary-button" onClick={() => downloadResume(resume)}>备份当前简历</button>
-          <button type="button" className="secondary-button" disabled={!library} onClick={() => void exportLibrary()}>备份全部简历</button>
-          <button type="button" className="secondary-button" onClick={() => importRef.current?.click()}>导入 JSON 备份</button>
-          <button type="button" className="secondary-button" disabled={!library} onClick={() => setTextImportOpen(true)}>粘贴旧简历文本</button>
-            </div>
-          </details>
           <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置</button>
-          <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => { void importFile(event.target.files?.[0]); event.target.value = ""; }} />
-          <button type="button" className="secondary-button standalone-preview-button" disabled={!activeResumeId} onClick={openStandalonePreview}>↗ 独立预览</button>
           <button type="button" className="primary-button export-button" disabled={!ready} onClick={() => setCheckOpen(true)}>导出 PDF</button>
         </div>
       </header>
+      <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => { void importFile(event.target.files?.[0]); event.target.value = ""; }} />
       <nav className="workspace-controls" aria-label="工作区布局">
         <button type="button" className="secondary-button" aria-expanded={modulesOpen} onClick={() => setModulesOpen(!modulesOpen)}>{modulesOpen ? "收起模块" : "简历模块"}</button>
-        <button type="button" className="secondary-button" disabled={!ready} onClick={() => setTemplatePickerOpen(true)}>选择模板</button>
+        <button type="button" className="secondary-button" disabled={!ready} onClick={() => setTemplatePickerOpen(true)}>排版样式</button>
+        {compactWorkspace ? <details className="workspace-more"><summary className="secondary-button">更多</summary><div className="workspace-more-panel">
         <button type="button" className="secondary-button" disabled={!library} onClick={() => setVersionsOpen(true)}>岗位版本</button>
         <div className="document-history-actions" role="group" aria-label="整份简历撤销与重做">
           <button type="button" className="secondary-button" disabled={!undoLabel} aria-label="撤销整份简历" title={undoLabel ? `撤销：${undoLabel}（Ctrl/⌘ + Alt + Z）` : "暂无可撤销的修改"} onClick={() => changeHistory("undo")}>↶ 撤销</button>
           <button type="button" className="secondary-button" disabled={!redoLabel} aria-label="重做整份简历" title={redoLabel ? `重做：${redoLabel}（Ctrl/⌘ + Alt + Shift + Z）` : "暂无可重做的修改"} onClick={() => changeHistory("redo")}>↷ 重做</button>
         </div>
+        </div></details> : <div className="workspace-secondary-tools">
+        <button type="button" className="secondary-button" disabled={!library} onClick={() => setVersionsOpen(true)}>岗位版本</button>
+        <div className="document-history-actions" role="group" aria-label="整份简历撤销与重做">
+          <button type="button" className="secondary-button" disabled={!undoLabel} aria-label="撤销整份简历" title={undoLabel ? `撤销：${undoLabel}（Ctrl/⌘ + Alt + Z）` : "暂无可撤销的修改"} onClick={() => changeHistory("undo")}>↶ 撤销</button>
+          <button type="button" className="secondary-button" disabled={!redoLabel} aria-label="重做整份简历" title={redoLabel ? `重做：${redoLabel}（Ctrl/⌘ + Alt + Shift + Z）` : "暂无可重做的修改"} onClick={() => changeHistory("redo")}>↷ 重做</button>
+        </div>
+        </div>}
         <div className="workspace-view-options">
           <button type="button" className={`secondary-button ${!previewVisible ? "active" : ""}`} aria-pressed={!previewVisible} onClick={() => { setMobilePreview(false); setSettings((current) => ({ ...current, previewOpen: false })); }}>专注编辑</button>
           <button type="button" className={`secondary-button ${previewVisible ? "active" : ""}`} aria-pressed={previewVisible} onClick={() => { setMobilePreview(true); setSettings((current) => ({ ...current, previewOpen: true })); }}>{compactWorkspace ? "查看预览" : "编辑＋预览"}</button>
@@ -562,12 +565,7 @@ export function App() {
                   {[70, 80, 90, 100].map((value) => <option key={value} value={value}>{value}%</option>)}
                 </select>
               </div>
-              <label className="template-picker">
-                <span>模板</span>
-                <select aria-label="简历模板" value={resume.theme.templateId} onChange={(event) => dispatch({ type: "update-theme", value: { templateId: event.target.value as ResumeDocument["theme"]["templateId"] } })}>
-                  {RESUME_TEMPLATES.map((template) => <option key={template.id} value={template.id}>{template.name}</option>)}
-                </select>
-              </label>
+              <button type="button" className="secondary-button" onClick={openStandalonePreview}>↗ 独立预览</button>
               <label className="density-control">
                 <span>紧凑</span>
                 <input
@@ -624,6 +622,19 @@ export function App() {
         onRestoreAsNew={restoreHistoryAsNew}
         onReplaceResume={replaceResumeFromHistory}
       />}
+      {libraryOpen && library && <ResumeLibraryDialog library={updateResumeSummary(library, activeResumeId, resume)} onClose={() => setLibraryOpen(false)} onNew={() => { setLibraryOpen(false); setNewResumeOpen(true); }} onOpen={switchResume} onRename={renameResume} onCopy={copyResume} onDelete={removeLibraryResume} onClear={clearContent} backupTools={<div className="library-backup-tools">
+          <span className={`disk-status ${backupStatus}`} title={backupDirectory ? `备份目录：${backupDirectory.name}` : "尚未选择本地备份目录"}>
+            {backupStatus === "ready" ? "● 磁盘已备份" : backupStatus === "saving" ? "● 磁盘备份中" : backupStatus === "permission-required" ? "● 磁盘待授权" : backupStatus === "error" ? "● 磁盘备份失败" : backupStatus === "unsupported" ? "磁盘备份不支持" : "磁盘未配置"}
+          </span>
+          <span className={`sync-status ${settings.liveSync && syncSupported ? "active" : ""}`} title={syncSupported ? "多个 SwiftResume 页面实时同步" : "当前浏览器不支持多页面同步"}>
+            <span />{settings.liveSync && syncSupported ? "多页同步" : "同步关闭"}
+          </span>
+          <button type="button" className="secondary-button" onClick={() => downloadResume(resume)}>备份当前简历</button>
+          <button type="button" className="secondary-button" disabled={!library} onClick={() => void exportLibrary()}>备份全部简历</button>
+          <button type="button" className="secondary-button" onClick={() => importRef.current?.click()}>导入 JSON 备份</button>
+          <button type="button" className="secondary-button" disabled={!library} onClick={() => { setLibraryOpen(false); setTextImportOpen(true); }}>粘贴旧简历文本</button>
+<button type="button" className="secondary-button" onClick={() => { setLibraryOpen(false); setSettingsOpen(true); }}>磁盘备份设置与历史恢复</button>
+      </div>} />}
       {newResumeOpen && <NewResumeDialog onSelect={createResume} onClose={() => { firstRunRef.current = false; setNewResumeOpen(false); }} />}
       {textImportOpen && <TextImportDialog onClose={() => setTextImportOpen(false)} onImport={async (document) => { await addResume(document); setTextImportOpen(false); }} />}
       {importBatch && <RestoreDialog batch={importBatch} onClose={() => setImportBatch(null)} onRestore={restoreSelected} />}
