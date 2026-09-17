@@ -20,7 +20,8 @@ export const RESUME_TEMPLATE_IDS = [
   "civil-service", "institution", "legal", "medical", "teacher", "public-sector", "policy", "formal", "administration", "state-owned",
 ] as const;
 export type ResumeTemplateId = typeof RESUME_TEMPLATE_IDS[number];
-export type ResumeCreationTemplate = "default" | "blank";
+export type ResumeCreationTemplate = "default" | "blank" | "graduate" | "experienced" | "career-change";
+export type SectionPurpose = "work" | "project" | "skills" | "summary" | "custom";
 export const DEFAULT_RESUME_TEMPLATE: ResumeTemplateId = "classic";
 export const DEFAULT_PROFILE_PHOTO = "./sample/fictional-engineer.png";
 export const DEFAULT_PHOTO_BACKGROUND = "transparent";
@@ -141,6 +142,7 @@ export interface ContentEntry {
 
 export interface ContentSection extends SectionBase {
   type: "content";
+  purpose?: SectionPurpose;
   entries: ContentEntry[];
 }
 
@@ -381,7 +383,24 @@ export function createBlankResume(): ResumeDocument {
 }
 
 export function createResumeFromTemplate(template: ResumeCreationTemplate): ResumeDocument {
-  return template === "default" ? createDefaultResume() : createBlankResume();
+  if (template === "default") return createDefaultResume();
+  const resume = createBlankResume();
+  if (template === "blank") return resume;
+  const starters = {
+    graduate: { title: "应届生简历", modules: ["education", "project", "work", "skills"] },
+    experienced: { title: "工作经验简历", modules: ["work", "project", "skills", "education"] },
+    "career-change": { title: "转行求职简历", modules: ["summary", "skills", "project", "work", "education"] },
+  } as const;
+  const starter = starters[template];
+  resume.title = starter.title;
+  resume.sections = starter.modules.map(createQuickSection);
+  return resume;
+}
+
+export function createQuickSection(purpose: SectionPurpose | "education"): ResumeSection {
+  if (purpose === "education") return createSection("education");
+  return { ...createSection("content"), type: "content", entries: [createContentEntry()], purpose,
+    title: { work: "工作经历", project: "项目经历", skills: "专业技能", summary: "个人简介", custom: "自定义模块" }[purpose] };
 }
 
 export function duplicateResume(resume: ResumeDocument): ResumeDocument {

@@ -51,7 +51,11 @@ function ContentToolbar({ editor }: { editor: Editor }) {
       <div className="toolbar-group">
         <ToolbarButton editor={editor} title="撤销" command={() => { editor.chain().focus().undo().run(); }}>↶</ToolbarButton>
         <ToolbarButton editor={editor} title="重做" command={() => { editor.chain().focus().redo().run(); }}>↷</ToolbarButton>
+        <ToolbarButton editor={editor} title="加粗" active={editor.isActive("bold")} command={() => { editor.chain().focus().toggleBold().run(); }}><strong>B</strong></ToolbarButton>
+        <ToolbarButton editor={editor} title="无序列表" active={editor.isActive("bulletList")} command={() => { editor.chain().focus().toggleBulletList().run(); }}>• 列表</ToolbarButton>
+        <ToolbarButton editor={editor} title="链接" active={editor.isActive("link")} command={setLink}>链接</ToolbarButton>
       </div>
+      <details className="more-format"><summary>更多格式</summary><div className="content-rich-toolbar">
       <label className="toolbar-select">
         <span>段落</span>
         <select
@@ -122,6 +126,7 @@ function ContentToolbar({ editor }: { editor: Editor }) {
         <ToolbarButton editor={editor} title="添加列" command={() => { editor.chain().focus().addColumnAfter().run(); }}>＋列</ToolbarButton>
         <ToolbarButton editor={editor} title="删除表格" command={() => { editor.chain().focus().deleteTable().run(); }}>删表</ToolbarButton>
       </div>
+      </div></details>
     </div>
   );
 }

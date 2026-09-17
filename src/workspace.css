@@ -79,6 +79,24 @@
 }
 
 .document-history-actions { display: flex; gap: 6px; }
+.flow-dialog { width: min(920px, calc(100vw - 32px)); max-height: 90vh; padding: 24px; overflow: auto; color: var(--text); }
+.flow-dialog .new-resume-dialog { width: auto; max-width: none; box-shadow: none; padding: 0; }
+.flow-dialog .new-resume-options { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.flow-dialog h2 { margin: 0 0 12px; }
+.flow-dialog p { line-height: 1.6; }
+.flow-actions, .quick-modules { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.flow-actions { justify-content: flex-end; }
+.writing-example { margin: 10px 0; padding: 10px; background: #f2f6f3; font-size: 12px; }
+.writing-example summary, .more-format summary { cursor: pointer; color: var(--green); }
+.writing-example p { white-space: pre-wrap; line-height: 1.7; }
+.writing-example small { display: block; margin-top: 6px; }
+.more-format { width: 100%; }
+.more-format summary { padding: 6px; font-size: 12px; }
+.flow-field { display: grid; gap: 6px; margin: 12px 0; font-size: 13px; }
+.flow-field input, .flow-field textarea, .flow-field select { width: 100%; border: 1px solid #cdd8d1; padding: 9px; border-radius: 7px; background: white; color: #263d30; }
+.flow-error { color: #b33232; }
+.flow-list { list-style: none; padding: 0; display: grid; gap: 10px; }
+.flow-list > li { padding: 12px; border: 1px solid #d9e3dd; border-radius: 8px; overflow-wrap: anywhere; }
 .undo-notice { position: fixed; z-index: 35; bottom: 24px; left: 50%; display: flex; align-items: center; gap: 18px; transform: translateX(-50%); border: 1px solid #c7d8cc; border-radius: 12px; padding: 12px 18px; background: white; box-shadow: 0 8px 35px #17302330; font-size: 13px; }
 .undo-notice button { border: 0; background: transparent; color: var(--green); font-weight: 700; }
 .pdf-preview-content { min-height: 0; overflow: auto; background: #525659; }

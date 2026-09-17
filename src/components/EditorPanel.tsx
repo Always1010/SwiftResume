@@ -4,6 +4,7 @@ import { createContentEntry, DEFAULT_PROFILE_PHOTO_CROP } from "../model/resume"
 import { createCroppedPhoto, drawCroppedPhoto, loadPhotoImage } from "../model/profilePhoto";
 import { ContentBodyEditor } from "./customEditors/ContentBodyEditor";
 import { PhotoBackgroundPicker } from "./PhotoBackgroundPicker";
+import { plainText, writingGuide } from "../model/writingGuide";
 
 const makeId = () => crypto.randomUUID();
 
@@ -223,12 +224,8 @@ function EducationEditor({ section, onChange }: { section: EducationSection; onC
   );
 }
 
-function entryLabels(_type: ContentSection["type"]) {
-  return { title: "标题 / 名称（选填）", subtitle: "补充信息（选填）", titlePlaceholder: "留空则只显示正文", subtitlePlaceholder: "角色、职位或其他说明", add: "添加内容条目" };
-}
-
 function ContentSectionEditor({ section, onChange }: { section: ContentSection; onChange: (value: ContentSection) => void }) {
-  const labels = entryLabels(section.type);
+  const labels = writingGuide(section);
   const replaceEntry = (entry: ContentEntry) => onChange({ ...section, entries: section.entries.map((item) => item.id === entry.id ? entry : item) });
   const moveEntry = (index: number, direction: -1 | 1) => {
     const target = index + direction;
@@ -248,8 +245,8 @@ function ContentSectionEditor({ section, onChange }: { section: ContentSection; 
   return (
     <>
       <div className="content-editor-notice">
-        <strong>标题行 + 富文本正文</strong>
-        <span>标题、补充信息和时间均可留空；全部留空时，简历只显示正文。</span>
+        <strong>写作提示</strong>
+        <span>{labels.prompt}</span>
       </div>
       <div className="content-entry-list">
         {section.entries.map((entry, index) => (
@@ -264,12 +261,13 @@ function ContentSectionEditor({ section, onChange }: { section: ContentSection; 
               </div>
             </div>
             <div className="content-heading-fields">
-              <Field label={labels.title} value={entry.title} placeholder={labels.titlePlaceholder} onChange={(title) => replaceEntry({ ...entry, title })} />
-              <Field label={labels.subtitle} value={entry.subtitle} placeholder={labels.subtitlePlaceholder} onChange={(subtitle) => replaceEntry({ ...entry, subtitle })} />
+              <Field label={labels.title} value={entry.title} placeholder="选填" onChange={(title) => replaceEntry({ ...entry, title })} />
+              <Field label={labels.subtitle} value={entry.subtitle} placeholder="选填" onChange={(subtitle) => replaceEntry({ ...entry, subtitle })} />
               <Field label="时间（选填）" value={entry.date} placeholder="例如：2024.07 – 2024.09" onChange={(date) => replaceEntry({ ...entry, date })} />
             </div>
             <div className="content-body-label"><span>正文</span><small>支持高级文字格式、行高、缩进、对齐和表格</small></div>
             <ContentBodyEditor entryId={entry.id} content={entry.body} onChange={(body) => replaceEntry({ ...entry, body })} />
+            <details className="writing-example"><summary>查看写作示例</summary><p>{labels.example}</p><button type="button" className="secondary-button" disabled={Boolean(plainText(entry.body).trim())} onClick={() => replaceEntry({ ...entry, body: { type: "doc", content: labels.example.split("\n").map((text) => ({ type: "paragraph", content: [{ type: "text", text }] })) } })}>填入空白正文</button><small>示例中的【占位内容】需要替换为你的真实经历。</small></details>
           </article>
         ))}
         {!section.entries.length && <div className="custom-empty-state">还没有内容，点击下方按钮添加。</div>}
