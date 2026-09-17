@@ -4,6 +4,7 @@ import * as compilerWrapper from "@myriaddreamin/typst-ts-web-compiler";
 import compilerWasmUrl from "@myriaddreamin/typst-ts-web-compiler/wasm?url";
 import { DEFAULT_PROFILE_PHOTO, getDensityLayout, type ContentEntry, type RichTextDocument, type RichTextNode, type ResumeDocument, type ResumeSection, type ResumeTemplateId } from "../model/resume";
 import { getResumeTemplate } from "../templates/registry";
+import { PROFILE_LAYOUT, profileInfoRows } from "../model/resumeLayout";
 
 const asString = (value: string) => JSON.stringify(value);
 const withUnit = (value: number, unit: string) => `${Math.round(value * 100) / 100}${unit}`;
@@ -200,13 +201,17 @@ function sectionSource(section: ResumeSection, templateId: ResumeTemplateId) {
 }
 
 function profileSource(resume: ResumeDocument, templateId: ResumeTemplateId, photoPath: string | null) {
-  const details = resume.profile.details.filter((item) => item.label || item.value);
-  const detailCells = details.map((item) => `[#text(fill: profile-ink, ${asString(`${item.label}：${item.value}`)})]`).join(",\n");
-  const detailGrid = detailCells
-    ? `#v(4pt)\n#grid(columns: (1fr, 1fr, 1fr), column-gutter: 10pt, row-gutter: 2pt, ${detailCells})`
+  const singleColumn = templateId === "sidebar";
+  const firstColumn = withUnit(getDensityLayout(resume.theme.density).typstFontSizePt * PROFILE_LAYOUT.firstColumnEm, "pt");
+  const infoCells = profileInfoRows(resume.profile).flatMap((row) => {
+    const cell = (value: string) => `[#text(fill: profile-ink, ${asString(value)})]`;
+    if (row.right === undefined) return [singleColumn ? cell(row.left) : `grid.cell(colspan: 2, ${cell(row.left)})`];
+    return singleColumn ? [row.left, row.right].filter(Boolean).map(cell) : [cell(row.left), cell(row.right)];
+  });
+  const infoGrid = infoCells.length
+    ? `#v(5.25pt)\n#layout(size => grid(columns: ${singleColumn ? "(1fr,)" : `(calc.min(${firstColumn}, size.width * 0.45), 1fr)`}, column-gutter: ${PROFILE_LAYOUT.columnGapEm}em, row-gutter: ${PROFILE_LAYOUT.rowGapPx * .75}pt, ${infoCells.join(",\n")}))`
     : "";
   const contact = [resume.profile.ageGender, resume.profile.location].filter(Boolean).join("    ");
-  const direct = [resume.profile.phone && `手机：${resume.profile.phone}`, resume.profile.email && `邮箱：${resume.profile.email}`].filter(Boolean).join("    ");
   const photoImage = photoPath ? `image(${asString(photoPath)}, width: 27mm, height: 35mm, fit: "cover")` : "";
   const photo = photoImage && /^#[0-9a-f]{6}$/i.test(resume.profile.photoBackground)
     ? `block(width: 27mm, height: 35mm, fill: rgb(${asString(resume.profile.photoBackground)}), ${photoImage})`
@@ -216,10 +221,8 @@ function profileSource(resume: ResumeDocument, templateId: ResumeTemplateId, pho
     #linebreak()
     #text(size: 9.5pt, weight: "bold", fill: profile-accent, ${asString(resume.profile.headline)})
     #v(5pt)
-    #text(fill: profile-ink, ${asString(contact)})
-    #linebreak()
-    #text(fill: profile-ink, ${asString(direct)})
-    ${detailGrid}
+    ${contact ? `#text(fill: profile-ink, ${asString(contact)})` : ""}
+    ${infoGrid}
   `;
   // Code arguments need a content block; markup bodies already provide one.
   const textBlock = `[${profileContent}]`;

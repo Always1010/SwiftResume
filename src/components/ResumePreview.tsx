@@ -2,6 +2,7 @@ import { lazy, Suspense, useState, type ReactNode } from "react";
 import { useTypstPreview } from "../export/useTypstPreview";
 import type { ContentEntry, ResumeDocument, ResumeSection, ResumeTemplateId } from "../model/resume";
 import { renderContentRichText } from "../model/contentRichText";
+import { PROFILE_LAYOUT, profileInfoRows } from "../model/resumeLayout";
 import "../typstPreview.css";
 
 const PdfCanvasPreview = lazy(() => import("./PdfCanvasPreview"));
@@ -51,7 +52,7 @@ function sectionItems(section: ResumeSection): PreviewFlowItem[] {
 }
 
 function ResumeProfileContent({ resume }: { resume: ResumeDocument }) {
-  const details = resume.profile.details.filter((item) => item.label || item.value);
+  const infoRows = profileInfoRows(resume.profile);
   return (
     <header className="resume-header">
       <div className="identity">
@@ -61,12 +62,14 @@ function ResumeProfileContent({ resume }: { resume: ResumeDocument }) {
           {resume.profile.ageGender && <span>{resume.profile.ageGender}</span>}
           {resume.profile.location && <span>{resume.profile.location}</span>}
         </div>
-        <div className="contact-row">
-          {resume.profile.phone && <span>手机：{resume.profile.phone}</span>}
-          {resume.profile.email && <span>邮箱：{resume.profile.email}</span>}
-        </div>
-        {details.length > 0 && <div className="profile-detail-grid">{details.map((detail) => (
-          <div key={detail.id}>{detail.label}：{detail.value}</div>
+        {infoRows.length > 0 && <div className="profile-info-grid" style={{
+          gridTemplateColumns: `minmax(0, min(${PROFILE_LAYOUT.firstColumnEm}em, 45%)) minmax(0, 1fr)`,
+          columnGap: `${PROFILE_LAYOUT.columnGapEm}em`, rowGap: PROFILE_LAYOUT.rowGapPx,
+        }}>{infoRows.map((row) => (
+          <div className="profile-info-row" key={row.id}>
+            <span style={row.right === undefined ? { gridColumn: "1 / -1" } : undefined}>{row.left}</span>
+            {row.right !== undefined && <span>{row.right}</span>}
+          </div>
         ))}</div>}
       </div>
       <div

@@ -1,5 +1,15 @@
 # SwiftResume 问题日志
 
+## SR-025：个人信息的联系方式与附加字段列位置不一致
+
+- 日期：2026-09-18
+- 状态：已解决
+- 现象或修改背景：编辑区邮箱与学历不对齐，PDF 又将附加信息平分为三列，求职状态被推到右侧。
+- 原因分析：联系方式与附加字段采用不同布局，HTML 与 PDF 分别维护字段分组及列宽。
+- 解决方案：增加共用信息行模型及列宽参数；手机、邮箱和附加信息使用同一两列网格，学历固定右列，求职状态独占一行；侧栏模板保留单列以适应自身内容区域。
+- 验证方式：25 项相关测试及 TypeScript 检查通过；生成经典、极简、侧栏和对半模板实际 PDF，目检经典与对半模板首页，确认邮箱和学历起点一致；更新四套预览素材。
+- 相关文件：`src/model/resumeLayout.ts`、`src/model/resumeLayout.test.ts`、`src/components/ResumePreview.tsx`、`src/components/ResumePreview.test.tsx`、`src/export/typstPdf.ts`、`src/export/typstPdf.test.ts`、`src/styles.css`、`src/templates/previewManifest.json`、`public/template-previews/`
+
 ## SR-024：部分模板抬头把 Typst 方括号和照片表达式显示为正文
 
 - 日期：2026-09-18

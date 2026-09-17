@@ -34,12 +34,12 @@
   },
   "templates": {
     "classic": {
-      "file": "classic-c1f9bed5fade.png",
+      "file": "classic-acae04003bb7.png",
       "width": 420,
       "height": 595
     },
     "minimal": {
-      "file": "minimal-8037d3470446.png",
+      "file": "minimal-e3bb4e47e82b.png",
       "width": 420,
       "height": 595
     },
@@ -49,7 +49,7 @@
       "height": 595
     },
     "sidebar": {
-      "file": "sidebar-0b2f2b481051.png",
+      "file": "sidebar-ed4115c9f9c3.png",
       "width": 420,
       "height": 595
     },
@@ -164,7 +164,7 @@
       "height": 595
     },
     "split": {
-      "file": "split-61b250bab797.png",
+      "file": "split-9480b27eb373.png",
       "width": 420,
       "height": 595
     },

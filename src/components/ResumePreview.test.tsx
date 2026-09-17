@@ -16,7 +16,16 @@ describe("ResumeSectionView", () => {
     expect(html).not.toContain("profile-detail-value");
     expect(html).not.toContain("<strong>本科</strong>");
     expect(html).not.toContain("基本信息");
-    expect(html).toContain("profile-detail-grid");
+    expect(html).toContain("profile-info-grid");
+  });
+
+  it("places email and degree in the second cell of the same information grid", () => {
+    const host = document.createElement("div");
+    host.innerHTML = renderToStaticMarkup(<ResumeProfileView resume={createDefaultResume()} />);
+    const rows = host.querySelectorAll(".profile-info-row");
+    expect(rows[0].children[1].textContent).toContain("邮箱：");
+    expect(rows[1].children[1].textContent).toBe("学历：本科");
+    expect((rows[2].children[0] as HTMLElement).style.gridColumn).toBe("1 / -1");
   });
 
   it("renders the configured profile photo background color", () => {
