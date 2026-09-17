@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import type { ContentEntry, ContentSection, EducationSection, ProfilePhotoCrop, ResumeDocument, ResumeProfile, ResumeSection } from "../model/resume";
-import { createContentEntry, DEFAULT_PROFILE_PHOTO_CROP } from "../model/resume";
+import { createPurposeEntry, DEFAULT_PROFILE_PHOTO_CROP } from "../model/resume";
 import { createCroppedPhoto, drawCroppedPhoto, loadPhotoImage } from "../model/profilePhoto";
 import { ContentBodyEditor } from "./customEditors/ContentBodyEditor";
 import { PhotoBackgroundPicker } from "./PhotoBackgroundPicker";
-import { plainText, writingGuide } from "../model/writingGuide";
+import { plainText, sectionPurpose, writingGuide } from "../model/writingGuide";
 
 const makeId = () => crypto.randomUUID();
 
@@ -211,11 +211,11 @@ function EducationEditor({ section, onChange }: { section: EducationSection; onC
       {section.items.map((item) => (
         <EditorCard key={item.id} onDelete={() => onChange({ ...section, items: section.items.filter((entry) => entry.id !== item.id) })}>
           <div className="field-grid">
-            <Field label="学校" value={item.school} onChange={(value) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, school: value } : entry) })} />
-            <Field label="时间" value={item.date} onChange={(value) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, date: value } : entry) })} />
-            <Field label="专业" value={item.major} onChange={(value) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, major: value } : entry) })} />
-            <Field label="学历" value={item.degree} onChange={(value) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, degree: value } : entry) })} />
-            <Field label="补充说明" value={item.detail} multiline onChange={(value) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, detail: value } : entry) })} />
+            <Field label="学校" placeholder="例如：江南理工大学" value={item.school} onChange={(value) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, school: value } : entry) })} />
+            <Field label="时间" placeholder="例如：2022.09 – 2026.06" value={item.date} onChange={(value) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, date: value } : entry) })} />
+            <Field label="专业" placeholder="例如：计算机科学与技术" value={item.major} onChange={(value) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, major: value } : entry) })} />
+            <Field label="学历" placeholder="例如：本科" value={item.degree} onChange={(value) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, degree: value } : entry) })} />
+            <Field label="补充说明" placeholder="选填：相关课程、研究方向或在校荣誉" value={item.detail} multiline onChange={(value) => onChange({ ...section, items: section.items.map((entry) => entry.id === item.id ? { ...entry, detail: value } : entry) })} />
           </div>
         </EditorCard>
       ))}
@@ -226,6 +226,9 @@ function EducationEditor({ section, onChange }: { section: EducationSection; onC
 
 function ContentSectionEditor({ section, onChange }: { section: ContentSection; onChange: (value: ContentSection) => void }) {
   const labels = writingGuide(section);
+  const purpose = sectionPurpose(section);
+  const isSummary = purpose === "summary";
+  const isSkills = purpose === "skills";
   const replaceEntry = (entry: ContentEntry) => onChange({ ...section, entries: section.entries.map((item) => item.id === entry.id ? entry : item) });
   const moveEntry = (index: number, direction: -1 | 1) => {
     const target = index + direction;
@@ -252,7 +255,7 @@ function ContentSectionEditor({ section, onChange }: { section: ContentSection; 
         {section.entries.map((entry, index) => (
           <article className="content-entry-editor" key={entry.id}>
             <div className="content-entry-actions">
-              <strong>内容 {index + 1}</strong>
+              <strong>{isSummary ? "个人简介" : isSkills ? "技能分组" : purpose === "work" ? "工作经历" : purpose === "project" ? "项目经历" : "内容"} {section.entries.length > 1 ? index + 1 : ""}</strong>
               <div>
                 <button type="button" className="icon-button" title="上移" disabled={index === 0} onClick={() => moveEntry(index, -1)}>↑</button>
                 <button type="button" className="icon-button" title="下移" disabled={index === section.entries.length - 1} onClick={() => moveEntry(index, 1)}>↓</button>
@@ -260,19 +263,20 @@ function ContentSectionEditor({ section, onChange }: { section: ContentSection; 
                 <button type="button" className="icon-button danger" title="删除" onClick={() => onChange({ ...section, entries: section.entries.filter((item) => item.id !== entry.id) })}>×</button>
               </div>
             </div>
-            <div className="content-heading-fields">
+            {!isSummary && <div className={`content-heading-fields ${isSkills ? "skills-heading-fields" : ""}`}>
               <Field label={labels.title} value={entry.title} placeholder="选填" onChange={(title) => replaceEntry({ ...entry, title })} />
               <Field label={labels.subtitle} value={entry.subtitle} placeholder="选填" onChange={(subtitle) => replaceEntry({ ...entry, subtitle })} />
-              <Field label="时间（选填）" value={entry.date} placeholder="例如：2024.07 – 2024.09" onChange={(date) => replaceEntry({ ...entry, date })} />
-            </div>
-            <div className="content-body-label"><span>正文</span><small>支持高级文字格式、行高、缩进、对齐和表格</small></div>
+              {!isSkills && <Field label="时间（选填）" value={entry.date} placeholder="例如：2024.07 – 2024.09" onChange={(date) => replaceEntry({ ...entry, date })} />}
+            </div>}
+            {(isSummary && (entry.title || entry.subtitle || entry.date) || isSkills && entry.date) && <details><summary>补充标题与时间</summary><Field label="标题" value={entry.title} onChange={(title) => replaceEntry({ ...entry, title })} /><Field label="补充信息" value={entry.subtitle} onChange={(subtitle) => replaceEntry({ ...entry, subtitle })} /><Field label="时间" value={entry.date} onChange={(date) => replaceEntry({ ...entry, date })} /></details>}
+            <div className="content-body-label"><span>{isSummary ? "用两三句话介绍自己" : isSkills ? "具体技能与应用场景" : purpose === "work" ? "职责与成果" : purpose === "project" ? "背景、行动与结果" : "正文"}</span></div>
             <ContentBodyEditor entryId={entry.id} content={entry.body} onChange={(body) => replaceEntry({ ...entry, body })} />
             <details className="writing-example"><summary>查看写作示例</summary><p>{labels.example}</p><button type="button" className="secondary-button" disabled={Boolean(plainText(entry.body).trim())} onClick={() => replaceEntry({ ...entry, body: { type: "doc", content: labels.example.split("\n").map((text) => ({ type: "paragraph", content: [{ type: "text", text }] })) } })}>填入空白正文</button><small>示例中的【占位内容】需要替换为你的真实经历。</small></details>
           </article>
         ))}
         {!section.entries.length && <div className="custom-empty-state">还没有内容，点击下方按钮添加。</div>}
       </div>
-      <button type="button" className="add-item-button" onClick={() => onChange({ ...section, entries: [...section.entries, createContentEntry()] })}>＋ {labels.add}</button>
+      {(!isSummary || !section.entries.length) && <button type="button" className="add-item-button" onClick={() => onChange({ ...section, entries: [...section.entries, createPurposeEntry(purpose)] })}>＋ {labels.add}</button>}
     </>
   );
 }
@@ -286,7 +290,7 @@ export function EditorPanel({ resume, selectedId, onProfileChange, onSectionChan
   return (
     <section className={className}>
       <div className="editor-title">
-        <div><span className="eyebrow">{section.type}</span><input className="section-title-input" value={section.title} aria-label="板块标题" onChange={(event) => onSectionChange({ ...section, title: event.target.value })} /></div>
+        <div><span className="eyebrow">{section.type === "education" ? "教育经历" : "内容模块"}</span><input className="section-title-input" value={section.title} aria-label="板块标题" onChange={(event) => onSectionChange({ ...section, title: event.target.value })} /></div>
         <button type="button" className="secondary-button danger-text" onClick={() => onDeleteSection(section.id)}>删除模块</button>
       </div>
       {section.type === "education" && <EducationEditor section={section} onChange={onSectionChange} />}

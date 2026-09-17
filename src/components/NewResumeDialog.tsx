@@ -1,43 +1,31 @@
-import type { ResumeCreationTemplate } from "../model/resume";
+import { useMemo, useState } from "react";
+import { createResumeFromTemplate, type ResumeCreationTemplate } from "../model/resume";
+import { SCENARIOS } from "../model/contentPresets";
 import { Modal } from "./Modal";
+import { ResumePreview } from "./ResumePreview";
 
-interface NewResumeDialogProps {
-  onSelect: (template: ResumeCreationTemplate) => void;
+export function NewResumeDialog({ onSelect, onClose }: {
+  onSelect: (template: ResumeCreationTemplate, withExamples?: boolean) => void;
   onClose: () => void;
-}
-
-export function NewResumeDialog({ onSelect, onClose }: NewResumeDialogProps) {
-  return (
-    <Modal titleId="new-resume-title" className="flow-dialog" onClose={onClose}>
-      <section className="new-resume-dialog">
-        <header>
-          <div>
-            <span className="eyebrow">新建简历</span>
-            <h2 id="new-resume-title">从适合你的起点开始</h2>
-            <p>先准备好常用模块，填写你自己的内容；写作示例不会自动进入简历。</p>
-          </div>
-          <button type="button" className="settings-close" onClick={onClose} aria-label="关闭新建简历窗口">×</button>
-        </header>
-        <div className="new-resume-options">
-          {([
-            ["graduate", "应届生 / 实习", "从教育、项目与技能开始，也可以补充实习经历。"],
-            ["experienced", "已有工作经验", "突出工作成果与项目经验，再补充技能和教育。"],
-            ["career-change", "转行求职", "先说明求职方向与可迁移技能，再用项目和经历支持。"],
-          ] as const).map(([id, title, description]) => <button key={id} type="button" className="new-resume-option" onClick={() => onSelect(id)}><strong>{title}</strong><p>{description}</p></button>)}
-          <button type="button" className="new-resume-option" onClick={() => onSelect("default")}>
-            <span className="new-resume-option-icon" aria-hidden="true">✦</span>
-            <span>
-              <strong>搞笑示例演示</strong>
-            </span>
-            <p>包含完整的搞笑反差示例、卡通头像和六个常用模块，适合边参考边替换。</p>
-          </button>
-          <button type="button" className="new-resume-option" onClick={() => onSelect("blank")}>
-            <span className="new-resume-option-icon blank" aria-hidden="true">□</span>
-            <span><strong>空白模板</strong></span>
-            <p>只创建一份空简历，不预置个人信息或模块，适合从零开始。</p>
-          </button>
-        </div>
-      </section>
-    </Modal>
-  );
+}) {
+  const [selected, setSelected] = useState<typeof SCENARIOS[number]["id"]>("graduate");
+  const [withExamples, setWithExamples] = useState(true);
+  const documents = useMemo(() => SCENARIOS.map((scene) => createResumeFromTemplate(scene.id)), []);
+  return <Modal titleId="new-resume-title" className="flow-dialog scene-dialog" onClose={onClose}>
+    <header className="workspace-dialog-header">
+      <div><span className="eyebrow">内容示例</span><h2 id="new-resume-title">从一份完整简历开始</h2><p>先选适合自己的写法，创建后逐项替换。所有人物、经历与成果均为虚构示例。</p></div>
+      <button type="button" className="secondary-button" onClick={onClose} aria-label="关闭新建简历窗口">关闭</button>
+    </header>
+    <div className="scene-options" role="group" aria-label="选择内容示例">
+      {SCENARIOS.map((scene, index) => <button key={scene.id} type="button" className={`scene-option ${selected === scene.id ? "selected" : ""}`} aria-pressed={selected === scene.id} onClick={() => setSelected(scene.id)}>
+        <div className="scene-thumbnail" aria-hidden="true"><ResumePreview resume={documents[index]} zoom="fit" /></div>
+        <span className="scene-label"><strong>{scene.title}</strong><small>{scene.role} · 完整示例</small><span>{scene.description}</span></span>
+      </button>)}
+    </div>
+    <details className="scene-full-preview"><summary>放大查看所选示例</summary><ResumePreview resume={documents[SCENARIOS.findIndex((scene) => scene.id === selected)]} zoom="fit" /></details>
+    <label className="restore-choice"><input type="checkbox" checked={withExamples} onChange={(event) => setWithExamples(event.target.checked)} />带入示例内容，边参考边替换</label>
+    <p className="flow-muted">取消勾选会清空示例，仅保留模块结构与排版。排版样式也可以在创建后单独更换。</p>
+    <footer className="scene-footer"><button type="button" className="secondary-button" onClick={() => onSelect("blank", false)}>从空白开始</button><button type="button" className="primary-button" onClick={() => onSelect(selected, withExamples)}>创建{SCENARIOS.find((scene) => scene.id === selected)?.title}简历</button></footer>
+    <details className="scene-demo"><summary>其他演示</summary><button type="button" className="text-button" onClick={() => onSelect("default")}>打开搞笑示例演示</button></details>
+  </Modal>;
 }

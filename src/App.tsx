@@ -15,7 +15,7 @@ import { TextImportDialog } from "./components/TextImportDialog";
 import { RestoreDialog } from "./components/RestoreDialog";
 import { createLibraryBackup, downloadJson, mergeImportedDocuments, parseBackupValue, type ImportBatch, type ImportDocument } from "./storage/libraryBackup";
 import { exportRecord } from "./model/resumeVersions";
-import { createBlankResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, type ResumeAction, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
+import { clearResumeContent, createBlankResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, type ResumeAction, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { createResumeHistory, resumeHistoryReducer } from "./model/resumeHistory";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
 import {
@@ -273,18 +273,23 @@ export function App() {
     setEditingId(null);
     setSaveState("saved");
   };
-  const createResume = (template: ResumeCreationTemplate) => {
+  const createResume = (template: ResumeCreationTemplate, withExamples = true) => {
     setNewResumeOpen(false);
     if (firstRunRef.current) {
       firstRunRef.current = false;
-      dispatch({ type: "replace", value: createResumeFromTemplate(template) });
-      setSelectedId("profile"); setEditingId("profile");
+      dispatch({ type: "replace", value: createResumeFromTemplate(template, withExamples) });
+      setSelectedId("profile"); setEditingId(null);
       return;
     }
-    void addResume(createResumeFromTemplate(template)).catch((error) => {
+    void addResume(createResumeFromTemplate(template, withExamples)).catch((error) => {
       setSaveState("error");
       window.alert(error instanceof Error ? error.message : "新建简历失败");
     });
+  };
+  const clearContent = () => {
+    if (!window.confirm("清空这份简历的个人信息与正文，保留模块结构和排版？操作后可以撤销。")) return;
+    dispatchHistory({ type: "edit", action: { type: "replace", value: clearResumeContent(resume) }, time: Date.now() });
+    setSelectedId("profile"); setEditingId("profile");
   };
   const copyResume = () => {
     void addResume(duplicateResume(resume)).catch((error) => {
@@ -526,7 +531,12 @@ export function App() {
         </div>
       </nav>
       <div className={`workspace ${previewVisible ? "" : "preview-hidden"} ${modulesOpen ? "modules-open" : "modules-hidden"} ${compactWorkspace && previewVisible ? "mobile-preview" : ""}`}>
-        {modulesOpen && <Sidebar resume={resume} selectedId={selectedId} onSelect={locateResumeBlock} onSectionsChange={setSections} onDeleteSection={removeSection} />}
+        {modulesOpen && <Sidebar resume={resume} selectedId={selectedId} onSelect={locateResumeBlock} onAdd={(section) => {
+          setSections([...resume.sections, section]);
+          if (compactWorkspace) { setMobilePreview(false); setModulesOpen(false); }
+          editResumeBlock(section.id);
+          window.requestAnimationFrame(() => document.getElementById(`resume-block-${section.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+        }} onSectionsChange={setSections} onDeleteSection={removeSection} />}
         <ResumeEditorCanvas
           key={activeResumeId}
           resume={resume}
@@ -534,6 +544,7 @@ export function App() {
           editingId={editingId}
           onEdit={editResumeBlock}
           onCloseEditor={closeInlineEditor}
+          onClearContent={clearContent}
           onProfileChange={(value) => dispatch({ type: "update-profile", value })}
           onSectionChange={updateSection}
           onDeleteSection={removeSection}

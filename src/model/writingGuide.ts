@@ -5,8 +5,12 @@ export function plainText(node: RichTextNode): string {
   return (node.content ?? []).map(plainText).join(["doc", "bulletList", "orderedList"].includes(node.type ?? "") ? "\n" : "");
 }
 
+export function sectionPurpose(section: ContentSection) {
+  return section.purpose ?? (/工作|实习/.test(section.title) ? "work" : /项目/.test(section.title) ? "project" : /技能/.test(section.title) ? "skills" : /简介|评价/.test(section.title) ? "summary" : "custom");
+}
+
 export function writingGuide(section: ContentSection) {
-  const purpose = section.purpose ?? (/工作|实习/.test(section.title) ? "work" : /项目/.test(section.title) ? "project" : /技能/.test(section.title) ? "skills" : "custom");
+  const purpose = sectionPurpose(section);
   const guides = {
     work: { title: "公司 / 组织", subtitle: "岗位", add: "添加工作经历", prompt: "负责什么业务？采取了哪些行动？产生了什么可核实的成果？", example: "负责【业务或职责】，通过【具体行动】改善【问题】，取得【可核实的结果】。" },
     project: { title: "项目名称", subtitle: "承担角色", add: "添加项目经历", prompt: "项目解决什么问题？你负责哪部分？采用什么措施？最后有什么结果？", example: "项目目标：【解决的问题】\n我的职责：【负责的部分】\n实施措施：【方法和技术】\n项目成果：【实际结果】" },
