@@ -9,7 +9,8 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { TemplatePickerDialog } from "./components/TemplatePickerDialog";
 import { exportTypstPdf } from "./export/typstPdf";
-import { createDefaultResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, resumeReducer, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
+import { createDefaultResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, type ResumeAction, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
+import { createResumeHistory, resumeHistoryReducer } from "./model/resumeHistory";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
 import {
   activateResume,
@@ -38,7 +39,11 @@ import { usePreviewPublisher } from "./sync/previewSync";
 import { RESUME_TEMPLATES } from "./templates/registry";
 
 export function App() {
-  const [resume, dispatch] = useReducer(resumeReducer, undefined, createDefaultResume);
+  const [editHistory, dispatchHistory] = useReducer(resumeHistoryReducer, undefined, () => createResumeHistory(createDefaultResume()));
+  const resume = editHistory.present;
+  const dispatch = useCallback((action: ResumeAction) => {
+    dispatchHistory(action.type === "replace" ? { type: "reset", document: action.value } : { type: "edit", action, time: Date.now() });
+  }, []);
   const [library, setLibrary] = useState<ResumeLibrary | null>(null);
   const [selectedId, setSelectedId] = useState("profile");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -62,6 +67,29 @@ export function App() {
   const libraryRef = useRef<ResumeLibrary | null>(null);
   libraryRef.current = library;
   const activeResumeId = library?.activeResumeId ?? "";
+  const undoLabel = editHistory.past.at(-1)?.label;
+  const redoLabel = editHistory.future.at(-1)?.label;
+  const changeHistory = useCallback((type: "undo" | "redo") => {
+    setEditingId(null);
+    dispatchHistory({ type, time: Date.now() });
+  }, []);
+
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.isComposing || event.defaultPrevented || !(event.ctrlKey || event.metaKey)) return;
+      if (document.querySelector('dialog[open], [aria-modal="true"]')) return;
+      const target = event.target;
+      const typing = target instanceof HTMLElement && (target.isContentEditable || Boolean(target.closest("input, textarea, select, [contenteditable]")));
+      if (typing && !event.altKey) return;
+      const key = event.key.toLowerCase();
+      const type = key === "z" ? event.shiftKey ? "redo" : "undo" : key === "y" ? "redo" : null;
+      if (!type) return;
+      event.preventDefault();
+      if (type === "undo" ? undoLabel : redoLabel) changeHistory(type);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [changeHistory, undoLabel, redoLabel]);
 
   useEffect(() => {
     let active = true;
@@ -150,7 +178,7 @@ export function App() {
   const updateSection = (section: ResumeSection) => setSections(resume.sections.map((item) => item.id === section.id ? section : item));
   const removeSection = (sectionId: string) => {
     const section = resume.sections.find((item) => item.id === sectionId);
-    if (!section || !window.confirm(`确定删除“${section.title}”模块吗？`)) return;
+    if (!section) return;
     setSections(resume.sections.filter((item) => item.id !== sectionId));
   };
   const persistCurrentResume = async () => {
@@ -379,7 +407,7 @@ export function App() {
     await saveResumeWorkspace(resumeId, restored, nextLibrary);
     libraryRef.current = nextLibrary;
     setLibrary(nextLibrary);
-    if (resumeId === activeResumeId) dispatch({ type: "replace", value: restored });
+    if (resumeId === activeResumeId) dispatchHistory({ type: "edit", action: { type: "replace", value: restored }, time: Date.now() });
     if (backupDirectory) await backupResumeToDirectory(backupDirectory, resumeId, restored, nextLibrary);
     setBackupStatus(backupDirectory ? "ready" : backupStatus);
     setSaveState("saved");
@@ -465,6 +493,10 @@ export function App() {
       <nav className="workspace-controls" aria-label="工作区布局">
         <button type="button" className="secondary-button" aria-expanded={modulesOpen} onClick={() => setModulesOpen(!modulesOpen)}>{modulesOpen ? "收起模块" : "简历模块"}</button>
         <button type="button" className="secondary-button" disabled={!ready} onClick={() => setTemplatePickerOpen(true)}>选择模板</button>
+        <div className="document-history-actions" role="group" aria-label="整份简历撤销与重做">
+          <button type="button" className="secondary-button" disabled={!undoLabel} aria-label="撤销整份简历" title={undoLabel ? `撤销：${undoLabel}（Ctrl/⌘ + Alt + Z）` : "暂无可撤销的修改"} onClick={() => changeHistory("undo")}>↶ 撤销</button>
+          <button type="button" className="secondary-button" disabled={!redoLabel} aria-label="重做整份简历" title={redoLabel ? `重做：${redoLabel}（Ctrl/⌘ + Alt + Shift + Z）` : "暂无可重做的修改"} onClick={() => changeHistory("redo")}>↷ 重做</button>
+        </div>
         <div className="workspace-view-options">
           <button type="button" className={`secondary-button ${!previewVisible ? "active" : ""}`} aria-pressed={!previewVisible} onClick={() => { setMobilePreview(false); setSettings((current) => ({ ...current, previewOpen: false })); }}>专注编辑</button>
           <button type="button" className={`secondary-button ${previewVisible ? "active" : ""}`} aria-pressed={previewVisible} onClick={() => { setMobilePreview(true); setSettings((current) => ({ ...current, previewOpen: true })); }}>{compactWorkspace ? "查看预览" : "编辑＋预览"}</button>
@@ -528,6 +560,7 @@ export function App() {
           </section>
         ) : null}
       </div>
+      {undoLabel === "删除模块" && <div className="undo-notice" role="status">模块已删除<button type="button" onClick={() => changeHistory("undo")}>撤销删除</button></div>}
       {settingsOpen && <SettingsPanel
         settings={settings}
         syncSupported={syncSupported}
