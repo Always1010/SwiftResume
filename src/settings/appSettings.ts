@@ -1,4 +1,3 @@
-export type ExportEngine = "typst" | "browser";
 export type PreviewZoom = "fit" | 70 | 80 | 90 | 100;
 export type SyncDelay = 0 | 100 | 300;
 export type SaveDelay = 300 | 500 | 1000;
@@ -9,7 +8,6 @@ export interface AppSettings {
   diskBackupEnabled: boolean;
   syncDelayMs: SyncDelay;
   saveDelayMs: SaveDelay;
-  exportEngine: ExportEngine;
   showOverflowWarning: boolean;
   previewZoom: PreviewZoom;
   previewOpen: boolean;
@@ -21,7 +19,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   diskBackupEnabled: true,
   syncDelayMs: 0,
   saveDelayMs: 500,
-  exportEngine: "typst",
   showOverflowWarning: true,
   previewZoom: "fit",
   previewOpen: true,
@@ -48,7 +45,6 @@ export function normalizeSettings(value: unknown): AppSettings {
     saveDelayMs: allowedSaveDelays.has(candidate.saveDelayMs as SaveDelay)
       ? candidate.saveDelayMs as SaveDelay
       : DEFAULT_SETTINGS.saveDelayMs,
-    exportEngine: candidate.exportEngine === "browser" ? "browser" : "typst",
     showOverflowWarning: typeof candidate.showOverflowWarning === "boolean"
       ? candidate.showOverflowWarning
       : DEFAULT_SETTINGS.showOverflowWarning,

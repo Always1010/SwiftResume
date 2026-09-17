@@ -1,6 +1,5 @@
 import type {
   AppSettings,
-  ExportEngine,
   PreviewZoom,
   SaveDelay,
   SyncDelay,
@@ -102,13 +101,7 @@ export function SettingsPanel({
                 <option value={1000}>1 秒</option>
               </select>
             </label>
-            <label className="setting-row">
-              <div><strong>PDF 导出方式</strong><p>Typst 生成可复制的矢量 PDF；浏览器打印可作为兼容模式。</p></div>
-              <select value={settings.exportEngine} onChange={(event) => update("exportEngine", event.target.value as ExportEngine)}>
-                <option value="typst">Typst PDF</option>
-                <option value="browser">浏览器打印</option>
-              </select>
-            </label>
+            <div className="setting-row"><div><strong>统一 PDF 排版</strong><p>预览、下载和打印均使用 Typst 生成的同一份 PDF。</p></div></div>
           </div>
 
           <div className="settings-group">

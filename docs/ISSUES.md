@@ -1,5 +1,15 @@
 # SwiftResume 问题日志
 
+## SR-022：预览、PDF 与网页打印采用不同排版导致成品不一致
+
+- 日期：2026-09-18
+- 状态：已解决
+- 现象或修改背景：工作台和模板试排中的换行、间距与最终 PDF 不同，浏览器打印还会再次以网页规则分页。
+- 原因分析：预览维护 HTML/CSS 测量分页，导出使用 Typst，打印调用工作台的 `window.print()`，存在三条输出路径。
+- 解决方案：全部成品预览消费 Typst PDF；以内容为键共享生成结果，合并连续编辑并拒绝过期结果；下载和打印指向同一 PDF，移除网页打印导出选项。模板缩略图同样渲染 PDF 首页并及时释放阅读器。
+- 验证方式：共享文件、失败重试、连续编辑竞态和打印快捷键回归测试；在生产 CSP 下验证桌面工作台、场景缩略图、模板试排和 PDF 导出。打印链接的文件一致性以自动化测试验证，浏览器安全策略限制打开原生 PDF 打印页，未进行实体打印。
+- 相关文件：`src/components/ResumePreview.tsx`、`src/components/PdfCanvasPreview.tsx`、`src/components/PdfExportDialog.tsx`、`src/components/TemplateGallery.tsx`、`src/export/pdfArtifact.ts`、`src/export/useTypstPreview.ts`、`src/export/usePdfPrintShortcut.ts`、`src/App.tsx`、`src/components/StandalonePreview.tsx`、`src/settings/appSettings.ts`、`src/typstPreview.css`
+
 ## SR-021：新增模块后未直接打开编辑器
 
 - 日期：2026-09-18

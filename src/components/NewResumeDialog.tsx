@@ -18,7 +18,7 @@ export function NewResumeDialog({ onSelect, onClose }: {
     </header>
     <div className="scene-options" role="group" aria-label="选择内容示例">
       {SCENARIOS.map((scene, index) => <button key={scene.id} type="button" className={`scene-option ${selected === scene.id ? "selected" : ""}`} aria-pressed={selected === scene.id} onClick={() => setSelected(scene.id)}>
-        <div className="scene-thumbnail" aria-hidden="true"><ResumePreview resume={documents[index]} zoom="fit" /></div>
+        <div className="scene-thumbnail" aria-hidden="true"><ResumePreview resume={documents[index]} zoom="fit" thumbnail /></div>
         <span className="scene-label"><strong>{scene.title}</strong><small>{scene.role} · 完整示例</small><span>{scene.description}</span></span>
       </button>)}
     </div>

@@ -1,3 +1,4 @@
+import { usePdfPrintShortcut } from "../export/usePdfPrintShortcut";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { PdfExportDialog } from "./PdfExportDialog";
 import { ResumeCheckDialog } from "./ResumeCheckDialog";
@@ -157,6 +158,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
     };
   }, [galleryMaxWidth, resizingGallery]);
 
+  usePdfPrintShortcut(() => { if (resume) setCheckOpen(true); });
   const zoom = fitWidth ? fitZoom : manualZoom;
   const title = useMemo(() => resume?.title || "独立预览", [resume?.title]);
   const previewResume = resume;
@@ -265,7 +267,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
             </div>
           )}
           <div ref={viewportRef} className="standalone-preview-viewport">
-            {previewResume ? <ResumePreview resume={previewResume} zoom={zoom} templateId={previewResume.theme.templateId} onPageCountChange={updatePageCount} /> : (
+            {previewResume ? <ResumePreview resume={previewResume} zoom={fitWidth ? "fit" : zoom} templateId={previewResume.theme.templateId} onPageCountChange={updatePageCount} /> : (
               <div className="standalone-preview-empty"><strong>{error || "正在读取简历…"}</strong>{error && <span>你可以关闭此页面并重新打开独立预览。</span>}</div>
             )}
           </div>
@@ -278,10 +280,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
         const next = { ...current, lastExport: exportRecord(pdfResume, filename), updatedAt: new Date(Math.max(Date.now(), Date.parse(current.updatedAt) + 1)).toISOString() };
         acceptResume(next);
         void saveResumeById(resumeId, next).then(() => publishCommittedResume(next)).catch(() => setStyleError("PDF 已下载，但导出记录保存失败"));
-      }} onClose={() => setPdfResume(null)} onBrowserPrint={() => {
-        setPdfResume(null);
-        window.requestAnimationFrame(() => window.print());
-      }} />}
+      }} onClose={() => setPdfResume(null)} />}
     </main>
   );
 }

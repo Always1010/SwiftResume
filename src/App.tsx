@@ -1,3 +1,4 @@
+import { usePdfPrintShortcut } from "./export/usePdfPrintShortcut";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { BackupSetupPrompt } from "./components/BackupSetupPrompt";
 import { HistoryPanel } from "./components/HistoryPanel";
@@ -489,13 +490,8 @@ export function App() {
     url.searchParams.set("resumeId", activeResumeId);
     window.open(url.toString(), `swift-resume-preview-${activeResumeId}`)?.focus();
   };
-  const exportPdf = () => {
-    if (settings.exportEngine === "browser") {
-      window.print();
-      return;
-    }
-    setPdfResume(resume);
-  };
+  usePdfPrintShortcut(() => { if (ready) setCheckOpen(true); });
+  const exportPdf = () => setPdfResume(resume);
 
   if (!ready) return <main className="startup-status" role="status">正在打开本机简历库…</main>;
 
@@ -587,12 +583,8 @@ export function App() {
           </section>
         ) : null}
       </div>
-      {!previewVisible && <div className="print-preview" aria-hidden="true"><ResumePreview resume={resume} zoom={100} /></div>}
       {checkOpen && <ResumeCheckDialog resume={resume} onClose={() => setCheckOpen(false)} onContinue={() => { setCheckOpen(false); exportPdf(); }} onLocate={(id) => { setCheckOpen(false); locateResumeBlock(id); }} />}
-      {pdfResume && <PdfExportDialog resume={pdfResume} onDownloaded={(filename) => dispatch({ type: "record-export", value: exportRecord(pdfResume, filename) })} onClose={() => setPdfResume(null)} onBrowserPrint={() => {
-        setPdfResume(null);
-        window.requestAnimationFrame(() => window.print());
-      }} />}
+      {pdfResume && <PdfExportDialog resume={pdfResume} onDownloaded={(filename) => dispatch({ type: "record-export", value: exportRecord(pdfResume, filename) })} onClose={() => setPdfResume(null)} />}
       {undoLabel === "删除模块" && <div className="undo-notice" role="status">模块已删除<button type="button" onClick={() => changeHistory("undo")}>撤销删除</button></div>}
       {settingsOpen && <SettingsPanel
         settings={settings}

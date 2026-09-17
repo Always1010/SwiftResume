@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import type { ResumeDocument, ResumeTemplateId } from "../model/resume";
+import { createDefaultResume, type ResumeDocument, type ResumeTemplateId } from "../model/resume";
 import {
   RESUME_TEMPLATES,
   TEMPLATE_FAMILIES,
@@ -18,6 +18,11 @@ function LazyTemplateImage({ template, rootRef }: {
 }) {
   const frameRef = useRef<HTMLDivElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
+  const sample = useMemo(() => {
+    const document = createDefaultResume();
+    document.theme = { ...document.theme, templateId: template.id, density: 42, accent: "#596d82" };
+    return document;
+  }, [template.id]);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -30,7 +35,7 @@ function LazyTemplateImage({ template, rootRef }: {
       if (!entry?.isIntersecting) return;
       setShouldLoad(true);
       observer.disconnect();
-    }, { root: rootRef.current, rootMargin: "320px 0px" });
+    }, { root: rootRef.current, rootMargin: "80px 0px" });
     observer.observe(frame);
     return () => observer.disconnect();
   }, [rootRef, shouldLoad]);
@@ -38,7 +43,7 @@ function LazyTemplateImage({ template, rootRef }: {
   return (
     <div ref={frameRef} className="template-thumbnail-frame">
       {shouldLoad
-        ? <img src={`./template-previews/${template.id}.png`} alt={`${template.name}模板缩略图`} loading="lazy" decoding="async" />
+        ? <ResumePreview resume={sample} zoom="fit" thumbnail />
         : <span className="template-thumbnail-placeholder" aria-hidden="true" />}
     </div>
   );
@@ -164,7 +169,7 @@ export function TemplateGallery({ selectedId, resume, onSelect }: {
                 const definition = RESUME_TEMPLATES.find((item) => item.id === templateId)!;
                 const previewResume = { ...resume, theme: { ...resume.theme, templateId } };
                 return <article className="template-compare-item" key={templateId}>
-                  <div className="template-compare-paper"><ResumePreview resume={previewResume} zoom={30} templateId={templateId} /></div>
+                  <div className="template-compare-paper"><ResumePreview resume={previewResume} zoom="fit" templateId={templateId} /></div>
                   <footer><div><strong>{definition.name}</strong><span>{definition.description}</span></div><button type="button" onClick={() => { onSelect(templateId); setCompareOpen(false); }}>使用这套</button></footer>
                 </article>;
               })}
