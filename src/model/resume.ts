@@ -400,7 +400,7 @@ export function createResumeFromTemplate(template: ResumeCreationTemplate, withE
   } as const;
   resume.title = titles[template];
   const scene = SCENARIOS.find((item) => item.id === template)!;
-  resume.theme = { ...resume.theme, templateId: scene.style, accent: template === "experienced" ? "#26466b" : "#247352" };
+  resume.theme = { ...resume.theme, templateId: scene.style, density: template === "graduate" ? DEFAULT_DENSITY : 100, accent: template === "experienced" ? "#26466b" : "#247352" };
   const example = SCENARIO_EXAMPLES[template];
   if (!withExamples) {
     resume.sections = example.sections.map((section) => ({
