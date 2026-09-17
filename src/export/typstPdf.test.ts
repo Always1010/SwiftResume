@@ -3,6 +3,15 @@ import { createDefaultResume, RESUME_TEMPLATE_IDS } from "../model/resume";
 import { createTypstSource } from "./typstPdf";
 
 describe("Typst source generator", () => {
+  it("shares contact and detail columns and spans the final odd detail", () => {
+    const resume = createDefaultResume();
+    resume.sections = [];
+    resume.profile.details.unshift({ id: "ethnicity", label: "民族", value: "汉族" });
+    const source = createTypstSource(resume);
+    expect(source).toContain("calc.min(114.4pt, size.width * 0.45), 1fr");
+    expect(source).toMatch(/手机：[^\n]+\n[^\n]+邮箱：[^\n]+\n[^\n]+民族：[^\n]+\n[^\n]+学历：/);
+    expect(source).toContain('grid.cell(colspan: 2, [#text(fill: profile-ink, "求职状态：');
+  });
   it.each(["minimal", "sidebar", "split", "diplomat"] as const)("does not print content delimiters around the %s profile", (templateId) => {
     const resume = createDefaultResume();
     resume.theme.templateId = templateId;
