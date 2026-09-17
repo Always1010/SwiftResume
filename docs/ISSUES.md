@@ -1,5 +1,15 @@
 # SwiftResume 问题日志
 
+## SR-018：扩展安全策略阻止 Typst 初始化
+
+- 日期：2026-09-17
+- 状态：已解决
+- 现象或修改背景：生产包在 Manifest V3 同等安全策略下生成 PDF 失败，错误提示禁止动态脚本求值；普通开发页面未暴露该问题。
+- 原因分析：Typst 0.7 的字体加载器与 WASM 初始化占位回调使用 `new Function`，与扩展禁止 `unsafe-eval` 的策略冲突。
+- 解决方案：直接加载随扩展打包的中文字体并关闭默认字体加载；构建时将已知占位回调映射为等价静态函数，未知回调拒绝执行，保留原有安全策略。
+- 验证方式：回归测试覆盖固定回调、未知代码拒绝、字体加载失败重试；生产预览服务启用与 manifest 一致的 CSP，实际生成并查看两页中文 PDF；类型检查与构建通过。
+- 相关文件：`src/export/typstPdf.ts`、`src/export/typstInitialization.test.ts`、`src/export/typstCsp.ts`、`src/export/typstCsp.test.ts`、`vite.config.ts`
+
 ## SR-017：PDF 中文列表过密且教育说明挤压专业字段
 
 - 日期：2026-09-17
