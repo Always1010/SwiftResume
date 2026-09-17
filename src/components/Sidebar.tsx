@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   createSection,
+  createQuickSection,
   duplicateSection,
   reorderSection,
   type ResumeDocument,
@@ -127,6 +128,11 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange, onDele
         ))}
         <div className="add-module">
           <label className="add-module-label" htmlFor="new-module-title">添加模块</label>
+          <div className="quick-modules">{([ ["education", "教育"], ["work", "工作"], ["project", "项目"], ["skills", "技能"], ["summary", "个人简介"] ] as const).map(([purpose, label]) => <button key={purpose} type="button" className="secondary-button" onClick={() => {
+            const section = createQuickSection(purpose);
+            onSectionsChange([...resume.sections, section]);
+            onSelect(section.id);
+          }}>＋ {label}</button>)}</div>
           <input
             id="new-module-title"
             value={newTitle}
