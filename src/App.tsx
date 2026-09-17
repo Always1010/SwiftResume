@@ -49,6 +49,10 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [newResumeOpen, setNewResumeOpen] = useState(false);
+  const [modulesOpen, setModulesOpen] = useState(() => window.innerWidth >= 1500);
+  const [compactWorkspace, setCompactWorkspace] = useState(() => window.innerWidth < 1100);
+  const [mobilePreview, setMobilePreview] = useState(false);
+  const previewVisible = compactWorkspace ? mobilePreview : settings.previewOpen;
   const [backupDirectory, setBackupDirectory] = useState<FileSystemDirectoryHandle | null>(null);
   const [backupStatus, setBackupStatus] = useState<DiskBackupStatus>(() => isDiskBackupSupported() ? "not-configured" : "unsupported");
   const [backupPromptOpen, setBackupPromptOpen] = useState(false);
@@ -69,6 +73,13 @@ export function App() {
   }, []);
 
   useEffect(() => subscribeToSettings(setSettings), []);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 1099px)");
+    const update = () => setCompactWorkspace(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     if (!isDiskBackupSupported()) return;
@@ -170,6 +181,7 @@ export function App() {
     setEditingId(id);
   };
   const locateResumeBlock = (id: string) => {
+    if (compactWorkspace) { setMobilePreview(false); setModulesOpen(false); }
     const targetVisible = id === "profile" || resume.sections.some((section) => section.id === id && section.enabled);
     if (targetVisible) editResumeBlock(id);
     else {
@@ -429,22 +441,34 @@ export function App() {
         </div>
         <div className="topbar-actions">
           <span className={`save-status ${saveState}`}>{saveState === "saved" ? "● 已自动保存" : saveState === "saving" ? "● 保存中" : "● 保存失败"}</span>
+          <details className="file-menu">
+            <summary className="secondary-button">文件与备份</summary>
+            <div className="file-menu-content">
           <span className={`disk-status ${backupStatus}`} title={backupDirectory ? `备份目录：${backupDirectory.name}` : "尚未选择本地备份目录"}>
             {backupStatus === "ready" ? "● 磁盘已备份" : backupStatus === "saving" ? "● 磁盘备份中" : backupStatus === "permission-required" ? "● 磁盘待授权" : backupStatus === "error" ? "● 磁盘备份失败" : backupStatus === "unsupported" ? "磁盘备份不支持" : "磁盘未配置"}
           </span>
           <span className={`sync-status ${settings.liveSync && syncSupported ? "active" : ""}`} title={syncSupported ? "多个 SwiftResume 页面实时同步" : "当前浏览器不支持多页面同步"}>
             <span />{settings.liveSync && syncSupported ? "多页同步" : "同步关闭"}
           </span>
+          <button type="button" className="secondary-button" onClick={() => downloadResume(resume)}>备份当前简历</button>
+          <button type="button" className="secondary-button" onClick={() => importRef.current?.click()}>导入 JSON 备份</button>
+            </div>
+          </details>
           <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置</button>
-          <button type="button" className="secondary-button" onClick={() => downloadResume(resume)}>备份 JSON</button>
-          <button type="button" className="secondary-button" onClick={() => importRef.current?.click()}>导入</button>
           <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => void importFile(event.target.files?.[0])} />
           <button type="button" className="secondary-button standalone-preview-button" disabled={!activeResumeId} onClick={openStandalonePreview}>↗ 独立预览</button>
           <button type="button" className="primary-button export-button" disabled={exporting} onClick={() => void exportPdf()}>{exporting ? "正在生成…" : "导出 PDF"}</button>
         </div>
       </header>
-      <div className={`workspace ${settings.previewOpen ? "" : "preview-hidden"}`}>
-        <Sidebar resume={resume} selectedId={selectedId} onSelect={locateResumeBlock} onSectionsChange={setSections} onDeleteSection={removeSection} />
+      <nav className="workspace-controls" aria-label="工作区布局">
+        <button type="button" className="secondary-button" aria-expanded={modulesOpen} onClick={() => setModulesOpen(!modulesOpen)}>{modulesOpen ? "收起模块" : "简历模块"}</button>
+        <div className="workspace-view-options">
+          <button type="button" className={`secondary-button ${!previewVisible ? "active" : ""}`} aria-pressed={!previewVisible} onClick={() => { setMobilePreview(false); setSettings((current) => ({ ...current, previewOpen: false })); }}>专注编辑</button>
+          <button type="button" className={`secondary-button ${previewVisible ? "active" : ""}`} aria-pressed={previewVisible} onClick={() => { setMobilePreview(true); setSettings((current) => ({ ...current, previewOpen: true })); }}>{compactWorkspace ? "查看预览" : "编辑＋预览"}</button>
+        </div>
+      </nav>
+      <div className={`workspace ${previewVisible ? "" : "preview-hidden"} ${modulesOpen ? "modules-open" : "modules-hidden"} ${compactWorkspace && previewVisible ? "mobile-preview" : ""}`}>
+        {modulesOpen && <Sidebar resume={resume} selectedId={selectedId} onSelect={locateResumeBlock} onSectionsChange={setSections} onDeleteSection={removeSection} />}
         <ResumeEditorCanvas
           key={activeResumeId}
           resume={resume}
@@ -456,12 +480,18 @@ export function App() {
           onSectionChange={updateSection}
           onDeleteSection={removeSection}
         />
-        {settings.previewOpen ? (
+        {previewVisible ? (
           <section className="preview-panel">
             <div className="preview-toolbar">
               <div className="preview-toolbar-leading">
-                <button type="button" className="preview-collapse-button" onClick={() => setSettings((current) => ({ ...current, previewOpen: false }))}><span aria-hidden="true">→</span> 收起预览</button>
                 {settings.showOverflowWarning && <span className="page-count-badge">共 {pageCount} 页</span>}
+                <select aria-label="预览缩放" value={settings.previewZoom} onChange={(event) => {
+                  const previewZoom = event.target.value === "fit" ? "fit" : Number(event.target.value) as 70 | 80 | 90 | 100;
+                  setSettings((current) => ({ ...current, previewZoom }));
+                }}>
+                  <option value="fit">适应宽度</option>
+                  {[70, 80, 90, 100].map((value) => <option key={value} value={value}>{value}%</option>)}
+                </select>
               </div>
               <label className="template-picker">
                 <span>模板</span>
@@ -493,11 +523,7 @@ export function App() {
             </div>
             <ResumePreview resume={resume} zoom={settings.previewZoom} onPageCountChange={handlePageCount} />
           </section>
-        ) : (
-          <aside className="preview-collapsed" aria-label="简历预览已关闭">
-            <button type="button" onClick={() => setSettings((current) => ({ ...current, previewOpen: true }))} title="显示简历预览"><span>▣</span><strong>显示预览</strong></button>
-          </aside>
-        )}
+        ) : null}
       </div>
       {settingsOpen && <SettingsPanel
         settings={settings}

@@ -124,7 +124,7 @@ function buildFlowItems(resume: ResumeDocument): PreviewFlowItem[] {
 
 interface ResumePreviewProps {
   resume: ResumeDocument;
-  zoom: number;
+  zoom: number | "fit";
   templateId?: ResumeTemplateId;
   onPageCountChange?: (pageCount: number) => void;
 }
@@ -134,8 +134,24 @@ export function ResumePreview({ resume, zoom, templateId, onPageCountChange }: R
   const activeTemplate = getResumeTemplate(activeTemplateId);
   const templateClasses = `resume-template-${activeTemplate.renderBase} resume-variant-${activeTemplate.styleVariant} resume-template-${activeTemplateId}`;
   const measureRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [fitZoom, setFitZoom] = useState(1);
   const flowItems = useMemo(() => buildFlowItems(resume), [resume]);
   const [pages, setPages] = useState<number[][]>(() => [flowItems.map((_, index) => index)]);
+
+  useLayoutEffect(() => {
+    const scroller = scrollerRef.current;
+    if (zoom !== "fit" || !scroller) return;
+    const update = () => {
+      const style = window.getComputedStyle(scroller);
+      const width = scroller.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      setFitZoom(Math.min(1, Math.max(0.1, (width - 2) / 794)));
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(scroller);
+    return () => observer.disconnect();
+  }, [zoom]);
 
   useLayoutEffect(() => {
     const page = measureRef.current;
@@ -193,8 +209,8 @@ export function ResumePreview({ resume, zoom, templateId, onPageCountChange }: R
   };
 
   return (
-    <div className="preview-scroller">
-      <div className="preview-zoom-stage" style={{ "--preview-zoom": zoom / 100 } as CSSProperties}>
+    <div ref={scrollerRef} className="preview-scroller">
+      <div className="preview-zoom-stage" style={{ "--preview-zoom": zoom === "fit" ? fitZoom : zoom / 100 } as CSSProperties}>
         <div className="resume-pages">
           {pages.map((pageItems, pageIndex) => (
             <div className="resume-page-wrap" key={`${pageIndex}-${pageItems.join("-")}`}>

@@ -119,7 +119,8 @@ export function SettingsPanel({
             </div>
             <label className="setting-row">
               <div><strong>预览缩放</strong><p>在较小屏幕上缩小页面，减少横向滚动。</p></div>
-              <select value={settings.previewZoom} onChange={(event) => update("previewZoom", Number(event.target.value) as PreviewZoom)}>
+              <select value={settings.previewZoom} onChange={(event) => update("previewZoom", event.target.value === "fit" ? "fit" : Number(event.target.value) as PreviewZoom)}>
+                <option value="fit">适应宽度</option>
                 <option value={70}>70%</option>
                 <option value={80}>80%</option>
                 <option value={90}>90%</option>
