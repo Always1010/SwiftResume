@@ -5,10 +5,11 @@ import { Modal } from "./Modal";
 
 const PdfCanvasPreview = lazy(() => import("./PdfCanvasPreview"));
 
-export function PdfExportDialog({ resume, onClose, onBrowserPrint }: {
+export function PdfExportDialog({ resume, onClose, onBrowserPrint, onDownloaded }: {
   resume: ResumeDocument;
   onClose: () => void;
   onBrowserPrint: () => void;
+  onDownloaded?: (filename: string) => void;
 }) {
   const [pdf, setPdf] = useState<(GeneratedPdf & { url: string }) | null>(null);
   const [error, setError] = useState("");
@@ -49,7 +50,7 @@ export function PdfExportDialog({ resume, onClose, onBrowserPrint }: {
       <span>{pdf ? `PDF 已生成 · ${Math.max(1, Math.round(pdf.blob.size / 1024))} KB` : "生成和预览均在本机完成"}</span>
       {pdf && <a className="secondary-button" href={pdf.url} target="_blank" rel="noopener noreferrer">在新标签页查看</a>}
       <button type="button" className="secondary-button" onClick={onBrowserPrint}>浏览器打印</button>
-      {pdf && <a className="primary-button" href={pdf.url} download={pdf.filename}>下载 PDF</a>}
+      {pdf && <a className="primary-button" href={pdf.url} download={pdf.filename} onClick={() => onDownloaded?.(pdf.filename)}>下载 PDF</a>}
     </footer>
   </Modal>;
 }

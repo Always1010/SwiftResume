@@ -22,6 +22,8 @@ export function createResumeHistory(document: ResumeDocument): ResumeHistory {
 
 function describeEdit(previous: ResumeDocument, action: ResumeAction): { label: string; group: string | null } {
   switch (action.type) {
+    case "update-target": return { label: "修改目标岗位", group: "target" };
+    case "record-export": return { label: "记录导出版本", group: null };
     case "replace": return { label: "恢复简历内容", group: null };
     case "update-title": return { label: "修改简历名称", group: "title" };
     case "update-profile": return {
