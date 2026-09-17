@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { BackupSetupPrompt } from "./components/BackupSetupPrompt";
 import { HistoryPanel } from "./components/HistoryPanel";
+import { HistoryActions } from "./components/HistoryActions";
 import { ResumeLibraryDialog } from "./components/ResumeLibraryDialog";
 import { NewResumeDialog } from "./components/NewResumeDialog";
 import { PhotoBackgroundPicker } from "./components/PhotoBackgroundPicker";
@@ -517,16 +518,10 @@ export function App() {
         <button type="button" className="secondary-button" disabled={!ready} onClick={() => setTemplatePickerOpen(true)}>排版样式</button>
         {compactWorkspace ? <details className="workspace-more"><summary className="secondary-button">更多</summary><div className="workspace-more-panel">
         <button type="button" className="secondary-button" disabled={!library} onClick={() => setVersionsOpen(true)}>岗位版本</button>
-        <div className="document-history-actions" role="group" aria-label="整份简历撤销与重做">
-          <button type="button" className="secondary-button" disabled={!undoLabel} aria-label="撤销整份简历" title={undoLabel ? `撤销：${undoLabel}（Ctrl/⌘ + Alt + Z）` : "暂无可撤销的修改"} onClick={() => changeHistory("undo")}>↶ 撤销</button>
-          <button type="button" className="secondary-button" disabled={!redoLabel} aria-label="重做整份简历" title={redoLabel ? `重做：${redoLabel}（Ctrl/⌘ + Alt + Shift + Z）` : "暂无可重做的修改"} onClick={() => changeHistory("redo")}>↷ 重做</button>
-        </div>
+        <HistoryActions undoLabel={undoLabel} redoLabel={redoLabel} onUndo={() => changeHistory("undo")} onRedo={() => changeHistory("redo")} />
         </div></details> : <div className="workspace-secondary-tools">
         <button type="button" className="secondary-button" disabled={!library} onClick={() => setVersionsOpen(true)}>岗位版本</button>
-        <div className="document-history-actions" role="group" aria-label="整份简历撤销与重做">
-          <button type="button" className="secondary-button" disabled={!undoLabel} aria-label="撤销整份简历" title={undoLabel ? `撤销：${undoLabel}（Ctrl/⌘ + Alt + Z）` : "暂无可撤销的修改"} onClick={() => changeHistory("undo")}>↶ 撤销</button>
-          <button type="button" className="secondary-button" disabled={!redoLabel} aria-label="重做整份简历" title={redoLabel ? `重做：${redoLabel}（Ctrl/⌘ + Alt + Shift + Z）` : "暂无可重做的修改"} onClick={() => changeHistory("redo")}>↷ 重做</button>
-        </div>
+        <HistoryActions undoLabel={undoLabel} redoLabel={redoLabel} onUndo={() => changeHistory("undo")} onRedo={() => changeHistory("redo")} />
         </div>}
         <div className="workspace-view-options">
           <button type="button" className={`secondary-button ${!previewVisible ? "active" : ""}`} aria-pressed={!previewVisible} onClick={() => { setMobilePreview(false); setSettings((current) => ({ ...current, previewOpen: false })); }}>专注编辑</button>

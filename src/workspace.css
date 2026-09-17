@@ -78,7 +78,6 @@
   .template-picker-body { grid-template-columns: minmax(0, 1fr); overflow: auto; grid-template-rows: minmax(260px, 45%) minmax(300px, 55%); }
 }
 
-.document-history-actions { display: flex; gap: 6px; }
 .flow-dialog { width: min(920px, calc(100vw - 32px)); max-height: 90vh; padding: 24px; overflow: auto; color: var(--text); }
 .flow-dialog[open] { display: block; height: auto; }
 .startup-status { display: grid; min-height: 100vh; place-items: center; color: #526a5b; }
