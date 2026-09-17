@@ -112,9 +112,9 @@ export function ResumePreview({ resume, zoom, templateId, onPageCountChange, thu
   const { blob, updating, error, retry } = useTypstPreview(document);
   const [thumbnailImage, setThumbnailImage] = useState<{ blob: Blob; source: string } | null>(null);
   return <div className={`preview-scroller typst-preview ${thumbnail ? "typst-thumbnail" : ""}`} aria-busy={updating && !error}>
-    <div className="typst-preview-status" role={error ? "alert" : "status"}>
-      {error ? <><span>预览更新失败：{error}{blob && "。下方仍为上次生成的版本。"}</span>{!thumbnail && <button type="button" onClick={retry}>重新生成</button>}</> : updating ? (blob ? "正在更新排版 · 下方为上次生成的版本…" : "正在生成预览…") : "预览与下载、打印使用同一份 PDF"}
-    </div>
+    {(updating || error) && <div className="typst-preview-status" role={error ? "alert" : "status"}>
+      {error ? <><span>预览更新失败：{error}{blob && "。下方仍为上次生成的版本。"}</span>{!thumbnail && <button type="button" onClick={retry}>重新生成</button>}</> : updating ? (blob ? "正在更新排版 · 下方为上次生成的版本…" : "正在生成预览…") : null}
+    </div>}
     {blob && (thumbnail && thumbnailImage?.blob === blob
       ? <img className="typst-thumbnail-image" src={thumbnailImage.source} alt="Typst PDF 首页" />
       : <Suspense fallback={<p role="status">正在打开 PDF…</p>}><PdfCanvasPreview blob={blob} zoom={zoom} onPageCountChange={onPageCountChange} thumbnail={thumbnail} onThumbnailReady={thumbnail ? (source) => setThumbnailImage({ blob, source }) : undefined} /></Suspense>)}
