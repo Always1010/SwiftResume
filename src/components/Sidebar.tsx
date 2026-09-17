@@ -1,13 +1,14 @@
 import { useState } from "react";
 import {
-  createSection,
-  createQuickSection,
   duplicateSection,
   reorderSection,
   type ResumeDocument,
   type ResumeSection,
   type SectionType,
+  type SectionPurpose,
 } from "../model/resume";
+
+import { AddModuleDialog } from "./AddModuleDialog";
 
 const sectionLabels: Record<SectionType, string> = {
   education: "教育经历",
@@ -18,23 +19,14 @@ interface SidebarProps {
   resume: ResumeDocument;
   selectedId: string;
   onSelect: (id: string) => void;
+  onAdd: (section: ResumeSection) => void;
   onSectionsChange: (sections: ResumeSection[]) => void;
   onDeleteSection: (sectionId: string) => void;
 }
 
-export function Sidebar({ resume, selectedId, onSelect, onSectionsChange, onDeleteSection }: SidebarProps) {
-  const [newTitle, setNewTitle] = useState("");
+export function Sidebar({ resume, selectedId, onSelect, onAdd, onSectionsChange, onDeleteSection }: SidebarProps) {
+  const [addPurpose, setAddPurpose] = useState<SectionPurpose | "education" | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
-
-  const addSection = () => {
-    const title = newTitle.trim();
-    if (!title) return;
-    const section = createSection("content");
-    section.title = title;
-    onSectionsChange([...resume.sections, section]);
-    onSelect(section.id);
-    setNewTitle("");
-  };
 
   return (
     <aside className="sidebar panel">
@@ -78,7 +70,7 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange, onDele
             <span className="drag-handle" title="拖动排序">⋮⋮</span>
             <span className="module-copy">
               <strong>{section.title || sectionLabels[section.type]}</strong>
-              <small>{section.type === "content" ? "可选标题行 + 正文" : sectionLabels[section.type]}{!section.enabled && " · 已隐藏"}</small>
+              <small>{section.type === "content" ? ({ work: "职责与成果", project: "背景、行动与结果", skills: "技能分组", summary: "一段简介", custom: "自由内容" }[section.purpose ?? "custom"]) : sectionLabels[section.type]}{!section.enabled && " · 已隐藏"}</small>
             </span>
             <div className="module-actions">
               <button
@@ -127,27 +119,11 @@ export function Sidebar({ resume, selectedId, onSelect, onSectionsChange, onDele
           </div>
         ))}
         <div className="add-module">
-          <label className="add-module-label" htmlFor="new-module-title">添加模块</label>
-          <div className="quick-modules">{([ ["education", "教育"], ["work", "工作"], ["project", "项目"], ["skills", "技能"], ["summary", "个人简介"] ] as const).map(([purpose, label]) => <button key={purpose} type="button" className="secondary-button" onClick={() => {
-            const section = createQuickSection(purpose);
-            onSectionsChange([...resume.sections, section]);
-            onSelect(section.id);
-          }}>＋ {label}</button>)}</div>
-          <input
-            id="new-module-title"
-            value={newTitle}
-            placeholder="输入模块名称，如：开源经历"
-            aria-label="新模块名称"
-            onChange={(event) => setNewTitle(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") addSection();
-            }}
-          />
-          <p className="add-module-hint">新模块包含可选标题日期行和富文本正文；标题行留空时仅显示正文。</p>
-          <button type="button" className="primary-button" disabled={!newTitle.trim()} onClick={addSection}>
-            ＋ 添加模块
-          </button>
+          <span className="add-module-label">添加模块</span>
+          <div className="quick-modules">{([ ["education", "教育"], ["work", "工作"], ["project", "项目"], ["skills", "技能"], ["summary", "个人简介"], ["custom", "自定义"] ] as const).map(([purpose, label]) => <button key={purpose} type="button" className="secondary-button" onClick={() => setAddPurpose(purpose)}>＋ {label}</button>)}</div>
+          <p className="add-module-hint">先查看填写示例，再添加对应结构。</p>
         </div>
+        {addPurpose && <AddModuleDialog initialPurpose={addPurpose} onClose={() => setAddPurpose(null)} onAdd={(section) => { onAdd(section); setAddPurpose(null); }} />}
       </div>
     </aside>
   );

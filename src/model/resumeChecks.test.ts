@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import { createDefaultResume, createResumeFromTemplate } from "./resume";
 import { checkPdfPage, checkResume } from "./resumeChecks";
 it("locates missing contact and placeholder content while excluding hidden modules", () => {
-  const resume = createResumeFromTemplate("experienced");
+  const resume = createResumeFromTemplate("experienced", false);
   expect(checkResume(resume).some((c) => c.id === "profile:contact")).toBe(true);
   resume.sections[0].enabled = false;
   expect(checkResume(resume).some((c) => c.sectionId === resume.sections[0].id)).toBe(false);
