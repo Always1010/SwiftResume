@@ -1,53 +1,16 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { createDefaultResume, type ResumeDocument, type ResumeTemplateId } from "../model/resume";
+import { useMemo, useRef, useState } from "react";
+import { type ResumeDocument, type ResumeTemplateId } from "../model/resume";
 import {
   RESUME_TEMPLATES,
   TEMPLATE_FAMILIES,
-  type ResumeTemplateDefinition,
   type ResumeTemplateFamily,
 } from "../templates/registry";
 import type { TemplateRecommendation } from "../templates/recommender";
 import { ResumePreview } from "./ResumePreview";
 import { TemplateFinder } from "./TemplateFinder";
+import { templatePreviewUrl } from "../templates/staticPreviews";
 
 const FAVORITES_KEY = "swift-resume-template-favorites";
-
-function LazyTemplateImage({ template, rootRef }: {
-  template: ResumeTemplateDefinition;
-  rootRef: RefObject<HTMLElement | null>;
-}) {
-  const frameRef = useRef<HTMLDivElement>(null);
-  const [shouldLoad, setShouldLoad] = useState(false);
-  const sample = useMemo(() => {
-    const document = createDefaultResume();
-    document.theme = { ...document.theme, templateId: template.id, density: 42, accent: "#596d82" };
-    return document;
-  }, [template.id]);
-
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame || shouldLoad) return;
-    if (typeof IntersectionObserver === "undefined") {
-      setShouldLoad(true);
-      return;
-    }
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry?.isIntersecting) return;
-      setShouldLoad(true);
-      observer.disconnect();
-    }, { root: rootRef.current, rootMargin: "80px 0px" });
-    observer.observe(frame);
-    return () => observer.disconnect();
-  }, [rootRef, shouldLoad]);
-
-  return (
-    <div ref={frameRef} className="template-thumbnail-frame">
-      {shouldLoad
-        ? <ResumePreview resume={sample} zoom="fit" thumbnail />
-        : <span className="template-thumbnail-placeholder" aria-hidden="true" />}
-    </div>
-  );
-}
 
 function readFavorites() {
   if (typeof window === "undefined") return [] as ResumeTemplateId[];
@@ -142,7 +105,7 @@ export function TemplateGallery({ selectedId, resume, onSelect }: {
                   title={template.description}
                   onClick={() => onSelect(template.id)}
                 >
-                  <LazyTemplateImage template={template} rootRef={railRef} />
+                  <div className="template-thumbnail-frame"><img src={templatePreviewUrl(template.id)} alt={`${template.name}模板示例首页`} loading="lazy" decoding="async" width={420} height={594} /></div>
                   <span className="template-gallery-copy"><strong>{template.name}</strong><small>{recommendation ? recommendation.reason : template.tags.slice(0, 2).join(" · ")}</small></span>
                 </button>
                 <button type="button" className={`template-compare-toggle ${comparing ? "active" : ""}`} aria-label={`${comparing ? "移出" : "加入"}${template.name}模板对比`} aria-pressed={comparing} onClick={() => toggleCompare(template.id)}>{comparing ? "✓ 已选" : "＋ 对比"}</button>

@@ -1,0 +1,527 @@
+{
+  "scenarios": {
+    "graduate": [
+      {
+        "file": "scenario-graduate-1-c2e721178754.png",
+        "width": 1200,
+        "height": 1698
+      }
+    ],
+    "experienced": [
+      {
+        "file": "scenario-experienced-1-6a9f1e1d3679.png",
+        "width": 1200,
+        "height": 1698
+      }
+    ],
+    "career-change": [
+      {
+        "file": "scenario-career-change-1-b701865fb7f5.png",
+        "width": 1200,
+        "height": 1698
+      }
+    ]
+  },
+  "templates": {
+    "classic": {
+      "file": "classic-c1f9bed5fade.png",
+      "width": 420,
+      "height": 595
+    },
+    "minimal": {
+      "file": "minimal-6d621e2ab5c5.png",
+      "width": 420,
+      "height": 595
+    },
+    "executive": {
+      "file": "executive.png",
+      "width": 420,
+      "height": 594
+    },
+    "sidebar": {
+      "file": "sidebar.png",
+      "width": 420,
+      "height": 594
+    },
+    "accent": {
+      "file": "accent.png",
+      "width": 420,
+      "height": 594
+    },
+    "timeline": {
+      "file": "timeline.png",
+      "width": 420,
+      "height": 594
+    },
+    "academic": {
+      "file": "academic.png",
+      "width": 420,
+      "height": 594
+    },
+    "developer": {
+      "file": "developer.png",
+      "width": 420,
+      "height": 594
+    },
+    "compact": {
+      "file": "compact.png",
+      "width": 420,
+      "height": 594
+    },
+    "newspaper": {
+      "file": "newspaper.png",
+      "width": 420,
+      "height": 594
+    },
+    "swiss": {
+      "file": "swiss.png",
+      "width": 420,
+      "height": 594
+    },
+    "magazine": {
+      "file": "magazine.png",
+      "width": 420,
+      "height": 594
+    },
+    "blueprint": {
+      "file": "blueprint.png",
+      "width": 420,
+      "height": 594
+    },
+    "japanese": {
+      "file": "japanese.png",
+      "width": 420,
+      "height": 594
+    },
+    "archive": {
+      "file": "archive.png",
+      "width": 420,
+      "height": 594
+    },
+    "nordic": {
+      "file": "nordic.png",
+      "width": 420,
+      "height": 594
+    },
+    "bauhaus": {
+      "file": "bauhaus.png",
+      "width": 420,
+      "height": 594
+    },
+    "index": {
+      "file": "index.png",
+      "width": 420,
+      "height": 594
+    },
+    "monochrome": {
+      "file": "monochrome.png",
+      "width": 420,
+      "height": 594
+    },
+    "gradient": {
+      "file": "gradient.png",
+      "width": 420,
+      "height": 594
+    },
+    "terminal": {
+      "file": "terminal.png",
+      "width": 420,
+      "height": 594
+    },
+    "ledger": {
+      "file": "ledger.png",
+      "width": 420,
+      "height": 594
+    },
+    "diplomat": {
+      "file": "diplomat.png",
+      "width": 420,
+      "height": 594
+    },
+    "studio": {
+      "file": "studio.png",
+      "width": 420,
+      "height": 594
+    },
+    "ribbon": {
+      "file": "ribbon.png",
+      "width": 420,
+      "height": 594
+    },
+    "capsule": {
+      "file": "capsule.png",
+      "width": 420,
+      "height": 594
+    },
+    "split": {
+      "file": "split.png",
+      "width": 420,
+      "height": 594
+    },
+    "metro": {
+      "file": "metro.png",
+      "width": 420,
+      "height": 594
+    },
+    "folio": {
+      "file": "folio.png",
+      "width": 420,
+      "height": 594
+    },
+    "boardroom": {
+      "file": "boardroom.png",
+      "width": 420,
+      "height": 594
+    },
+    "consultant": {
+      "file": "consultant.png",
+      "width": 420,
+      "height": 594
+    },
+    "finance": {
+      "file": "finance.png",
+      "width": 420,
+      "height": 594
+    },
+    "corporate": {
+      "file": "corporate.png",
+      "width": 420,
+      "height": 594
+    },
+    "strategy": {
+      "file": "strategy.png",
+      "width": 420,
+      "height": 594
+    },
+    "banking": {
+      "file": "banking.png",
+      "width": 420,
+      "height": 594
+    },
+    "pure": {
+      "file": "pure.png",
+      "width": 420,
+      "height": 594
+    },
+    "whitespace": {
+      "file": "whitespace.png",
+      "width": 420,
+      "height": 594
+    },
+    "zen": {
+      "file": "zen.png",
+      "width": 420,
+      "height": 594
+    },
+    "linen": {
+      "file": "linen.png",
+      "width": 420,
+      "height": 594
+    },
+    "quiet": {
+      "file": "quiet.png",
+      "width": 420,
+      "height": 594
+    },
+    "contour": {
+      "file": "contour.png",
+      "width": 420,
+      "height": 594
+    },
+    "urban": {
+      "file": "urban.png",
+      "width": 420,
+      "height": 594
+    },
+    "horizon": {
+      "file": "horizon.png",
+      "width": 420,
+      "height": 594
+    },
+    "modular": {
+      "file": "modular.png",
+      "width": 420,
+      "height": 594
+    },
+    "signal": {
+      "file": "signal.png",
+      "width": 420,
+      "height": 594
+    },
+    "code-grid": {
+      "file": "code-grid.png",
+      "width": 420,
+      "height": 594
+    },
+    "data-lab": {
+      "file": "data-lab.png",
+      "width": 420,
+      "height": 594
+    },
+    "circuit": {
+      "file": "circuit.png",
+      "width": 420,
+      "height": 594
+    },
+    "cloud": {
+      "file": "cloud.png",
+      "width": 420,
+      "height": 594
+    },
+    "system": {
+      "file": "system.png",
+      "width": 420,
+      "height": 594
+    },
+    "engineer": {
+      "file": "engineer.png",
+      "width": 420,
+      "height": 594
+    },
+    "cyber": {
+      "file": "cyber.png",
+      "width": 420,
+      "height": 594
+    },
+    "research": {
+      "file": "research.png",
+      "width": 420,
+      "height": 594
+    },
+    "thesis": {
+      "file": "thesis.png",
+      "width": 420,
+      "height": 594
+    },
+    "scholar": {
+      "file": "scholar.png",
+      "width": 420,
+      "height": 594
+    },
+    "lecture": {
+      "file": "lecture.png",
+      "width": 420,
+      "height": 594
+    },
+    "laboratory": {
+      "file": "laboratory.png",
+      "width": 420,
+      "height": 594
+    },
+    "journal": {
+      "file": "journal.png",
+      "width": 420,
+      "height": 594
+    },
+    "citation": {
+      "file": "citation.png",
+      "width": 420,
+      "height": 594
+    },
+    "campus-faculty": {
+      "file": "campus-faculty.png",
+      "width": 420,
+      "height": 594
+    },
+    "doctoral": {
+      "file": "doctoral.png",
+      "width": 420,
+      "height": 594
+    },
+    "editorial": {
+      "file": "editorial.png",
+      "width": 420,
+      "height": 594
+    },
+    "broadsheet": {
+      "file": "broadsheet.png",
+      "width": 420,
+      "height": 594
+    },
+    "column": {
+      "file": "column.png",
+      "width": 420,
+      "height": 594
+    },
+    "headline": {
+      "file": "headline.png",
+      "width": 420,
+      "height": 594
+    },
+    "gazette": {
+      "file": "gazette.png",
+      "width": 420,
+      "height": 594
+    },
+    "typecraft": {
+      "file": "typecraft.png",
+      "width": 420,
+      "height": 594
+    },
+    "canvas": {
+      "file": "canvas.png",
+      "width": 420,
+      "height": 594
+    },
+    "mosaic": {
+      "file": "mosaic.png",
+      "width": 420,
+      "height": 594
+    },
+    "prism": {
+      "file": "prism.png",
+      "width": 420,
+      "height": 594
+    },
+    "poster": {
+      "file": "poster.png",
+      "width": 420,
+      "height": 594
+    },
+    "gallery": {
+      "file": "gallery.png",
+      "width": 420,
+      "height": 594
+    },
+    "heritage": {
+      "file": "heritage.png",
+      "width": 420,
+      "height": 594
+    },
+    "serif": {
+      "file": "serif.png",
+      "width": 420,
+      "height": 594
+    },
+    "ivory": {
+      "file": "ivory.png",
+      "width": 420,
+      "height": 594
+    },
+    "gentleman": {
+      "file": "gentleman.png",
+      "width": 420,
+      "height": 594
+    },
+    "manuscript": {
+      "file": "manuscript.png",
+      "width": 420,
+      "height": 594
+    },
+    "seal": {
+      "file": "seal.png",
+      "width": 420,
+      "height": 594
+    },
+    "copper": {
+      "file": "copper.png",
+      "width": 420,
+      "height": 594
+    },
+    "tradition": {
+      "file": "tradition.png",
+      "width": 420,
+      "height": 594
+    },
+    "freshman": {
+      "file": "freshman.png",
+      "width": 420,
+      "height": 594
+    },
+    "graduate": {
+      "file": "graduate.png",
+      "width": 420,
+      "height": 594
+    },
+    "internship": {
+      "file": "internship.png",
+      "width": 420,
+      "height": 594
+    },
+    "campus": {
+      "file": "campus.png",
+      "width": 420,
+      "height": 594
+    },
+    "youth": {
+      "file": "youth.png",
+      "width": 420,
+      "height": 594
+    },
+    "starter": {
+      "file": "starter.png",
+      "width": 420,
+      "height": 594
+    },
+    "bright": {
+      "file": "bright.png",
+      "width": 420,
+      "height": 594
+    },
+    "club": {
+      "file": "club.png",
+      "width": 420,
+      "height": 594
+    },
+    "scholarship": {
+      "file": "scholarship.png",
+      "width": 420,
+      "height": 594
+    },
+    "first-job": {
+      "file": "first-job.png",
+      "width": 420,
+      "height": 594
+    },
+    "civil-service": {
+      "file": "civil-service.png",
+      "width": 420,
+      "height": 594
+    },
+    "institution": {
+      "file": "institution.png",
+      "width": 420,
+      "height": 594
+    },
+    "legal": {
+      "file": "legal.png",
+      "width": 420,
+      "height": 594
+    },
+    "medical": {
+      "file": "medical.png",
+      "width": 420,
+      "height": 594
+    },
+    "teacher": {
+      "file": "teacher.png",
+      "width": 420,
+      "height": 594
+    },
+    "public-sector": {
+      "file": "public-sector.png",
+      "width": 420,
+      "height": 594
+    },
+    "policy": {
+      "file": "policy.png",
+      "width": 420,
+      "height": 594
+    },
+    "formal": {
+      "file": "formal.png",
+      "width": 420,
+      "height": 594
+    },
+    "administration": {
+      "file": "administration.png",
+      "width": 420,
+      "height": 594
+    },
+    "state-owned": {
+      "file": "state-owned.png",
+      "width": 420,
+      "height": 594
+    }
+  }
+}
