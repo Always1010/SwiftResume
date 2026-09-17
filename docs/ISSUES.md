@@ -1,5 +1,15 @@
 # SwiftResume 问题日志
 
+## SR-026：教育背景固定分栏导致说明拥挤且未靠右
+
+- 日期：2026-09-18
+- 状态：已解决
+- 现象或修改背景：PDF 教育背景第二行固定按 2:3 分栏，专业较短时留出大块空白，长说明局促；用户要求专业及学历位于左侧，绩点和说明同行靠右。
+- 原因分析：PDF 使用固定比例且默认左对齐；HTML 的 flex 子项也会被长说明挤压。
+- 解决方案：HTML 与 PDF 均让专业及学历按内容宽度占据左列（上限为可用宽度的 45%），说明占据剩余空间并靠右；长说明在右列自然换行，保留专业完整展示的空间。
+- 验证方式：27 项相关回归测试通过，覆盖短绩点、空说明、显式换行及长说明；TypeScript 检查通过；实际生成经典模板与应届示例 PDF，目检应届示例确认专业与本科同行、说明右边缘与日期对齐。
+- 相关文件：`src/model/resumeLayout.ts`、`src/components/ResumePreview.tsx`、`src/components/ResumePreview.test.tsx`、`src/export/typstPdf.ts`、`src/export/typstPdf.test.ts`、`src/styles.css`、`src/templates/previewManifest.json`、`public/template-previews/`
+
 ## SR-025：个人信息的联系方式与附加字段列位置不一致
 
 - 日期：2026-09-18

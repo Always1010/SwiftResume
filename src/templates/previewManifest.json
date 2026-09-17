@@ -2,7 +2,7 @@
   "scenarios": {
     "graduate": [
       {
-        "file": "scenario-graduate-1-bddbfb0480df.png",
+        "file": "scenario-graduate-1-e100e2102f6d.png",
         "width": 1200,
         "height": 1698
       }
@@ -34,7 +34,7 @@
   },
   "templates": {
     "classic": {
-      "file": "classic-acae04003bb7.png",
+      "file": "classic-e84531a959be.png",
       "width": 420,
       "height": 595
     },

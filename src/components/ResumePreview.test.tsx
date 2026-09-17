@@ -5,6 +5,16 @@ import { createDefaultResume, createSection } from "../model/resume";
 import { ResumeProfileView, ResumeSectionView } from "./ResumePreview";
 
 describe("ResumeSectionView", () => {
+  it("keeps degree beside the major and GPA in the separate right-hand cell", () => {
+    const section = createSection("education");
+    if (section.type !== "education") throw new Error("expected education");
+    Object.assign(section.items[0], { major: "计算机科学与技术", degree: "本科", detail: "GPA 3.7/4.0" });
+    const host = document.createElement("div");
+    host.innerHTML = renderToStaticMarkup(<ResumeSectionView section={section} />);
+    const detail = host.querySelector(".education-detail")!;
+    expect(detail.children[0].textContent).toBe("计算机科学与技术 | 本科");
+    expect(detail.children[1].textContent).toBe("GPA 3.7/4.0");
+  });
   it("keeps extended personal details inside the profile header without a basic-info section", () => {
     const html = renderToStaticMarkup(<ResumeProfileView resume={createDefaultResume()} />);
     expect(html).toContain("学历");

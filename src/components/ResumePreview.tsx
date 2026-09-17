@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, type ReactNode } from "react";
 import { useTypstPreview } from "../export/useTypstPreview";
 import type { ContentEntry, ResumeDocument, ResumeSection, ResumeTemplateId } from "../model/resume";
 import { renderContentRichText } from "../model/contentRichText";
-import { PROFILE_LAYOUT, profileInfoRows } from "../model/resumeLayout";
+import { EDUCATION_LAYOUT, PROFILE_LAYOUT, profileInfoRows } from "../model/resumeLayout";
 import "../typstPreview.css";
 
 const PdfCanvasPreview = lazy(() => import("./PdfCanvasPreview"));
@@ -40,7 +40,7 @@ function sectionItems(section: ResumeSection): PreviewFlowItem[] {
       content: (
         <article className="resume-entry education-entry">
           <div className="entry-topline"><strong>{item.school || "未填写学校"}</strong><time>{item.date}</time></div>
-          <div className="education-detail"><span>{[item.major, item.degree].filter(Boolean).join(" | ")}</span><span>{item.detail}</span></div>
+          <div className="education-detail" style={{ gridTemplateColumns: `fit-content(${EDUCATION_LAYOUT.maxLeftPercent}%) minmax(0, 1fr)`, columnGap: EDUCATION_LAYOUT.columnGapPx }}><span>{[item.major, item.degree].filter(Boolean).join(" | ")}</span><span>{item.detail}</span></div>
         </article>
       ),
     }));
