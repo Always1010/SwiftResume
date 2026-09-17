@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { PdfExportDialog } from "./PdfExportDialog";
+import { ResumeCheckDialog } from "./ResumeCheckDialog";
 import type { ResumeDocument } from "../model/resume";
 import { loadResumeById, saveResumeById } from "../storage/resumeStorage";
 import { usePreviewSubscriber } from "../sync/previewSync";
@@ -56,6 +57,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
   const [manualZoom, setManualZoom] = useState(100);
   const [fitZoom, setFitZoom] = useState(100);
   const [pdfResume, setPdfResume] = useState<ResumeDocument | null>(null);
+  const [checkOpen, setCheckOpen] = useState(false);
   const [styleSyncState, setStyleSyncState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [styleError, setStyleError] = useState("");
   const [galleryWidth, setGalleryWidth] = useState(readTemplateGalleryWidth);
@@ -202,7 +204,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
             <button type="button" aria-label="放大预览" onClick={() => adjustZoom(10)}>＋</button>
           </div>
           {styleSyncState !== "idle" && <span className={`standalone-sync-status ${styleSyncState === "error" ? "error" : ""}`}>{styleSyncState === "saving" ? "正在自动同步…" : styleSyncState === "error" ? "同步失败" : "已自动同步"}</span>}
-          <button type="button" className="primary-button" disabled={!previewResume} onClick={() => setPdfResume(previewResume)}>导出 PDF</button>
+          <button type="button" className="primary-button" disabled={!previewResume} onClick={() => setCheckOpen(true)}>导出 PDF</button>
           <button type="button" className="secondary-button" onClick={() => window.close()}>关闭页面</button>
         </div>
       </header>
@@ -268,6 +270,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
           </div>
         </section>
       </div>
+      {checkOpen && previewResume && <ResumeCheckDialog resume={previewResume} onClose={() => setCheckOpen(false)} onContinue={() => { setCheckOpen(false); setPdfResume(previewResume); }} />}
       {pdfResume && <PdfExportDialog resume={pdfResume} onClose={() => setPdfResume(null)} onBrowserPrint={() => {
         setPdfResume(null);
         window.requestAnimationFrame(() => window.print());

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getDocument, PDFWorker, type PDFDocumentLoadingTask, type PDFDocumentProxy, type RenderTask } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import { checkPdfPage } from "../model/resumeChecks";
 
 export default function PdfCanvasPreview({ blob }: { blob: Blob }) {
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
@@ -10,6 +11,8 @@ export default function PdfCanvasPreview({ blob }: { blob: Blob }) {
   const [error, setError] = useState("");
   const [rendering, setRendering] = useState(true);
   const [pageText, setPageText] = useState("");
+  const [pageWarnings, setPageWarnings] = useState<{ page: number; message: string }[]>([]);
+  const [dismissed, setDismissed] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -20,6 +23,8 @@ export default function PdfCanvasPreview({ blob }: { blob: Blob }) {
     let worker: PDFWorker | undefined;
     setPdf(null);
     setError("");
+    setPageWarnings([]);
+    setDismissed(false);
     void blob.arrayBuffer().then(async (data) => {
       if (!active) return;
       // An explicit local worker avoids PDF.js creating a blob script for
@@ -30,6 +35,17 @@ export default function PdfCanvasPreview({ blob }: { blob: Blob }) {
       loading = getDocument({ data: new Uint8Array(data), worker, useSystemFonts: false, useWasm: false });
       const document = await loading.promise;
       if (active) { setPdf(document); setPageNumber(1); }
+      const warnings: { page: number; message: string }[] = [];
+      for (let i = 1; active && i <= document.numPages; i++) {
+        const page = await document.getPage(i);
+        const text = await page.getTextContent();
+        const items = text.items.filter((item) => "str" in item);
+        const height = page.getViewport({ scale: 1 }).height;
+        const used = items.length ? (height - Math.min(...items.map((item) => item.transform[5]))) / height : 0;
+        const message = checkPdfPage(items.reduce((n, item) => n + item.str.trim().length, 0), used, i === document.numPages, document.numPages);
+        if (message) warnings.push({ page: i, message });
+      }
+      if (active) setPageWarnings(warnings);
     }).catch((reason: unknown) => {
       if (active) setError(reason instanceof Error ? reason.message : "无法显示 PDF");
     });
@@ -91,6 +107,7 @@ export default function PdfCanvasPreview({ blob }: { blob: Blob }) {
       <select aria-label="PDF 缩放" value={zoom} onChange={(event) => setZoom(event.target.value)}>
         <option value="fit">适应宽度</option><option value="75">75%</option><option value="100">100%</option><option value="125">125%</option>
       </select>
+      {!dismissed && pageWarnings.length > 0 && <details className="pdf-page-checks"><summary>分页检查：{pageWarnings.length} 条提示</summary>{pageWarnings.map((warning) => <p key={warning.page}><button onClick={() => setPageNumber(warning.page)}>第 {warning.page} 页</button> {warning.message}</p>)}<button onClick={() => setDismissed(true)}>本次忽略分页提示</button></details>}
     </div>
     <div ref={viewportRef} className="pdf-page-viewport" aria-busy={rendering && !error}>
       {error && <div className="pdf-reader-error" role="alert">PDF 已生成，暂时无法显示预览。可以下载后打开。<details><summary>查看原因</summary>{error}</details></div>}
