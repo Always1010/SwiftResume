@@ -3,6 +3,37 @@ import { createDefaultResume, RESUME_TEMPLATE_IDS } from "../model/resume";
 import { createTypstSource } from "./typstPdf";
 
 describe("Typst source generator", () => {
+  it.each(["minimal", "sidebar", "split", "diplomat"] as const)("does not print content delimiters around the %s profile", (templateId) => {
+    const resume = createDefaultResume();
+    resume.theme.templateId = templateId;
+    resume.sections = [];
+    const source = createTypstSource(resume);
+    const profileStart = ["minimal", "diplomat"].includes(templateId) ? "#align(center)[" : "#let profile-accent = white\n";
+    const profile = source.slice(source.indexOf(profileStart) + profileStart.length);
+    expect(profile.trimStart()).toMatch(/^#text\(size: 18pt/);
+    expect(source).not.toContain("#align(center)[[");
+    expect(source).not.toMatch(/#let profile-accent = white\s*\[/);
+    expect(source).toContain(JSON.stringify(resume.profile.name));
+    expect(source).toContain("学历：本科");
+  });
+
+  it.each(["sidebar", "split"] as const)("evaluates the %s profile photo inside markup", (templateId) => {
+    const resume = createDefaultResume();
+    resume.theme.templateId = templateId;
+    resume.sections = [];
+    resume.profile.photoBackground = "";
+    let source = createTypstSource(resume);
+    expect(source).toContain('[#image("/profile-photo.png"');
+    expect(source).not.toContain('[image("/profile-photo.png"');
+    resume.profile.photoBackground = "#438EDB";
+    source = createTypstSource(resume);
+    expect(source).toContain('[#block(width: 27mm, height: 35mm, fill: rgb("#438EDB"), image("/profile-photo.png"');
+    expect(source).not.toContain('[block(width: 27mm');
+    resume.profile.photo = "";
+    source = createTypstSource(resume);
+    expect(source).not.toContain('image("/profile-photo.png"');
+    expect(source).toContain(JSON.stringify(resume.profile.headline));
+  });
   it("reserves full CJK line boxes and lets list spacing follow paragraph leading", () => {
     const source = createTypstSource(createDefaultResume());
     expect(source).toContain("top-edge: 0.88em, bottom-edge: -0.12em");
