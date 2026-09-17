@@ -95,7 +95,7 @@ it.each(["graduate", "experienced", "career-change"] as const)("creates independ
 it("provides complete scenario-specific projects and explicitly fictional data", () => {
   for (const scene of ["graduate", "experienced", "career-change"] as const) {
     const resume = createResumeFromTemplate(scene);
-    expect(resume.profile.details.find((detail) => detail.label === "示例说明")?.value).toContain("均为虚构");
+    expect(resume.profile.name).toContain("【示例】");
     const projects = resume.sections.find((section) => section.type === "content" && section.purpose === "project");
     if (projects?.type !== "content") throw new Error("expected project section");
     expect(projects.entries.length).toBeGreaterThanOrEqual(3);

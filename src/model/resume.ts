@@ -412,10 +412,7 @@ export function createResumeFromTemplate(template: ResumeCreationTemplate, withE
   resume.profile = {
     ...resume.profile, name: example.name, headline: scene.role, location: "杭州",
     phone: "【填写你的手机】", email: example.email,
-    details: [
-      ...example.details.map((detail) => ({ ...detail, id: makeId() })),
-      { id: makeId(), label: "示例说明", value: "人物、机构、经历及数据均为虚构，请替换为真实信息" },
-    ],
+    details: example.details.map((detail) => ({ ...detail, id: makeId() })),
   };
   resume.sections = example.sections.map((section): ResumeSection => {
     const base = { id: makeId(), title: section.title, enabled: true };
