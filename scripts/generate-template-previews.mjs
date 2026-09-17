@@ -16,7 +16,8 @@ const scenarioList = /export const SCENARIOS\s*=\s*\[([\s\S]*?)\]\s*as const/.ex
 if (!scenarioList) throw new Error("无法读取场景列表");
 const allScenarioIds = [...scenarioList.matchAll(/\{ id: "([a-z-]+)"/g)].map((match) => match[1]);
 const args = process.argv.slice(2);
-if (args.some((arg) => !/^--(?:templates|scenarios)=/.test(arg))) throw new Error("参数格式：--templates=classic,minimal --scenarios=graduate；使用 none 跳过某类，省略参数则生成该类全部素材");
+const verifyOnly = args.includes("--verify-only");
+if (args.some((arg) => arg !== "--verify-only" && !/^--(?:templates|scenarios)=/.test(arg))) throw new Error("参数格式：--templates=classic,minimal --scenarios=graduate；使用 none 跳过某类，省略参数则生成该类全部素材；--verify-only 仅验证不写入素材");
 function selectedIds(key, available) {
   const value = args.find((arg) => arg.startsWith(`--${key}=`))?.split("=")[1];
   const selected = value === undefined ? available : value === "none" ? [] : value.split(",");
@@ -53,23 +54,34 @@ let fail;
 let idleTimer;
 let browser;
 let diagnostics = "";
-const completed = new Promise((resolvePromise, rejectPromise) => { finish = resolvePromise; fail = rejectPromise; });
+let batchJobs = [];
+const batchSize = 20;
+async function stopBrowser() {
+  if (browser && browser.exitCode === null) {
+    const exited = new Promise((resolveExit) => browser.once("exit", resolveExit));
+    browser.kill();
+    await exited;
+  }
+  browser = undefined;
+}
 // Fail on missing readiness instead of capturing whatever happens to be visible.
 const resetTimeout = () => {
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => fail(new Error(`素材生成超过 120 秒没有进展\n${diagnostics}`)), 120_000);
+  idleTimer = setTimeout(() => fail(new Error(`素材生成超过 120 秒没有进展（下一任务：${pending.keys().next().value ?? "完成确认"}）\n${diagnostics}`)), 120_000);
 };
 const server = await createServer({
   root: projectRoot,
   logLevel: "error",
-  server: { host: "127.0.0.1", port: 4179, strictPort: false, fs: { allow: [projectRoot, await realpath(join(projectRoot, "node_modules"))] } },
+  // This server is a batch renderer, not an editor session. File changes must
+  // not reload the browser or interrupt in-flight font/photo/worker requests.
+  server: { host: "127.0.0.1", port: 4179, strictPort: false, hmr: false, watch: null, fs: { allow: [projectRoot, await realpath(join(projectRoot, "node_modules"))] } },
   plugins: [{ name: "static-preview-results", configureServer(vite) {
     vite.middlewares.use(async (request, response, next) => {
       const url = new URL(request.url ?? "/", "http://127.0.0.1");
       if (url.pathname !== "/__template-generation") return next();
       if (url.searchParams.get("token") !== token) { response.statusCode = 403; response.end("无效生成令牌"); return; }
       response.setHeader("Content-Type", "application/json");
-      if (request.method === "GET") { response.end(JSON.stringify({ jobs })); return; }
+      if (request.method === "GET") { response.end(JSON.stringify({ jobs: batchJobs })); return; }
       if (request.method !== "POST") { response.statusCode = 405; response.end(); return; }
       try {
         const chunks = [];
@@ -82,7 +94,7 @@ const server = await createServer({
         const result = JSON.parse(Buffer.concat(chunks).toString("utf8"));
         if (result.type === "error") throw new Error(result.message);
         if (result.type === "done") {
-          if (pending.size) throw new Error(`尚有 ${pending.size} 个素材未完成`);
+          if (batchJobs.some((job) => pending.has(`${job.kind}:${job.id}`))) throw new Error("本批次仍有素材未完成");
           response.end("{}"); finish(); return;
         }
         const key = `${result.job?.kind}:${result.job?.id}`;
@@ -121,33 +133,42 @@ try {
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") throw new Error("无法确定本地服务端口");
   const url = `http://127.0.0.1:${address.port}/?view=template-thumbnail&generationToken=${token}`;
-  browser = spawn(browserPath, ["--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--remote-debugging-port=0", `--user-data-dir=${join(temporaryRoot, "browser-profile")}`, "--window-size=1440,1000", url], { cwd: projectRoot, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
-  browser.stdout.on("data", (chunk) => { diagnostics = (diagnostics + chunk).slice(-6000); });
-  browser.stderr.on("data", (chunk) => { diagnostics = (diagnostics + chunk).slice(-6000); });
-  browser.on("error", fail);
-  browser.on("exit", (code) => { if (pending.size) fail(new Error(`浏览器提前退出（${code}）\n${diagnostics}`)); });
-  resetTimeout();
-  await completed;
-  // All jobs succeeded. Content-addressed files preserve the old manifest until
-  // the complete new manifest is atomically published.
-  await mkdir(outputDirectory, { recursive: true });
-  for (const file of generatedFiles) await copyFile(join(captures, file), join(outputDirectory, file));
-  const temporaryManifest = `${manifestPath}.tmp`;
-  await writeFile(temporaryManifest, JSON.stringify(manifest, null, 2) + "\n");
-  await rename(temporaryManifest, manifestPath);
-  const filesIn = (value) => [...Object.values(value.templates), ...Object.values(value.scenarios).flat()].map((page) => page.file);
-  const retained = new Set(filesIn(manifest));
-  for (const file of filesIn(originalManifest)) {
-    if (!retained.has(file) && file === basename(file) && /^[a-z0-9-]+\.png$/.test(file)) await rm(join(outputDirectory, file), { force: true });
+  // Recycle the browser between bounded batches: each fresh process releases
+  // Typst's growing WASM heap and all PDF workers from the previous batch.
+  for (let offset = 0; offset < jobs.length; offset += batchSize) {
+    batchJobs = jobs.slice(offset, offset + batchSize);
+    const completed = new Promise((resolvePromise, rejectPromise) => { finish = resolvePromise; fail = rejectPromise; });
+    diagnostics = "";
+    browser = spawn(browserPath, ["--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--remote-debugging-port=0", `--user-data-dir=${join(temporaryRoot, `browser-profile-${offset}`)}`, "--window-size=1440,1000", url], { cwd: projectRoot, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+    browser.stdout.on("data", (chunk) => { diagnostics = (diagnostics + chunk).slice(-6000); });
+    browser.stderr.on("data", (chunk) => { diagnostics = (diagnostics + chunk).slice(-6000); });
+    browser.on("error", fail);
+    browser.on("exit", (code) => { if (batchJobs.some((job) => pending.has(`${job.kind}:${job.id}`))) fail(new Error(`浏览器提前退出（${code}）\n${diagnostics}`)); });
+    resetTimeout();
+    await completed;
+    clearTimeout(idleTimer);
+    await stopBrowser();
   }
-  console.log(`已生成 ${generatedFiles.length} 张静态预览，清单：${manifestPath}`);
+  if (verifyOnly) {
+    console.log(`已验证 ${jobs.length} 项任务、${generatedFiles.length} 张图片，未修改素材或清单`);
+  } else {
+    // All jobs succeeded. Content-addressed files preserve the old manifest until
+    // the complete new manifest is atomically published.
+    await mkdir(outputDirectory, { recursive: true });
+    for (const file of generatedFiles) await copyFile(join(captures, file), join(outputDirectory, file));
+    const temporaryManifest = `${manifestPath}.tmp`;
+    await writeFile(temporaryManifest, JSON.stringify(manifest, null, 2) + "\n");
+    await rename(temporaryManifest, manifestPath);
+    const filesIn = (value) => [...Object.values(value.templates), ...Object.values(value.scenarios).flat()].map((page) => page.file);
+    const retained = new Set(filesIn(manifest));
+    for (const file of filesIn(originalManifest)) {
+      if (!retained.has(file) && file === basename(file) && /^[a-z0-9-]+\.png$/.test(file)) await rm(join(outputDirectory, file), { force: true });
+    }
+    console.log(`已生成 ${generatedFiles.length} 张静态预览，清单：${manifestPath}`);
+  }
 } finally {
   clearTimeout(idleTimer);
-  if (browser && browser.exitCode === null) {
-    const exited = new Promise((resolveExit) => browser.once("exit", resolveExit));
-    browser.kill();
-    await exited;
-  }
+  await stopBrowser();
   await server.close();
   await rm(temporaryRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }
