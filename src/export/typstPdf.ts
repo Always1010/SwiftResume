@@ -1,4 +1,4 @@
-import { createTypstCompiler, loadFonts } from "@myriaddreamin/typst.ts";
+import { createTypstCompiler } from "@myriaddreamin/typst.ts";
 import { CompileFormatEnum } from "@myriaddreamin/typst.ts/compiler";
 import * as compilerWrapper from "@myriaddreamin/typst-ts-web-compiler";
 import compilerWasmUrl from "@myriaddreamin/typst-ts-web-compiler/wasm?url";
@@ -289,7 +289,13 @@ async function initializeCompiler() {
   await compiler.init({
     getWrapper: async () => extensionCompilerWrapper,
     getModule: () => compilerWasmUrl,
-    beforeBuild: [loadFonts([fontUrl], { assets: false })],
+    // The upstream loadFonts helper constructs a Function even in browsers,
+    // which is forbidden by Manifest V3. Load our bundled font directly.
+    beforeBuild: [Object.assign(async (_: unknown, { builder }: { builder: compilerWrapper.TypstCompilerBuilder }) => {
+      const response = await fetch(fontUrl);
+      if (!response.ok) throw new Error("无法读取内置中文字体，请重新加载扩展后重试");
+      await builder.add_raw_font(new Uint8Array(await response.arrayBuffer()));
+    }, { _kind: "fontLoader" as const, _preloadRemoteFontOptions: { assets: false as const } })],
   });
   return compiler;
 }
