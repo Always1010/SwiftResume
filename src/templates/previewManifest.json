@@ -1,0 +1,537 @@
+{
+  "scenarios": {
+    "graduate": [
+      {
+        "file": "scenario-graduate-1-bddbfb0480df.png",
+        "width": 1200,
+        "height": 1698
+      }
+    ],
+    "experienced": [
+      {
+        "file": "scenario-experienced-1-82c7b0620159.png",
+        "width": 1200,
+        "height": 1698
+      },
+      {
+        "file": "scenario-experienced-2-072154465f7d.png",
+        "width": 1200,
+        "height": 1698
+      }
+    ],
+    "career-change": [
+      {
+        "file": "scenario-career-change-1-e16b92a322f3.png",
+        "width": 1200,
+        "height": 1698
+      },
+      {
+        "file": "scenario-career-change-2-5a95eac31146.png",
+        "width": 1200,
+        "height": 1698
+      }
+    ]
+  },
+  "templates": {
+    "classic": {
+      "file": "classic-c1f9bed5fade.png",
+      "width": 420,
+      "height": 595
+    },
+    "minimal": {
+      "file": "minimal-8037d3470446.png",
+      "width": 420,
+      "height": 595
+    },
+    "executive": {
+      "file": "executive-2ce1915b5990.png",
+      "width": 420,
+      "height": 595
+    },
+    "sidebar": {
+      "file": "sidebar-0b2f2b481051.png",
+      "width": 420,
+      "height": 595
+    },
+    "accent": {
+      "file": "accent-f90e7d9674a6.png",
+      "width": 420,
+      "height": 595
+    },
+    "timeline": {
+      "file": "timeline-2ba8128cc59c.png",
+      "width": 420,
+      "height": 595
+    },
+    "academic": {
+      "file": "academic-416a0fab90a1.png",
+      "width": 420,
+      "height": 595
+    },
+    "developer": {
+      "file": "developer-c6dedff7f558.png",
+      "width": 420,
+      "height": 595
+    },
+    "compact": {
+      "file": "compact-440e3389e366.png",
+      "width": 420,
+      "height": 595
+    },
+    "newspaper": {
+      "file": "newspaper-db9b7dd7b386.png",
+      "width": 420,
+      "height": 595
+    },
+    "swiss": {
+      "file": "swiss-8ba47e810f14.png",
+      "width": 420,
+      "height": 595
+    },
+    "magazine": {
+      "file": "magazine-afa16ed20f83.png",
+      "width": 420,
+      "height": 595
+    },
+    "blueprint": {
+      "file": "blueprint-64b5f2da3b56.png",
+      "width": 420,
+      "height": 595
+    },
+    "japanese": {
+      "file": "japanese-f4fefe051d34.png",
+      "width": 420,
+      "height": 595
+    },
+    "archive": {
+      "file": "archive-2d8501176870.png",
+      "width": 420,
+      "height": 595
+    },
+    "nordic": {
+      "file": "nordic-14eb568fc46b.png",
+      "width": 420,
+      "height": 595
+    },
+    "bauhaus": {
+      "file": "bauhaus-24265a501d6d.png",
+      "width": 420,
+      "height": 595
+    },
+    "index": {
+      "file": "index-06d03b51398d.png",
+      "width": 420,
+      "height": 595
+    },
+    "monochrome": {
+      "file": "monochrome-e94ae4e9fb9a.png",
+      "width": 420,
+      "height": 595
+    },
+    "gradient": {
+      "file": "gradient-1354f9e7b640.png",
+      "width": 420,
+      "height": 595
+    },
+    "terminal": {
+      "file": "terminal-6cf5afd4318d.png",
+      "width": 420,
+      "height": 595
+    },
+    "ledger": {
+      "file": "ledger-1f38b54c752c.png",
+      "width": 420,
+      "height": 595
+    },
+    "diplomat": {
+      "file": "diplomat-87b9016bf65a.png",
+      "width": 420,
+      "height": 595
+    },
+    "studio": {
+      "file": "studio-e56e90c89f49.png",
+      "width": 420,
+      "height": 595
+    },
+    "ribbon": {
+      "file": "ribbon-d109653dc090.png",
+      "width": 420,
+      "height": 595
+    },
+    "capsule": {
+      "file": "capsule-840888be01e1.png",
+      "width": 420,
+      "height": 595
+    },
+    "split": {
+      "file": "split-61b250bab797.png",
+      "width": 420,
+      "height": 595
+    },
+    "metro": {
+      "file": "metro-b84b247ea41c.png",
+      "width": 420,
+      "height": 595
+    },
+    "folio": {
+      "file": "folio-49ea6a808e4f.png",
+      "width": 420,
+      "height": 595
+    },
+    "boardroom": {
+      "file": "boardroom-2ce1915b5990.png",
+      "width": 420,
+      "height": 595
+    },
+    "consultant": {
+      "file": "consultant-8ba47e810f14.png",
+      "width": 420,
+      "height": 595
+    },
+    "finance": {
+      "file": "finance-1f38b54c752c.png",
+      "width": 420,
+      "height": 595
+    },
+    "corporate": {
+      "file": "corporate-2ce1915b5990.png",
+      "width": 420,
+      "height": 595
+    },
+    "strategy": {
+      "file": "strategy-440e3389e366.png",
+      "width": 420,
+      "height": 595
+    },
+    "banking": {
+      "file": "banking-87b9016bf65a.png",
+      "width": 420,
+      "height": 595
+    },
+    "pure": {
+      "file": "pure-8037d3470446.png",
+      "width": 420,
+      "height": 595
+    },
+    "whitespace": {
+      "file": "whitespace-f4fefe051d34.png",
+      "width": 420,
+      "height": 595
+    },
+    "zen": {
+      "file": "zen-f4fefe051d34.png",
+      "width": 420,
+      "height": 595
+    },
+    "linen": {
+      "file": "linen-2d8501176870.png",
+      "width": 420,
+      "height": 595
+    },
+    "quiet": {
+      "file": "quiet-14eb568fc46b.png",
+      "width": 420,
+      "height": 595
+    },
+    "contour": {
+      "file": "contour-c1f9bed5fade.png",
+      "width": 420,
+      "height": 595
+    },
+    "urban": {
+      "file": "urban-b84b247ea41c.png",
+      "width": 420,
+      "height": 595
+    },
+    "horizon": {
+      "file": "horizon-d109653dc090.png",
+      "width": 420,
+      "height": 595
+    },
+    "modular": {
+      "file": "modular-440e3389e366.png",
+      "width": 420,
+      "height": 595
+    },
+    "signal": {
+      "file": "signal-f90e7d9674a6.png",
+      "width": 420,
+      "height": 595
+    },
+    "code-grid": {
+      "file": "code-grid-c6dedff7f558.png",
+      "width": 420,
+      "height": 595
+    },
+    "data-lab": {
+      "file": "data-lab-64b5f2da3b56.png",
+      "width": 420,
+      "height": 595
+    },
+    "circuit": {
+      "file": "circuit-b84b247ea41c.png",
+      "width": 420,
+      "height": 595
+    },
+    "cloud": {
+      "file": "cloud-1354f9e7b640.png",
+      "width": 420,
+      "height": 595
+    },
+    "system": {
+      "file": "system-6cf5afd4318d.png",
+      "width": 420,
+      "height": 595
+    },
+    "engineer": {
+      "file": "engineer-64b5f2da3b56.png",
+      "width": 420,
+      "height": 595
+    },
+    "cyber": {
+      "file": "cyber-6cf5afd4318d.png",
+      "width": 420,
+      "height": 595
+    },
+    "research": {
+      "file": "research-416a0fab90a1.png",
+      "width": 420,
+      "height": 595
+    },
+    "thesis": {
+      "file": "thesis-416a0fab90a1.png",
+      "width": 420,
+      "height": 595
+    },
+    "scholar": {
+      "file": "scholar-87b9016bf65a.png",
+      "width": 420,
+      "height": 595
+    },
+    "lecture": {
+      "file": "lecture-c1f9bed5fade.png",
+      "width": 420,
+      "height": 595
+    },
+    "laboratory": {
+      "file": "laboratory-1f38b54c752c.png",
+      "width": 420,
+      "height": 595
+    },
+    "journal": {
+      "file": "journal-06d03b51398d.png",
+      "width": 420,
+      "height": 595
+    },
+    "citation": {
+      "file": "citation-06d03b51398d.png",
+      "width": 420,
+      "height": 595
+    },
+    "campus-faculty": {
+      "file": "campus-faculty-87b9016bf65a.png",
+      "width": 420,
+      "height": 595
+    },
+    "doctoral": {
+      "file": "doctoral-8037d3470446.png",
+      "width": 420,
+      "height": 595
+    },
+    "editorial": {
+      "file": "editorial-afa16ed20f83.png",
+      "width": 420,
+      "height": 595
+    },
+    "broadsheet": {
+      "file": "broadsheet-db9b7dd7b386.png",
+      "width": 420,
+      "height": 595
+    },
+    "column": {
+      "file": "column-db9b7dd7b386.png",
+      "width": 420,
+      "height": 595
+    },
+    "headline": {
+      "file": "headline-afa16ed20f83.png",
+      "width": 420,
+      "height": 595
+    },
+    "gazette": {
+      "file": "gazette-db9b7dd7b386.png",
+      "width": 420,
+      "height": 595
+    },
+    "typecraft": {
+      "file": "typecraft-8ba47e810f14.png",
+      "width": 420,
+      "height": 595
+    },
+    "canvas": {
+      "file": "canvas-e56e90c89f49.png",
+      "width": 420,
+      "height": 595
+    },
+    "mosaic": {
+      "file": "mosaic-24265a501d6d.png",
+      "width": 420,
+      "height": 595
+    },
+    "prism": {
+      "file": "prism-1354f9e7b640.png",
+      "width": 420,
+      "height": 595
+    },
+    "poster": {
+      "file": "poster-e94ae4e9fb9a.png",
+      "width": 420,
+      "height": 595
+    },
+    "gallery": {
+      "file": "gallery-49ea6a808e4f.png",
+      "width": 420,
+      "height": 595
+    },
+    "heritage": {
+      "file": "heritage-87b9016bf65a.png",
+      "width": 420,
+      "height": 595
+    },
+    "serif": {
+      "file": "serif-c1f9bed5fade.png",
+      "width": 420,
+      "height": 595
+    },
+    "ivory": {
+      "file": "ivory-2d8501176870.png",
+      "width": 420,
+      "height": 595
+    },
+    "gentleman": {
+      "file": "gentleman-2ce1915b5990.png",
+      "width": 420,
+      "height": 595
+    },
+    "manuscript": {
+      "file": "manuscript-2d8501176870.png",
+      "width": 420,
+      "height": 595
+    },
+    "seal": {
+      "file": "seal-87b9016bf65a.png",
+      "width": 420,
+      "height": 595
+    },
+    "copper": {
+      "file": "copper-1f38b54c752c.png",
+      "width": 420,
+      "height": 595
+    },
+    "tradition": {
+      "file": "tradition-c1f9bed5fade.png",
+      "width": 420,
+      "height": 595
+    },
+    "freshman": {
+      "file": "freshman-8037d3470446.png",
+      "width": 420,
+      "height": 595
+    },
+    "graduate": {
+      "file": "graduate-c1f9bed5fade.png",
+      "width": 420,
+      "height": 595
+    },
+    "internship": {
+      "file": "internship-440e3389e366.png",
+      "width": 420,
+      "height": 595
+    },
+    "campus": {
+      "file": "campus-840888be01e1.png",
+      "width": 420,
+      "height": 595
+    },
+    "youth": {
+      "file": "youth-d109653dc090.png",
+      "width": 420,
+      "height": 595
+    },
+    "starter": {
+      "file": "starter-c1f9bed5fade.png",
+      "width": 420,
+      "height": 595
+    },
+    "bright": {
+      "file": "bright-1354f9e7b640.png",
+      "width": 420,
+      "height": 595
+    },
+    "club": {
+      "file": "club-2ba8128cc59c.png",
+      "width": 420,
+      "height": 595
+    },
+    "scholarship": {
+      "file": "scholarship-416a0fab90a1.png",
+      "width": 420,
+      "height": 595
+    },
+    "first-job": {
+      "file": "first-job-06d03b51398d.png",
+      "width": 420,
+      "height": 595
+    },
+    "civil-service": {
+      "file": "civil-service-416a0fab90a1.png",
+      "width": 420,
+      "height": 595
+    },
+    "institution": {
+      "file": "institution-87b9016bf65a.png",
+      "width": 420,
+      "height": 595
+    },
+    "legal": {
+      "file": "legal-1f38b54c752c.png",
+      "width": 420,
+      "height": 595
+    },
+    "medical": {
+      "file": "medical-14eb568fc46b.png",
+      "width": 420,
+      "height": 595
+    },
+    "teacher": {
+      "file": "teacher-c1f9bed5fade.png",
+      "width": 420,
+      "height": 595
+    },
+    "public-sector": {
+      "file": "public-sector-f90e7d9674a6.png",
+      "width": 420,
+      "height": 595
+    },
+    "policy": {
+      "file": "policy-06d03b51398d.png",
+      "width": 420,
+      "height": 595
+    },
+    "formal": {
+      "file": "formal-87b9016bf65a.png",
+      "width": 420,
+      "height": 595
+    },
+    "administration": {
+      "file": "administration-440e3389e366.png",
+      "width": 420,
+      "height": 595
+    },
+    "state-owned": {
+      "file": "state-owned-2ce1915b5990.png",
+      "width": 420,
+      "height": 595
+    }
+  }
+}
