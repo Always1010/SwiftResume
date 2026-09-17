@@ -1,0 +1,84 @@
+.document-history-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid #dce6df;
+  border-radius: 11px;
+  background: #eef4f0;
+}
+
+.history-actions-label {
+  padding: 0 7px;
+  color: #718278;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+
+.history-action-wrap {
+  display: inline-flex;
+}
+
+.history-action-button.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 6px 9px;
+  border-color: transparent;
+  background: #fff;
+  box-shadow: 0 1px 2px #17302310;
+  white-space: nowrap;
+}
+
+.history-action-button.secondary-button:hover:not(:disabled) {
+  border-color: #a9c2b1;
+  background: #fafffb;
+  color: #1f6743;
+}
+
+.history-action-button.secondary-button:focus-visible {
+  outline: 2px solid #34835b;
+  outline-offset: 2px;
+}
+
+.history-action-button.secondary-button:disabled {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  opacity: .5;
+}
+
+.history-action-icon {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+
+.history-action-icon.redo {
+  transform: scaleX(-1);
+}
+
+.workspace-more-panel .document-history-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
+}
+
+.workspace-more-panel .history-actions-label {
+  grid-column: 1 / -1;
+  padding: 0 2px 2px;
+}
+
+.workspace-more-panel .history-action-wrap,
+.workspace-more-panel .history-action-button {
+  width: 100%;
+}

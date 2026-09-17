@@ -6,6 +6,7 @@ import { TemplateThumbnailCapture } from "./components/TemplateThumbnailCapture"
 import { normalizeResumeTemplateId } from "./model/resume";
 import "./styles.css";
 import "./editorModes.css";
+import "./historyActions.css";
 import "./workspace.css";
 
 const parameters = new URLSearchParams(window.location.search);
