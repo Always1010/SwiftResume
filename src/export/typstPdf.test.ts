@@ -3,6 +3,25 @@ import { createDefaultResume, RESUME_TEMPLATE_IDS } from "../model/resume";
 import { createTypstSource } from "./typstPdf";
 
 describe("Typst source generator", () => {
+  it("reserves full CJK line boxes and lets list spacing follow paragraph leading", () => {
+    const source = createTypstSource(createDefaultResume());
+    expect(source).toContain("top-edge: 0.88em, bottom-edge: -0.12em");
+    expect(source).toContain("#set list(indent: 12pt, body-indent: 4pt, spacing: auto)");
+    expect(source).toContain("#set enum(indent: 12pt, body-indent: 4pt, spacing: auto)");
+    expect(source).not.toContain("spacing: 1pt");
+  });
+
+  it("gives education details a bounded share instead of squeezing the major column", () => {
+    const resume = createDefaultResume();
+    const education = resume.sections.find((section) => section.type === "education")!;
+    if (education.type !== "education") throw new Error("expected education");
+    education.items[0].detail = "较长的课程与成绩说明".repeat(20);
+    const source = createTypstSource(resume);
+    expect(source).toContain("#grid(columns: (2fr, 3fr), column-gutter: 8pt");
+    expect(source).toContain(education.items[0].detail);
+    expect(source).toContain(education.items[0].major);
+  });
+
   it("contains active resume modules and selected theme", () => {
     const resume = createDefaultResume();
     const source = createTypstSource(resume);

@@ -190,7 +190,7 @@ function sectionSource(section: ResumeSection, templateId: ResumeTemplateId) {
   let body = "";
   switch (section.type) {
     case "education":
-      body = section.items.map((item) => `${topLine(item.school, item.date, "", templateId)}#grid(columns: (1fr, auto), text(${asString([item.major, item.degree].filter(Boolean).join(" | "))}), text(${asString(item.detail)}))\n`).join("#v(4pt)\n");
+      body = section.items.map((item) => `${topLine(item.school, item.date, "", templateId)}#grid(columns: (2fr, 3fr), column-gutter: 8pt, text(${asString([item.major, item.degree].filter(Boolean).join(" | "))}), text(${asString(item.detail)}))\n`).join("#v(4pt)\n");
       break;
     case "content":
       body = section.entries.map((entry) => contentEntrySource(entry, templateId)).join("#v(6pt)\n");
@@ -268,9 +268,10 @@ export function createTypstSource(resume: ResumeDocument): string {
 
   return `// swift-resume-template: ${selectedTemplateId}
 #set page(paper: "a4", margin: ${pageMargin})
-#set text(font: "Noto Sans CJK SC", lang: "zh", size: ${withUnit(density.typstFontSizePt, "pt")}, fill: rgb("#303030"))
+#set text(font: "Noto Sans CJK SC", lang: "zh", size: ${withUnit(density.typstFontSizePt, "pt")}, fill: rgb("#303030"), top-edge: 0.88em, bottom-edge: -0.12em)
 #set par(leading: ${withUnit(density.typstLeadingEm, "em")}, spacing: ${withUnit(density.typstGapPt, "pt")})
-#set list(indent: 12pt, body-indent: 4pt, spacing: 1pt)
+#set list(indent: 12pt, body-indent: 4pt, spacing: auto)
+#set enum(indent: 12pt, body-indent: 4pt, spacing: auto)
 #let accent = rgb(${asString(resume.theme.accent)})
 #let profile-ink = rgb("#303030")
 #let profile-accent = accent
