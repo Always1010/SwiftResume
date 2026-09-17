@@ -108,16 +108,15 @@
 .undo-notice { position: fixed; z-index: 35; bottom: 24px; left: 50%; display: flex; align-items: center; gap: 18px; transform: translateX(-50%); border: 1px solid #c7d8cc; border-radius: 12px; padding: 12px 18px; background: white; box-shadow: 0 8px 35px #17302330; font-size: 13px; }
 .undo-notice button { border: 0; background: transparent; color: var(--green); font-weight: 700; }
 .pdf-preview-content { min-height: 0; overflow: auto; background: #525659; }
-.pdf-reader { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; min-height: 0; }
-.pdf-reader-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; padding: 10px; color: #34453b; background: #f1f5f2; font-size: 12px; }
+.pdf-reader { display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; }
+.pdf-reader-toolbar { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; padding: 10px; color: #34453b; background: #f1f5f2; font-size: 12px; }
 .pdf-reader-toolbar select { border: 1px solid var(--border); border-radius: 6px; padding: 6px; background: white; font-size: 12px; }
-.pdf-page-viewport { min-height: 0; overflow: auto; padding: 18px; }
-.pdf-page-viewport canvas { display: block; margin: 0 auto; background: white; box-shadow: 0 3px 14px #0004; }
+.pdf-page-viewport { flex: 1; min-height: 0; min-width: 0; overflow: auto; padding: 18px; scrollbar-gutter: stable; }
+.pdf-page-sheet { position: relative; flex: none; margin: 0 auto 18px; background: white; box-shadow: 0 3px 14px #0004; }
+.pdf-page-sheet:last-child { margin-bottom: 0; }
+.pdf-page-viewport canvas { display: block; background: white; }
 .pdf-page-viewport canvas[hidden] { display: none; }
 .pdf-reader-error { padding: 24px; color: #34453b; background: white; line-height: 1.8; }
-.pdf-text-check { max-height: 180px; overflow: auto; padding: 9px 18px; background: white; font-size: 12px; }
-.pdf-text-check summary { cursor: pointer; color: var(--green); }
-.pdf-text-check p { white-space: pre-wrap; line-height: 1.6; }
 .pdf-export-message { display: grid; justify-items: center; align-content: center; gap: 12px; min-height: 100%; padding: 32px; color: #34453b; background: #f8faf8; text-align: center; }
 .pdf-export-message h3, .pdf-export-message p { margin: 0; }
 .pdf-export-message p { color: var(--muted); font-size: 13px; }

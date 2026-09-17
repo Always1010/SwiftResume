@@ -4,7 +4,10 @@
 .typst-preview-status button { margin-left: 8px; }
 .typst-preview > .pdf-reader { flex: 1; height: auto; min-height: 0; }
 .standalone-preview-viewport:has(> .typst-preview) { padding: 0; overflow: hidden; }
-.template-compare-paper .typst-preview { height: 100%; }
+.template-compare-paper .preview-scroller.typst-preview,
+.history-preview .preview-scroller.typst-preview,
+.standalone-preview-viewport .preview-scroller.typst-preview,
+.template-picker-preview .preview-scroller.typst-preview { display: flex; height: 100%; min-width: 0; min-height: 0; padding: 0; overflow: hidden; }
 .template-thumbnail-frame .typst-preview { position: absolute; inset: 0; }
 .typst-thumbnail .typst-preview-status { font-size: 10px; }
 .typst-thumbnail[aria-busy="false"] .typst-preview-status:not([role="alert"]) { display: none; }
