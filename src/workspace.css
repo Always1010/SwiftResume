@@ -80,6 +80,7 @@
 
 .document-history-actions { display: flex; gap: 6px; }
 .flow-dialog { width: min(920px, calc(100vw - 32px)); max-height: 90vh; padding: 24px; overflow: auto; color: var(--text); }
+.flow-dialog[open] { display: block; height: auto; }
 .flow-dialog .new-resume-dialog { width: auto; max-width: none; box-shadow: none; padding: 0; }
 .flow-dialog .new-resume-options { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 .flow-dialog h2 { margin: 0 0 12px; }
