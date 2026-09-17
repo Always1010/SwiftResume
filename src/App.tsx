@@ -15,7 +15,7 @@ import { TextImportDialog } from "./components/TextImportDialog";
 import { RestoreDialog } from "./components/RestoreDialog";
 import { createLibraryBackup, downloadJson, mergeImportedDocuments, parseBackupValue, type ImportBatch, type ImportDocument } from "./storage/libraryBackup";
 import { exportRecord } from "./model/resumeVersions";
-import { createDefaultResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, type ResumeAction, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
+import { createBlankResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, type ResumeAction, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { createResumeHistory, resumeHistoryReducer } from "./model/resumeHistory";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
 import {
@@ -45,7 +45,7 @@ import { usePreviewPublisher } from "./sync/previewSync";
 import { RESUME_TEMPLATES } from "./templates/registry";
 
 export function App() {
-  const [editHistory, dispatchHistory] = useReducer(resumeHistoryReducer, undefined, () => createResumeHistory(createDefaultResume()));
+  const [editHistory, dispatchHistory] = useReducer(resumeHistoryReducer, undefined, () => createResumeHistory(createBlankResume()));
   const resume = editHistory.present;
   const dispatch = useCallback((action: ResumeAction) => {
     dispatchHistory(action.type === "replace" ? { type: "reset", document: action.value } : { type: "edit", action, time: Date.now() });
@@ -74,6 +74,7 @@ export function App() {
   const [backupStatus, setBackupStatus] = useState<DiskBackupStatus>(() => isDiskBackupSupported() ? "not-configured" : "unsupported");
   const [backupPromptOpen, setBackupPromptOpen] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
+  const firstRunRef = useRef(false);
   const libraryRef = useRef<ResumeLibrary | null>(null);
   libraryRef.current = library;
   const activeResumeId = library?.activeResumeId ?? "";
@@ -107,6 +108,7 @@ export function App() {
       if (active) {
         setLibrary(workspace.library);
         dispatch({ type: "replace", value: workspace.resume });
+        if (workspace.firstRun) { firstRunRef.current = true; setNewResumeOpen(true); }
       }
     }).catch(() => setSaveState("error")).finally(() => active && setReady(true));
     return () => { active = false; };
@@ -273,6 +275,12 @@ export function App() {
   };
   const createResume = (template: ResumeCreationTemplate) => {
     setNewResumeOpen(false);
+    if (firstRunRef.current) {
+      firstRunRef.current = false;
+      dispatch({ type: "replace", value: createResumeFromTemplate(template) });
+      setSelectedId("profile"); setEditingId("profile");
+      return;
+    }
     void addResume(createResumeFromTemplate(template)).catch((error) => {
       setSaveState("error");
       window.alert(error instanceof Error ? error.message : "新建简历失败");
@@ -464,6 +472,8 @@ export function App() {
     setPdfResume(resume);
   };
 
+  if (!ready) return <main className="startup-status" role="status">正在打开本机简历库…</main>;
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -603,7 +613,7 @@ export function App() {
         onRestoreAsNew={restoreHistoryAsNew}
         onReplaceResume={replaceResumeFromHistory}
       />}
-      {newResumeOpen && <NewResumeDialog onSelect={createResume} onClose={() => setNewResumeOpen(false)} />}
+      {newResumeOpen && <NewResumeDialog onSelect={createResume} onClose={() => { firstRunRef.current = false; setNewResumeOpen(false); }} />}
       {textImportOpen && <TextImportDialog onClose={() => setTextImportOpen(false)} onImport={async (document) => { await addResume(document); setTextImportOpen(false); }} />}
       {importBatch && <RestoreDialog batch={importBatch} onClose={() => setImportBatch(null)} onRestore={restoreSelected} />}
       {versionsOpen && library && <VersionsDialog resume={resume} library={library} onClose={() => setVersionsOpen(false)} onUpdate={(value) => dispatch({ type: "update-target", value })} onCreate={async (document) => { await addResume(document); setVersionsOpen(false); }} onSyncContacts={async (ids) => {
@@ -621,7 +631,7 @@ export function App() {
         dispatch({ type: "update-theme", value: theme });
         setTemplatePickerOpen(false);
       }} />}
-      {backupPromptOpen && backupStatus !== "unsupported" && <BackupSetupPrompt
+      {backupPromptOpen && !newResumeOpen && backupStatus !== "unsupported" && <BackupSetupPrompt
         status={backupStatus}
         directoryName={backupDirectory?.name ?? ""}
         onChooseDirectory={() => void selectBackupDirectory()}
