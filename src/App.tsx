@@ -7,6 +7,7 @@ import { ResumeEditorCanvas } from "./components/ResumeEditorCanvas";
 import { ResumePreview } from "./components/ResumePreview";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
+import { TemplatePickerDialog } from "./components/TemplatePickerDialog";
 import { exportTypstPdf } from "./export/typstPdf";
 import { createDefaultResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, resumeReducer, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
@@ -49,6 +50,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [newResumeOpen, setNewResumeOpen] = useState(false);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [modulesOpen, setModulesOpen] = useState(() => window.innerWidth >= 1500);
   const [compactWorkspace, setCompactWorkspace] = useState(() => window.innerWidth < 1100);
   const [mobilePreview, setMobilePreview] = useState(false);
@@ -462,6 +464,7 @@ export function App() {
       </header>
       <nav className="workspace-controls" aria-label="工作区布局">
         <button type="button" className="secondary-button" aria-expanded={modulesOpen} onClick={() => setModulesOpen(!modulesOpen)}>{modulesOpen ? "收起模块" : "简历模块"}</button>
+        <button type="button" className="secondary-button" disabled={!ready} onClick={() => setTemplatePickerOpen(true)}>选择模板</button>
         <div className="workspace-view-options">
           <button type="button" className={`secondary-button ${!previewVisible ? "active" : ""}`} aria-pressed={!previewVisible} onClick={() => { setMobilePreview(false); setSettings((current) => ({ ...current, previewOpen: false })); }}>专注编辑</button>
           <button type="button" className={`secondary-button ${previewVisible ? "active" : ""}`} aria-pressed={previewVisible} onClick={() => { setMobilePreview(true); setSettings((current) => ({ ...current, previewOpen: true })); }}>{compactWorkspace ? "查看预览" : "编辑＋预览"}</button>
@@ -549,6 +552,10 @@ export function App() {
         onReplaceResume={replaceResumeFromHistory}
       />}
       {newResumeOpen && <NewResumeDialog onSelect={createResume} onClose={() => setNewResumeOpen(false)} />}
+      {templatePickerOpen && <TemplatePickerDialog resume={resume} onClose={() => setTemplatePickerOpen(false)} onApply={(theme) => {
+        dispatch({ type: "update-theme", value: theme });
+        setTemplatePickerOpen(false);
+      }} />}
       {backupPromptOpen && backupStatus !== "unsupported" && <BackupSetupPrompt
         status={backupStatus}
         directoryName={backupDirectory?.name ?? ""}
