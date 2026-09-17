@@ -70,14 +70,16 @@ export function normalizeDensity(value: unknown): Density {
 
 export function getDensityLayout(value: unknown): DensityLayout {
   const density = normalizeDensity(value);
+  const fontSizePx = interpolateDensity(density, 10.2, 11.5, 12.7);
+  const bodyLine = interpolateDensity(density, 1.22, 1.42, 1.68);
   return {
-    fontSizePx: interpolateDensity(density, 10.2, 11.5, 12.7),
+    fontSizePx,
     sectionSpacePx: interpolateDensity(density, 6, 14, 25),
     entrySpacePx: interpolateDensity(density, 4, 10, 19),
-    bodyLine: interpolateDensity(density, 1.22, 1.42, 1.68),
-    typstFontSizePt: interpolateDensity(density, 7.7, 8.8, 10),
-    typstLeadingEm: interpolateDensity(density, 0.22, 0.42, 0.72),
-    typstGapPt: interpolateDensity(density, 2.5, 6, 12),
+    bodyLine,
+    typstFontSizePt: fontSizePx * .75,
+    typstLeadingEm: bodyLine - 1,
+    typstGapPt: 1.5,
   };
 }
 

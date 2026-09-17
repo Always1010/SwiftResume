@@ -34,7 +34,7 @@ async function photoBytes(photo: string): Promise<Uint8Array | null> {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
-function heading(title: string, templateId: ResumeTemplateId) {
+function headingStyle(title: string, templateId: ResumeTemplateId) {
   const label = asString(templateId === "developer" ? `// ${title}` : title);
   if (templateId === "minimal") return `#v(8pt)\n#align(center)[#text(size: 11.5pt, weight: "medium", tracking: 1.4pt, ${label})]\n#v(4pt)\n`;
   if (templateId === "executive") return `#v(7pt)\n#text(size: 12pt, weight: "bold", fill: accent, ${label})\n#line(length: 100%, stroke: 1.2pt + accent)\n#v(3pt)\n`;
@@ -64,18 +64,25 @@ function heading(title: string, templateId: ResumeTemplateId) {
   if (templateId === "split") return `#v(7pt)\n#grid(columns: (1fr, 1fr), column-gutter: 0pt, block(fill: accent, inset: (x: 7pt, y: 3pt))[#text(size: 11pt, weight: "bold", fill: white, ${label})], rect(height: 17pt, fill: rgb("#202725")))\n#v(3pt)\n`;
   if (templateId === "metro") return `#v(7pt)\n#grid(columns: (9pt, auto, 1fr), column-gutter: 5pt, circle(radius: 4pt, fill: accent, stroke: 1pt + white), block(fill: accent, inset: (x: 6pt, y: 2pt))[#text(size: 10pt, weight: "bold", fill: white, ${label})], line(length: 100%, stroke: (dash: "dashed", paint: accent, thickness: .5pt)))\n#v(3pt)\n`;
   if (templateId === "folio") return `#v(9pt)\n#grid(columns: (9mm, auto, 1fr), column-gutter: 6pt, text(size: 8pt, weight: "bold", fill: accent, "§"), text(size: 13pt, weight: "regular", tracking: .8pt, ${label}), line(length: 100%, stroke: .5pt))\n#v(4pt)\n`;
-  return `#v(6pt)\n#grid(columns: (auto, 1fr), column-gutter: 5pt, align: bottom, text(size: 13pt, weight: "bold", ${label}), line(length: 100%, stroke: 0.45pt))\n#v(3pt)\n`;
+  return `#grid(columns: (auto, 1fr), column-gutter: 5.25pt, align: bottom, text(size: 12pt, weight: "bold", ${label}), line(length: 100%, stroke: 0.45pt))\n`;
+}
+
+function heading(title: string, templateId: ResumeTemplateId) {
+  const content = headingStyle(title, templateId).replace(/^#v\([^\n]+\)\n/, "").replace(/#v\([^\n]+\)\n$/, "");
+  return `#block(above: section-gap, below: 4.5pt, sticky: true)[${content}]\n`;
 }
 
 function topLine(left: string, right: string, role = "", templateId: ResumeTemplateId = "classic") {
   const date = ["timeline", "capsule", "metro", "index"].includes(templateId) && right
     ? `box(fill: accent, radius: 5pt, inset: (x: 4pt, y: 1pt), text(size: 7.5pt, fill: white, ${asString(right)}))`
-    : `text(size: 8pt, fill: ${templateId === "academic" ? `rgb("#333333")` : "accent"}, ${asString(right)})`;
-  return `#grid(
+    : `text(size: 7.5pt, fill: ${templateId === "academic" ? `rgb("#333333")` : "accent"}, ${asString(right)})`;
+  return `#block(sticky: true, below: 1.5pt)[#grid(
   columns: (1fr, auto),
-  [#text(weight: "bold", ${asString(left)})${role ? `${left ? " #h(18pt)" : ""} #text(fill: rgb("#68736c"), ${asString(role)})` : ""}],
+  column-gutter: 9pt,
+  align: bottom,
+  [#text(size: 9.375pt, weight: "bold", ${asString(left)})${role ? `${left ? " #h(19.5pt)" : ""} #text(fill: rgb("#68736c"), ${asString(role)})` : ""}],
   ${date},
-)
+)]
 `;
 }
 
@@ -102,7 +109,7 @@ function inlineSource(node: RichTextNode): string {
     } else if (mark.type === "textStyle") {
       const options: string[] = [];
       const fontSize = mark.attrs?.fontSize;
-      if (typeof fontSize === "string" && /^(?:[89]|1\d|2[0-4])(?:pt|px)$/.test(fontSize)) options.push(`size: ${fontSize}`);
+      if (typeof fontSize === "string" && /^(?:[89]|1\d|2[0-4])(?:pt|px)$/.test(fontSize)) options.push(`size: ${fontSize.endsWith("px") ? withUnit(parseFloat(fontSize) * .75, "pt") : fontSize}`);
       const fontWeight = mark.attrs?.fontWeight;
       if (typeof fontWeight === "string" && /^(?:400|500|600|700)$/.test(fontWeight)) options.push(`weight: ${fontWeight}`);
       const color = typstColor(mark.attrs?.color);
@@ -131,48 +138,46 @@ function firstTextStyleValue(node: RichTextNode, key: string): unknown {
 }
 
 function listItemSource(node: RichTextNode): string {
-  return (node.content ?? []).map((child) => {
-    if (child.type === "bulletList" || child.type === "orderedList") return blockSource(child);
-    return inlineSource(child);
-  }).join("");
+  return (node.content ?? []).map((child, index) => blockSource(child, index === 0)).join("");
 }
 
 function tableSource(node: RichTextNode): string {
   const rows = (node.content ?? []).filter((row) => row.type === "tableRow");
   const columns = Math.max(1, ...rows.map((row) => row.content?.length ?? 0));
-  const cells = rows.flatMap((row) => (row.content ?? []).map((cell) => `[${(cell.content ?? []).map(blockSource).join("")}]`));
+  const cells = rows.flatMap((row) => (row.content ?? []).map((cell) => `[${(cell.content ?? []).map((child) => blockSource(child)).join("")}]`));
   return cells.length
     ? `#grid(columns: (${Array.from({ length: columns }, () => "1fr").join(", ")}), column-gutter: 6pt, row-gutter: 3pt, ${cells.join(", ")})\n`
     : "";
 }
 
-function blockSource(node: RichTextNode): string {
+function blockSource(node: RichTextNode, inList = false): string {
   if (node.type === "bulletList" || node.type === "orderedList") {
     const command = node.type === "orderedList" ? "enum" : "list";
     const items = (node.content ?? []).map((item) => `[${listItemSource(item)}]`);
-    return items.length ? `#${command}(${items.join(", ")})\n` : "";
+    const start = command === "enum" && Number.isInteger(node.attrs?.start) && Number(node.attrs?.start) > 0 ? `start: ${Number(node.attrs?.start)}, ` : "";
+    return items.length ? `#block(above: 2.25pt, below: 0pt)[#${command}(${start}${items.join(", ")})]\n` : "";
   }
-  if (node.type === "doc") return (node.content ?? []).map(blockSource).join("");
+  if (node.type === "doc") return (node.content ?? []).map((child) => blockSource(child)).join("");
   if (node.type === "table") return tableSource(node);
   if (node.type === "horizontalRule") return "#line(length: 100%, stroke: 0.35pt)\n";
   if (node.type === "codeBlock") return `#raw(${asString((node.content ?? []).map((child) => child.text ?? "").join(""))}, block: true)\n`;
+  if (node.type === "blockquote") return `#block(above: 3pt, below: 3pt, stroke: (left: 1.5pt + rgb("#a8b4ac")), inset: (left: 6pt))[#set text(fill: rgb("#5c665f"))\n${(node.content ?? []).map((child) => blockSource(child)).join("")}]\n`;
   const inline = inlineSource(node);
-  if (!inline) return "";
+  if (!inline) return node.type === "paragraph" ? "#block(height: body-line * 1em)[]\n" : "";
   const level = Number(node.attrs?.level ?? 2);
-  let source = node.type === "heading"
-    ? `#text(size: ${level === 1 ? 14 : level === 2 ? 12 : 10.5}pt, weight: "bold")[${inline}] #linebreak()\n`
-    : node.type === "blockquote"
-      ? `#quote(block: true)[${inline}]\n`
-      : `${Number(node.attrs?.indent ?? 0) > 0 ? `#h(${Number(node.attrs?.indent) * 2}em)` : ""}${inline} #linebreak()\n`;
+  const isHeading = node.type === "heading";
+  const rules: string[] = [];
   const alignment = node.attrs?.textAlign;
-  if (alignment === "center" || alignment === "right" || alignment === "justify") {
-    source = `#align(${alignment === "justify" ? "left" : alignment})[${source}]\n`;
-  }
+  if (alignment === "center" || alignment === "right") rules.push(`#set align(${alignment})`);
+  if (alignment === "justify") rules.push("#set par(justify: true)");
   const lineHeight = Number(firstTextStyleValue(node, "lineHeight"));
   if (Number.isFinite(lineHeight) && lineHeight >= 1 && lineHeight <= 2) {
-    source = `#block[#set par(leading: ${Math.round((lineHeight - 1) * 100) / 100}em)\n${source}]\n`;
+    rules.push(`#set par(leading: ${Math.round((lineHeight - 1) * 100) / 100}em)`);
   }
-  return source;
+  const indent = Math.min(6, Math.max(0, Number(node.attrs?.indent) || 0));
+  const inset = indent > 0 ? `, inset: (left: ${indent * 2}em)` : "";
+  const text = isHeading ? `#text(size: ${level === 1 ? 14 : level === 2 ? 12 : 10.5}pt, weight: "bold")[${inline}]` : inline;
+  return `#block(width: 100%, above: ${isHeading ? "3.75pt" : inList ? "0pt" : "body-leading + 1.5pt"}, below: ${isHeading ? "2.25pt" : "0pt"}${isHeading ? ", sticky: true" : ""}${inset})[${rules.join("\n")}\n${text}]\n`;
 }
 
 function richTextSource(content: RichTextDocument): string {
@@ -183,7 +188,10 @@ function contentEntrySource(entry: ContentEntry, templateId: ResumeTemplateId): 
   const headingSource = entry.title || entry.subtitle || entry.date
     ? topLine(entry.title, entry.date, entry.subtitle, templateId)
     : "";
-  return `${headingSource}${richTextSource(entry.body)}`;
+  return `#layout(size => {
+  let entry = [${headingSource}${richTextSource(entry.body)}]
+  block(breakable: measure(entry, width: size.width).height > page-content-height, entry)
+})\n`;
 }
 
 function sectionSource(section: ResumeSection, templateId: ResumeTemplateId) {
@@ -195,10 +203,10 @@ function sectionSource(section: ResumeSection, templateId: ResumeTemplateId) {
   let major = text(${asString([item.major, item.degree].filter(Boolean).join(" | "))})
   let major-width = calc.min(measure(major).width, size.width * ${EDUCATION_LAYOUT.maxLeftPercent / 100})
   grid(columns: (major-width, 1fr), column-gutter: ${EDUCATION_LAYOUT.columnGapPx * .75}pt, align: (left, right), major, text(${asString(item.detail)}))
-})\n`).join("#v(4pt)\n");
+})\n`).join("#v(entry-gap)\n");
       break;
     case "content":
-      body = section.entries.map((entry) => contentEntrySource(entry, templateId)).join("#v(6pt)\n");
+      body = section.entries.map((entry) => contentEntrySource(entry, templateId)).join("#v(entry-gap)\n");
       break;
   }
   return `${heading(section.title, templateId)}${body}`;
@@ -221,9 +229,9 @@ function profileSource(resume: ResumeDocument, templateId: ResumeTemplateId, pho
     ? `block(width: 27mm, height: 35mm, fill: rgb(${asString(resume.profile.photoBackground)}), ${photoImage})`
     : photoImage;
   const profileContent = `
-    #text(size: 18pt, weight: "bold", fill: profile-ink, ${asString(resume.profile.name || "姓名")})
+    #text(size: 17.25pt, weight: "bold", fill: profile-ink, ${asString(resume.profile.name || "姓名")})
     #linebreak()
-    #text(size: 9.5pt, weight: "bold", fill: profile-accent, ${asString(resume.profile.headline)})
+    #text(size: 9pt, weight: "bold", fill: profile-accent, ${asString(resume.profile.headline)})
     #v(5pt)
     ${contact ? `#text(fill: profile-ink, ${asString(contact)})` : ""}
     ${infoGrid}
@@ -279,8 +287,15 @@ export function createTypstSource(resume: ResumeDocument): string {
 #set page(paper: "a4", margin: ${pageMargin})
 #set text(font: "Noto Sans CJK SC", lang: "zh", size: ${withUnit(density.typstFontSizePt, "pt")}, fill: rgb("#303030"), top-edge: 0.88em, bottom-edge: -0.12em)
 #set par(leading: ${withUnit(density.typstLeadingEm, "em")}, spacing: ${withUnit(density.typstGapPt, "pt")})
-#set list(indent: 12pt, body-indent: 4pt, spacing: auto)
-#set enum(indent: 12pt, body-indent: 4pt, spacing: auto)
+#set block(spacing: 0pt)
+#let body-line = ${density.bodyLine}
+#let body-leading = ${withUnit(density.typstLeadingEm, "em")}
+#let section-gap = ${withUnit(density.sectionSpacePx * .75, "pt")}
+#let entry-gap = ${withUnit(density.entrySpacePx * .75, "pt")}
+#set list(indent: 7.5pt, body-indent: 4.5pt, spacing: ${withUnit(density.typstLeadingEm, "em")} + 0.75pt)
+#set list(marker: ([•], [◦], [▪]))
+#set enum(indent: 7.5pt, body-indent: 4.5pt, spacing: ${withUnit(density.typstLeadingEm, "em")} + 0.75pt)
+#let page-content-height = ${297 - 2 * (["minimal", "academic", "diplomat", "folio"].includes(templateId) ? 11 : ["compact", "magazine", "studio"].includes(templateId) ? 9 : 10.5)}mm
 #let accent = rgb(${asString(resume.theme.accent)})
 #let profile-ink = rgb("#303030")
 #let profile-accent = accent
@@ -294,16 +309,18 @@ let compilerPromise: ReturnType<typeof initializeCompiler> | null = null;
 
 async function initializeCompiler() {
   const compiler = createTypstCompiler();
-  const fontUrl = new URL("./fonts/NotoSansCJKsc-Regular.otf", window.location.href).href;
   await compiler.init({
     getWrapper: async () => extensionCompilerWrapper,
     getModule: () => compilerWasmUrl,
     // The upstream loadFonts helper constructs a Function even in browsers,
     // which is forbidden by Manifest V3. Load our bundled font directly.
     beforeBuild: [Object.assign(async (_: unknown, { builder }: { builder: compilerWrapper.TypstCompilerBuilder }) => {
-      const response = await fetch(fontUrl);
-      if (!response.ok) throw new Error("无法读取内置中文字体，请重新加载扩展后重试");
-      await builder.add_raw_font(new Uint8Array(await response.arrayBuffer()));
+      for (const weight of ["Regular", "Bold"]) {
+        const fontUrl = new URL(`./fonts/NotoSansCJKsc-${weight}.otf`, window.location.href).href;
+        const response = await fetch(fontUrl);
+        if (!response.ok) throw new Error("无法读取内置中文字体，请重新加载扩展后重试");
+        await builder.add_raw_font(new Uint8Array(await response.arrayBuffer()));
+      }
     }, { _kind: "fontLoader" as const, _preloadRemoteFontOptions: { assets: false as const } })],
   });
   return compiler;

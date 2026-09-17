@@ -3,12 +3,32 @@ import { createDefaultResume, RESUME_TEMPLATE_IDS } from "../model/resume";
 import { createTypstSource } from "./typstPdf";
 
 describe("Typst source generator", () => {
+  it("preserves paragraphs, nested lists, numbering starts, blank lines and block formatting", () => {
+    const resume = createDefaultResume();
+    const paragraph = (text: string) => ({ type: "paragraph", content: [{ type: "text", text }] });
+    resume.sections = [{ id: "rich", type: "content", enabled: true, title: "格式", entries: [{ id: "entry", title: "", subtitle: "", date: "", body: {
+      type: "doc", content: [
+        { ...paragraph("左右对齐"), attrs: { textAlign: "justify", indent: 1 } },
+        { type: "paragraph" },
+        { type: "orderedList", attrs: { start: 3 }, content: [{ type: "listItem", content: [paragraph("首段"), paragraph("续段"), { type: "bulletList", content: [{ type: "listItem", content: [paragraph("嵌套段")] }] }] }] },
+        { type: "paragraph", content: [{ type: "text", text: "像素字号", marks: [{ type: "textStyle", attrs: { fontSize: "12px" } }] }] },
+      ],
+    } }] }];
+    const source = createTypstSource(resume);
+    expect(source).toContain("#set par(justify: true)");
+    expect(source).toContain("inset: (left: 2em)");
+    expect(source).toContain("#block(height: body-line * 1em)[]");
+    expect(source).toContain("#enum(start: 3,");
+    expect(source).toMatch(/text\("首段"\)\]\n#block\([^\n]+\)\[\n#text\("续段"\)/);
+    expect(source).toContain("#list(");
+    expect(source).toContain('#text(size: 9pt)[#text("像素字号")]');
+  });
   it("shares contact and detail columns and spans the final odd detail", () => {
     const resume = createDefaultResume();
     resume.sections = [];
     resume.profile.details.unshift({ id: "ethnicity", label: "民族", value: "汉族" });
     const source = createTypstSource(resume);
-    expect(source).toContain("calc.min(114.4pt, size.width * 0.45), 1fr");
+    expect(source).toContain("calc.min(112.13pt, size.width * 0.45), 1fr");
     expect(source).toMatch(/手机：[^\n]+\n[^\n]+邮箱：[^\n]+\n[^\n]+民族：[^\n]+\n[^\n]+学历：/);
     expect(source).toContain('grid.cell(colspan: 2, [#text(fill: profile-ink, "求职状态：');
   });
@@ -19,7 +39,7 @@ describe("Typst source generator", () => {
     const source = createTypstSource(resume);
     const profileStart = ["minimal", "diplomat"].includes(templateId) ? "#align(center)[" : "#let profile-accent = white\n";
     const profile = source.slice(source.indexOf(profileStart) + profileStart.length);
-    expect(profile.trimStart()).toMatch(/^#text\(size: 18pt/);
+    expect(profile.trimStart()).toMatch(/^#text\(size: 17.25pt/);
     expect(source).not.toContain("#align(center)[[");
     expect(source).not.toMatch(/#let profile-accent = white\s*\[/);
     expect(source).toContain(JSON.stringify(resume.profile.name));
@@ -46,8 +66,8 @@ describe("Typst source generator", () => {
   it("reserves full CJK line boxes and lets list spacing follow paragraph leading", () => {
     const source = createTypstSource(createDefaultResume());
     expect(source).toContain("top-edge: 0.88em, bottom-edge: -0.12em");
-    expect(source).toContain("#set list(indent: 12pt, body-indent: 4pt, spacing: auto)");
-    expect(source).toContain("#set enum(indent: 12pt, body-indent: 4pt, spacing: auto)");
+    expect(source).toContain("#set list(indent: 7.5pt, body-indent: 4.5pt, spacing: 0.42em + 0.75pt)");
+    expect(source).toContain("#set enum(indent: 7.5pt, body-indent: 4.5pt, spacing: 0.42em + 0.75pt)");
     expect(source).not.toContain("spacing: 1pt");
   });
 
@@ -107,9 +127,11 @@ describe("Typst source generator", () => {
     const resume = createDefaultResume();
     resume.theme.density = 25;
     const source = createTypstSource(resume);
-    expect(source).toContain("size: 8.25pt");
+    expect(source).toContain("size: 8.14pt");
     expect(source).toContain("leading: 0.32em");
-    expect(source).toContain("spacing: 4.25pt");
+    expect(source).toContain("spacing: 1.5pt");
+    expect(source).toContain("#let section-gap = 7.5pt");
+    expect(source).toContain("#let entry-gap = 5.25pt");
   });
 
   it("quotes user content instead of injecting markup", () => {
@@ -210,8 +232,8 @@ describe("Typst source generator", () => {
     };
 
     const source = createTypstSource(resume);
-    expect(source).toContain("#h(4em)");
-    expect(source).toContain("#align(right)");
+    expect(source).toContain("inset: (left: 4em)");
+    expect(source).toContain("#set align(right)");
     expect(source).toContain("size: 14pt");
     expect(source).toContain("weight: 600");
     expect(source).toContain('rgb("#123456")');

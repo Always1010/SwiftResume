@@ -78,7 +78,8 @@ function ContentToolbar({ editor }: { editor: Editor }) {
       </label>
       <label className="toolbar-select">
         <span>字体</span>
-        <select aria-label="字体" defaultValue="Microsoft YaHei" onChange={(event) => editor.chain().focus().setFontFamily(event.target.value).run()}>
+        <select aria-label="字体" defaultValue="" onChange={(event) => event.target.value ? editor.chain().focus().setFontFamily(event.target.value).run() : editor.chain().focus().unsetFontFamily().run()}>
+          <option value="">默认黑体</option>
           <option value="Microsoft YaHei">微软雅黑</option><option value="SimSun">宋体</option><option value="KaiTi">楷体</option><option value="Cascadia Mono">等宽</option>
         </select>
       </label>
