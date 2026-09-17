@@ -293,8 +293,22 @@ async function initializeCompiler() {
   return compiler;
 }
 
-export async function exportTypstPdf(resume: ResumeDocument): Promise<void> {
-  const compiler = await (compilerPromise ??= initializeCompiler());
+export interface GeneratedPdf { blob: Blob; filename: string }
+let compilationQueue: Promise<unknown> = Promise.resolve();
+
+// The compiler uses a shared virtual filesystem. Serialize requests so a cancelled
+// preview cannot overwrite the sources of a newer export.
+export function generateTypstPdf(resume: ResumeDocument): Promise<GeneratedPdf> {
+  const request = compilationQueue.then(() => compilePdf(resume));
+  compilationQueue = request.catch(() => undefined);
+  return request;
+}
+
+async function compilePdf(resume: ResumeDocument): Promise<GeneratedPdf> {
+  const compiler = await (compilerPromise ??= initializeCompiler().catch((error) => {
+    compilerPromise = null;
+    throw error;
+  }));
   for (const extension of ["png", "jpg", "webp", "svg"]) {
     compiler.unmapShadow(`/profile-photo.${extension}`);
   }
@@ -313,9 +327,14 @@ export async function exportTypstPdf(resume: ResumeDocument): Promise<void> {
   const safeTitle = resume.title.replace(/[\\/:*?"<>|]/g, "-") || "SwiftResume";
   const pdfBytes = new Uint8Array(compilation.result);
   const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
+  return { blob, filename: `${safeTitle}.pdf` };
+}
+
+export async function exportTypstPdf(resume: ResumeDocument): Promise<void> {
+  const { blob, filename } = await generateTypstPdf(resume);
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = `${safeTitle}.pdf`;
+  link.download = filename;
   link.click();
-  URL.revokeObjectURL(link.href);
+  window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }

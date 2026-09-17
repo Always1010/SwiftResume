@@ -23,6 +23,7 @@
     "@tiptap/react": "^3.31.3",
     "@tiptap/starter-kit": "^3.31.3",
     "@vitejs/plugin-react": "latest",
+    "pdfjs-dist": "6.3.289",
     "react": "latest",
     "react-dom": "latest",
     "vite": "latest"

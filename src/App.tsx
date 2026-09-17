@@ -8,7 +8,7 @@ import { ResumePreview } from "./components/ResumePreview";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { TemplatePickerDialog } from "./components/TemplatePickerDialog";
-import { exportTypstPdf } from "./export/typstPdf";
+import { PdfExportDialog } from "./components/PdfExportDialog";
 import { createDefaultResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, type ResumeAction, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { createResumeHistory, resumeHistoryReducer } from "./model/resumeHistory";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
@@ -50,7 +50,7 @@ export function App() {
   const [ready, setReady] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
   const [pageCount, setPageCount] = useState(1);
-  const [exporting, setExporting] = useState(false);
+  const [pdfResume, setPdfResume] = useState<ResumeDocument | null>(null);
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -437,21 +437,12 @@ export function App() {
     url.searchParams.set("resumeId", activeResumeId);
     window.open(url.toString(), `swift-resume-preview-${activeResumeId}`)?.focus();
   };
-  const exportPdf = async () => {
+  const exportPdf = () => {
     if (settings.exportEngine === "browser") {
       window.print();
       return;
     }
-    setExporting(true);
-    try {
-      await exportTypstPdf(resume);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "未知错误";
-      window.alert(`Typst PDF 导出失败，将打开浏览器打印作为备用方案。\n\n${message}`);
-      window.print();
-    } finally {
-      setExporting(false);
-    }
+    setPdfResume(resume);
   };
 
   return (
@@ -487,7 +478,7 @@ export function App() {
           <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置</button>
           <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => void importFile(event.target.files?.[0])} />
           <button type="button" className="secondary-button standalone-preview-button" disabled={!activeResumeId} onClick={openStandalonePreview}>↗ 独立预览</button>
-          <button type="button" className="primary-button export-button" disabled={exporting} onClick={() => void exportPdf()}>{exporting ? "正在生成…" : "导出 PDF"}</button>
+          <button type="button" className="primary-button export-button" disabled={!ready} onClick={exportPdf}>导出 PDF</button>
         </div>
       </header>
       <nav className="workspace-controls" aria-label="工作区布局">
@@ -560,6 +551,11 @@ export function App() {
           </section>
         ) : null}
       </div>
+      {!previewVisible && <div className="print-preview" aria-hidden="true"><ResumePreview resume={resume} zoom={100} /></div>}
+      {pdfResume && <PdfExportDialog resume={pdfResume} onClose={() => setPdfResume(null)} onBrowserPrint={() => {
+        setPdfResume(null);
+        window.requestAnimationFrame(() => window.print());
+      }} />}
       {undoLabel === "删除模块" && <div className="undo-notice" role="status">模块已删除<button type="button" onClick={() => changeHistory("undo")}>撤销删除</button></div>}
       {settingsOpen && <SettingsPanel
         settings={settings}
