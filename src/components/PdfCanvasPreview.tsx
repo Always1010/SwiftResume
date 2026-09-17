@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { getDocument, GlobalWorkerOptions, type PDFDocumentLoadingTask, type PDFDocumentProxy, type RenderTask } from "pdfjs-dist";
+import { getDocument, PDFWorker, type PDFDocumentLoadingTask, type PDFDocumentProxy, type RenderTask } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-
-GlobalWorkerOptions.workerSrc = workerUrl;
 
 export default function PdfCanvasPreview({ blob }: { blob: Blob }) {
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
@@ -18,17 +16,31 @@ export default function PdfCanvasPreview({ blob }: { blob: Blob }) {
   useEffect(() => {
     let active = true;
     let loading: PDFDocumentLoadingTask | undefined;
+    let nativeWorker: Worker | undefined;
+    let worker: PDFWorker | undefined;
     setPdf(null);
     setError("");
     void blob.arrayBuffer().then(async (data) => {
       if (!active) return;
-      loading = getDocument({ data: new Uint8Array(data), useSystemFonts: false, useWasm: false });
+      // An explicit local worker avoids PDF.js creating a blob script for
+      // extension origins, whose CSP intentionally only permits local scripts.
+      nativeWorker = new Worker(workerUrl, { type: "module" });
+      // @ts-expect-error PDF.js 6.3 accepts Worker ports, but its generated declaration infers only null.
+      worker = new PDFWorker({ port: nativeWorker });
+      loading = getDocument({ data: new Uint8Array(data), worker, useSystemFonts: false, useWasm: false });
       const document = await loading.promise;
       if (active) { setPdf(document); setPageNumber(1); }
     }).catch((reason: unknown) => {
       if (active) setError(reason instanceof Error ? reason.message : "无法显示 PDF");
     });
-    return () => { active = false; void loading?.destroy().catch(() => undefined); };
+    return () => {
+      active = false;
+      void (async () => {
+        await loading?.destroy().catch(() => undefined);
+        worker?.destroy();
+        nativeWorker?.terminate();
+      })();
+    };
   }, [blob]);
 
   useEffect(() => {
