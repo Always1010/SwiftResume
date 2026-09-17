@@ -78,7 +78,11 @@
   .template-picker-body { grid-template-columns: minmax(0, 1fr); overflow: auto; grid-template-rows: minmax(260px, 45%) minmax(300px, 55%); }
 }
 
+.document-history-actions { display: flex; gap: 6px; }
+.undo-notice { position: fixed; z-index: 35; bottom: 24px; left: 50%; display: flex; align-items: center; gap: 18px; transform: translateX(-50%); border: 1px solid #c7d8cc; border-radius: 12px; padding: 12px 18px; background: white; box-shadow: 0 8px 35px #17302330; font-size: 13px; }
+.undo-notice button { border: 0; background: transparent; color: var(--green); font-weight: 700; }
 @media print {
+  .undo-notice { display: none !important; }
   .workspace-dialog { display: none !important; }
   .workspace-controls, .file-menu { display: none !important; }
 }
