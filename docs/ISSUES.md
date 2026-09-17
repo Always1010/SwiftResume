@@ -1,5 +1,15 @@
 # SwiftResume 问题日志
 
+## SR-016：收起预览时浏览器打印缺少简历内容
+
+- 日期：2026-09-17
+- 状态：已解决
+- 现象或修改背景：专注编辑或关闭预览后，浏览器打印缺少简历页面。
+- 原因分析：页面预览被条件卸载，而打印样式又隐藏编辑画布，打印时没有剩余的简历内容节点。
+- 解决方案：在预览关闭时保留仅用于打印的离屏分页内容；PDF 导出新增真实文件预览，并让生成失败后的打印入口由用户主动选择。
+- 验证方式：导出对话框测试覆盖同一文件预览和下载、错误重试及关闭后的资源释放；检查专注编辑模式仍有完整分页节点，并执行正式构建。
+- 相关文件：`src/App.tsx`、`src/components/PdfExportDialog.tsx`、`src/components/PdfExportDialog.test.tsx`、`src/components/StandalonePreview.tsx`、`src/export/typstPdf.ts`、`src/workspace.css`
+
 ## SR-015：窄窗口中编辑表单受挤压并产生横向溢出
 
 - 日期：2026-09-17

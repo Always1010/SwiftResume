@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { exportTypstPdf } from "../export/typstPdf";
+import { PdfExportDialog } from "./PdfExportDialog";
 import type { ResumeDocument } from "../model/resume";
 import { loadResumeById, saveResumeById } from "../storage/resumeStorage";
 import { usePreviewSubscriber } from "../sync/previewSync";
@@ -55,7 +55,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
   const [fitWidth, setFitWidth] = useState(true);
   const [manualZoom, setManualZoom] = useState(100);
   const [fitZoom, setFitZoom] = useState(100);
-  const [exporting, setExporting] = useState(false);
+  const [pdfResume, setPdfResume] = useState<ResumeDocument | null>(null);
   const [styleSyncState, setStyleSyncState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [styleError, setStyleError] = useState("");
   const [galleryWidth, setGalleryWidth] = useState(readTemplateGalleryWidth);
@@ -185,19 +185,6 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
       });
     }, STYLE_SAVE_DELAY_MS);
   };
-  const exportPdf = async () => {
-    if (!previewResume) return;
-    setExporting(true);
-    try {
-      await exportTypstPdf(previewResume);
-    } catch (exportError) {
-      const message = exportError instanceof Error ? exportError.message : "未知错误";
-      window.alert(`Typst PDF 导出失败，将打开浏览器打印作为备用方案。\n\n${message}`);
-      window.print();
-    } finally {
-      setExporting(false);
-    }
-  };
 
   return (
     <main className="standalone-preview">
@@ -215,7 +202,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
             <button type="button" aria-label="放大预览" onClick={() => adjustZoom(10)}>＋</button>
           </div>
           {styleSyncState !== "idle" && <span className={`standalone-sync-status ${styleSyncState === "error" ? "error" : ""}`}>{styleSyncState === "saving" ? "正在自动同步…" : styleSyncState === "error" ? "同步失败" : "已自动同步"}</span>}
-          <button type="button" className="primary-button" disabled={!previewResume || exporting} onClick={() => void exportPdf()}>{exporting ? "正在生成…" : "导出 PDF"}</button>
+          <button type="button" className="primary-button" disabled={!previewResume} onClick={() => setPdfResume(previewResume)}>导出 PDF</button>
           <button type="button" className="secondary-button" onClick={() => window.close()}>关闭页面</button>
         </div>
       </header>
@@ -281,6 +268,10 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
           </div>
         </section>
       </div>
+      {pdfResume && <PdfExportDialog resume={pdfResume} onClose={() => setPdfResume(null)} onBrowserPrint={() => {
+        setPdfResume(null);
+        window.requestAnimationFrame(() => window.print());
+      }} />}
     </main>
   );
 }
