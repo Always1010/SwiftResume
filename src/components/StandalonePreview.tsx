@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { PdfExportDialog } from "./PdfExportDialog";
 import { ResumeCheckDialog } from "./ResumeCheckDialog";
+import { exportRecord } from "../model/resumeVersions";
 import type { ResumeDocument } from "../model/resume";
 import { loadResumeById, saveResumeById } from "../storage/resumeStorage";
 import { usePreviewSubscriber } from "../sync/previewSync";
@@ -271,7 +272,13 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
         </section>
       </div>
       {checkOpen && previewResume && <ResumeCheckDialog resume={previewResume} onClose={() => setCheckOpen(false)} onContinue={() => { setCheckOpen(false); setPdfResume(previewResume); }} />}
-      {pdfResume && <PdfExportDialog resume={pdfResume} onClose={() => setPdfResume(null)} onBrowserPrint={() => {
+      {pdfResume && <PdfExportDialog resume={pdfResume} onDownloaded={(filename) => {
+        const current = resumeRef.current;
+        if (!current) return;
+        const next = { ...current, lastExport: exportRecord(pdfResume, filename), updatedAt: new Date(Math.max(Date.now(), Date.parse(current.updatedAt) + 1)).toISOString() };
+        acceptResume(next);
+        void saveResumeById(resumeId, next).then(() => publishCommittedResume(next)).catch(() => setStyleError("PDF 已下载，但导出记录保存失败"));
+      }} onClose={() => setPdfResume(null)} onBrowserPrint={() => {
         setPdfResume(null);
         window.requestAnimationFrame(() => window.print());
       }} />}

@@ -155,6 +155,8 @@ export interface ResumeDocument {
   theme: { accent: string; density: Density; templateId: ResumeTemplateId };
   sections: ResumeSection[];
   updatedAt: string;
+  target?: { company: string; role: string; notes: string };
+  lastExport?: { at: string; filename: string; snapshot: Omit<ResumeDocument, "lastExport"> };
 }
 
 export type ResumeAction =
@@ -162,6 +164,8 @@ export type ResumeAction =
   | { type: "update-title"; value: string }
   | { type: "update-profile"; value: ResumeProfile }
   | { type: "update-theme"; value: Partial<ResumeDocument["theme"]> }
+  | { type: "update-target"; value: NonNullable<ResumeDocument["target"]> }
+  | { type: "record-export"; value: NonNullable<ResumeDocument["lastExport"]> }
   | { type: "set-sections"; value: ResumeSection[] };
 
 const makeId = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
@@ -405,6 +409,7 @@ export function createQuickSection(purpose: SectionPurpose | "education"): Resum
 
 export function duplicateResume(resume: ResumeDocument): ResumeDocument {
   const copy = structuredClone(resume);
+  delete copy.lastExport;
   copy.title = `${copy.title || "未命名简历"} 副本`;
   copy.updatedAt = new Date().toISOString();
   return copy;
@@ -462,6 +467,8 @@ export function resumeReducer(state: ResumeDocument, action: ResumeAction): Resu
     case "update-title": return { ...state, title: action.value, updatedAt };
     case "update-profile": return { ...state, profile: action.value, updatedAt };
     case "update-theme": return { ...state, theme: { ...state.theme, ...action.value }, updatedAt };
+    case "update-target": return { ...state, target: action.value, updatedAt };
+    case "record-export": return { ...state, lastExport: action.value, updatedAt };
     case "set-sections": return { ...state, sections: action.value, updatedAt };
   }
 }

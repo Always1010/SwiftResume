@@ -10,6 +10,8 @@ import { Sidebar } from "./components/Sidebar";
 import { TemplatePickerDialog } from "./components/TemplatePickerDialog";
 import { PdfExportDialog } from "./components/PdfExportDialog";
 import { ResumeCheckDialog } from "./components/ResumeCheckDialog";
+import { VersionsDialog } from "./components/VersionsDialog";
+import { exportRecord } from "./model/resumeVersions";
 import { createDefaultResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, type ResumeAction, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { createResumeHistory, resumeHistoryReducer } from "./model/resumeHistory";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
@@ -22,6 +24,7 @@ import {
   loadResumeWorkspace,
   parseResumeFile,
   saveResumeWorkspace,
+  saveDocuments,
   updateResumeSummary,
   type ResumeLibrary,
 } from "./storage/resumeStorage";
@@ -53,6 +56,7 @@ export function App() {
   const [pageCount, setPageCount] = useState(1);
   const [pdfResume, setPdfResume] = useState<ResumeDocument | null>(null);
   const [checkOpen, setCheckOpen] = useState(false);
+  const [versionsOpen, setVersionsOpen] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -486,6 +490,7 @@ export function App() {
       <nav className="workspace-controls" aria-label="工作区布局">
         <button type="button" className="secondary-button" aria-expanded={modulesOpen} onClick={() => setModulesOpen(!modulesOpen)}>{modulesOpen ? "收起模块" : "简历模块"}</button>
         <button type="button" className="secondary-button" disabled={!ready} onClick={() => setTemplatePickerOpen(true)}>选择模板</button>
+        <button type="button" className="secondary-button" disabled={!library} onClick={() => setVersionsOpen(true)}>岗位版本</button>
         <div className="document-history-actions" role="group" aria-label="整份简历撤销与重做">
           <button type="button" className="secondary-button" disabled={!undoLabel} aria-label="撤销整份简历" title={undoLabel ? `撤销：${undoLabel}（Ctrl/⌘ + Alt + Z）` : "暂无可撤销的修改"} onClick={() => changeHistory("undo")}>↶ 撤销</button>
           <button type="button" className="secondary-button" disabled={!redoLabel} aria-label="重做整份简历" title={redoLabel ? `重做：${redoLabel}（Ctrl/⌘ + Alt + Shift + Z）` : "暂无可重做的修改"} onClick={() => changeHistory("redo")}>↷ 重做</button>
@@ -555,7 +560,7 @@ export function App() {
       </div>
       {!previewVisible && <div className="print-preview" aria-hidden="true"><ResumePreview resume={resume} zoom={100} /></div>}
       {checkOpen && <ResumeCheckDialog resume={resume} onClose={() => setCheckOpen(false)} onContinue={() => { setCheckOpen(false); exportPdf(); }} onLocate={(id) => { setCheckOpen(false); locateResumeBlock(id); }} />}
-      {pdfResume && <PdfExportDialog resume={pdfResume} onClose={() => setPdfResume(null)} onBrowserPrint={() => {
+      {pdfResume && <PdfExportDialog resume={pdfResume} onDownloaded={(filename) => dispatch({ type: "record-export", value: exportRecord(pdfResume, filename) })} onClose={() => setPdfResume(null)} onBrowserPrint={() => {
         setPdfResume(null);
         window.requestAnimationFrame(() => window.print());
       }} />}
@@ -584,6 +589,17 @@ export function App() {
         onReplaceResume={replaceResumeFromHistory}
       />}
       {newResumeOpen && <NewResumeDialog onSelect={createResume} onClose={() => setNewResumeOpen(false)} />}
+      {versionsOpen && library && <VersionsDialog resume={resume} library={library} onClose={() => setVersionsOpen(false)} onUpdate={(value) => dispatch({ type: "update-target", value })} onCreate={async (document) => { await addResume(document); setVersionsOpen(false); }} onSyncContacts={async (ids) => {
+        const currentLibrary = await persistCurrentResume();
+        if (!currentLibrary) throw new Error("简历库尚未就绪");
+        const documents = await Promise.all(ids.map(async (id) => {
+          const document = await loadResumeById(id);
+          if (!document) throw new Error("无法读取部分所选版本，尚未写入任何变更");
+          return { id, resume: { ...document, profile: { ...document.profile, phone: resume.profile.phone, email: resume.profile.email, location: resume.profile.location }, updatedAt: new Date().toISOString() } };
+        }));
+        const next = documents.reduce((lib, item) => updateResumeSummary(lib, item.id, item.resume), currentLibrary);
+        await saveDocuments(documents, next); libraryRef.current = next; setLibrary(next);
+      }} />}
       {templatePickerOpen && <TemplatePickerDialog resume={resume} onClose={() => setTemplatePickerOpen(false)} onApply={(theme) => {
         dispatch({ type: "update-theme", value: theme });
         setTemplatePickerOpen(false);

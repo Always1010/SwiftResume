@@ -147,6 +147,21 @@ export async function saveResumeById(resumeId: string, resume: ResumeDocument): 
   }
 }
 
+export async function saveDocuments(documents: { id: string; resume: ResumeDocument }[], library: ResumeLibrary): Promise<void> {
+  const database = await openDatabase();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(STORE, "readwrite");
+      const store = transaction.objectStore(STORE);
+      for (const item of documents) store.put(item.resume, resumeKey(item.id));
+      store.put(library, LIBRARY_KEY);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error ?? new Error("保存已取消"));
+    });
+  } finally { database.close(); }
+}
+
 export async function activateResume(library: ResumeLibrary, resumeId: string): Promise<ResumeLibrary> {
   const next = { ...library, activeResumeId: resumeId };
   const database = await openDatabase();
