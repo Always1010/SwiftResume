@@ -12,6 +12,8 @@ import { PdfExportDialog } from "./components/PdfExportDialog";
 import { ResumeCheckDialog } from "./components/ResumeCheckDialog";
 import { VersionsDialog } from "./components/VersionsDialog";
 import { TextImportDialog } from "./components/TextImportDialog";
+import { RestoreDialog } from "./components/RestoreDialog";
+import { createLibraryBackup, downloadJson, mergeImportedDocuments, parseBackupValue, type ImportBatch, type ImportDocument } from "./storage/libraryBackup";
 import { exportRecord } from "./model/resumeVersions";
 import { createDefaultResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, type ResumeAction, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { createResumeHistory, resumeHistoryReducer } from "./model/resumeHistory";
@@ -23,7 +25,6 @@ import {
   downloadResume,
   loadResumeById,
   loadResumeWorkspace,
-  parseResumeFile,
   saveResumeWorkspace,
   saveDocuments,
   updateResumeSummary,
@@ -59,6 +60,7 @@ export function App() {
   const [checkOpen, setCheckOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [textImportOpen, setTextImportOpen] = useState(false);
+  const [importBatch, setImportBatch] = useState<ImportBatch | null>(null);
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -301,10 +303,27 @@ export function App() {
   const importFile = async (file: File | undefined) => {
     if (!file) return;
     try {
-      await addResume(await parseResumeFile(file));
+      if (file.size > 100 * 1024 * 1024) throw new Error("备份文件超过 100MB，请分批导入");
+      setImportBatch(parseBackupValue(JSON.parse(await file.text())));
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "导入失败");
     }
+  };
+  const restoreSelected = async (documents: ImportDocument[]) => {
+    const current = await persistCurrentResume();
+    if (!current) throw new Error("简历库尚未就绪");
+    const merged = mergeImportedDocuments(current, documents);
+    await saveDocuments(merged.documents, merged.library);
+    libraryRef.current = merged.library; setLibrary(merged.library);
+    dispatch({ type: "replace", value: merged.documents[0].resume });
+    setSelectedId("profile"); setEditingId(null); setImportBatch(null); setSaveState("saved");
+  };
+  const exportLibrary = async () => {
+    try {
+      const current = await persistCurrentResume();
+      if (!current) throw new Error("简历库尚未就绪");
+      downloadJson(await createLibraryBackup(current), `SwiftResume-整库-${new Date().toISOString().slice(0, 10)}.json`);
+    } catch (e) { window.alert(e instanceof Error ? e.message : "整库备份失败"); }
   };
   const backupAllResumes = async (directory: FileSystemDirectoryHandle, forceSnapshot = false) => {
     const currentLibrary = libraryRef.current;
@@ -365,16 +384,8 @@ export function App() {
         return;
       }
       const restored = await readDiskBackup(backupDirectory);
-      if (!window.confirm(`将从磁盘恢复 ${restored.documents.length} 份简历，并替换当前浏览器简历库。是否继续？`)) return;
-      for (const item of restored.documents) {
-        await saveResumeWorkspace(item.id, item.resume, restored.library);
-      }
-      const activeDocument = restored.documents.find((item) => item.id === restored.library.activeResumeId)?.resume
-        ?? restored.documents[0].resume;
-      libraryRef.current = restored.library;
-      setLibrary(restored.library);
-      dispatch({ type: "replace", value: activeDocument });
-      setSelectedId("profile");
+      setImportBatch(parseBackupValue({ format: "swift-resume-library", version: 1, documents: restored.documents }));
+      setSettingsOpen(false);
       setBackupStatus("ready");
       setSaveState("saved");
     } catch (error) {
@@ -480,12 +491,13 @@ export function App() {
             <span />{settings.liveSync && syncSupported ? "多页同步" : "同步关闭"}
           </span>
           <button type="button" className="secondary-button" onClick={() => downloadResume(resume)}>备份当前简历</button>
+          <button type="button" className="secondary-button" disabled={!library} onClick={() => void exportLibrary()}>备份全部简历</button>
           <button type="button" className="secondary-button" onClick={() => importRef.current?.click()}>导入 JSON 备份</button>
           <button type="button" className="secondary-button" disabled={!library} onClick={() => setTextImportOpen(true)}>粘贴旧简历文本</button>
             </div>
           </details>
           <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置</button>
-          <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => void importFile(event.target.files?.[0])} />
+          <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => { void importFile(event.target.files?.[0]); event.target.value = ""; }} />
           <button type="button" className="secondary-button standalone-preview-button" disabled={!activeResumeId} onClick={openStandalonePreview}>↗ 独立预览</button>
           <button type="button" className="primary-button export-button" disabled={!ready} onClick={() => setCheckOpen(true)}>导出 PDF</button>
         </div>
@@ -593,6 +605,7 @@ export function App() {
       />}
       {newResumeOpen && <NewResumeDialog onSelect={createResume} onClose={() => setNewResumeOpen(false)} />}
       {textImportOpen && <TextImportDialog onClose={() => setTextImportOpen(false)} onImport={async (document) => { await addResume(document); setTextImportOpen(false); }} />}
+      {importBatch && <RestoreDialog batch={importBatch} onClose={() => setImportBatch(null)} onRestore={restoreSelected} />}
       {versionsOpen && library && <VersionsDialog resume={resume} library={library} onClose={() => setVersionsOpen(false)} onUpdate={(value) => dispatch({ type: "update-target", value })} onCreate={async (document) => { await addResume(document); setVersionsOpen(false); }} onSyncContacts={async (ids) => {
         const currentLibrary = await persistCurrentResume();
         if (!currentLibrary) throw new Error("简历库尚未就绪");
