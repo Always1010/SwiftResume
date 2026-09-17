@@ -9,6 +9,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { TemplatePickerDialog } from "./components/TemplatePickerDialog";
 import { PdfExportDialog } from "./components/PdfExportDialog";
+import { ResumeCheckDialog } from "./components/ResumeCheckDialog";
 import { createDefaultResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, type ResumeAction, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { createResumeHistory, resumeHistoryReducer } from "./model/resumeHistory";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
@@ -51,6 +52,7 @@ export function App() {
   const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
   const [pageCount, setPageCount] = useState(1);
   const [pdfResume, setPdfResume] = useState<ResumeDocument | null>(null);
+  const [checkOpen, setCheckOpen] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -478,7 +480,7 @@ export function App() {
           <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置</button>
           <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => void importFile(event.target.files?.[0])} />
           <button type="button" className="secondary-button standalone-preview-button" disabled={!activeResumeId} onClick={openStandalonePreview}>↗ 独立预览</button>
-          <button type="button" className="primary-button export-button" disabled={!ready} onClick={exportPdf}>导出 PDF</button>
+          <button type="button" className="primary-button export-button" disabled={!ready} onClick={() => setCheckOpen(true)}>导出 PDF</button>
         </div>
       </header>
       <nav className="workspace-controls" aria-label="工作区布局">
@@ -552,6 +554,7 @@ export function App() {
         ) : null}
       </div>
       {!previewVisible && <div className="print-preview" aria-hidden="true"><ResumePreview resume={resume} zoom={100} /></div>}
+      {checkOpen && <ResumeCheckDialog resume={resume} onClose={() => setCheckOpen(false)} onContinue={() => { setCheckOpen(false); exportPdf(); }} onLocate={(id) => { setCheckOpen(false); locateResumeBlock(id); }} />}
       {pdfResume && <PdfExportDialog resume={pdfResume} onClose={() => setPdfResume(null)} onBrowserPrint={() => {
         setPdfResume(null);
         window.requestAnimationFrame(() => window.print());
