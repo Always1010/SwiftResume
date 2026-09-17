@@ -99,6 +99,7 @@
 .version-diff pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 12px; background: #f2f6f3; padding: 12px; margin-bottom: 0; }
 .restore-choice { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
 .restore-choice input { flex: 0 0 auto; }
+.import-text { font-family: inherit; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; max-height: 300px; overflow: auto; }
 .pdf-page-checks { width: 100%; max-height: 150px; overflow: auto; }
 @media (max-width: 600px) { .flow-columns, .version-diff { grid-template-columns: minmax(0, 1fr); } }
 .flow-list { list-style: none; padding: 0; display: grid; gap: 10px; }
