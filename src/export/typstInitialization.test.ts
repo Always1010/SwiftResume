@@ -29,6 +29,8 @@ it("loads the bundled font directly and retries initialization after a failed fe
   await expect(generateTypstPdf(resume)).rejects.toThrow("无法读取内置中文字体");
   await expect(generateTypstPdf(resume)).resolves.toMatchObject({ filename: `${resume.title}.pdf` });
   expect(mocks.init).toHaveBeenCalledTimes(2);
-  expect(fetchFont).toHaveBeenLastCalledWith(new URL("./fonts/NotoSansCJKsc-Regular.otf", window.location.href).href);
+  expect(fetchFont).toHaveBeenCalledWith(new URL("./fonts/NotoSansCJKsc-Regular.otf", window.location.href).href);
+  expect(fetchFont).toHaveBeenLastCalledWith(new URL("./fonts/NotoSansCJKsc-Bold.otf", window.location.href).href);
+  expect(mocks.addFont).toHaveBeenCalledTimes(2);
   expect(mocks.addFont).toHaveBeenCalledWith(font);
 });

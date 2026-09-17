@@ -1,3 +1,6 @@
+@font-face { font-family: "SwiftResume Sans"; src: url("/fonts/NotoSansCJKsc-Regular.otf") format("opentype"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "SwiftResume Sans"; src: url("/fonts/NotoSansCJKsc-Bold.otf") format("opentype"); font-style: normal; font-weight: 700; font-display: swap; }
+
 :root {
   font-family: Inter, "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
   color: #17211b;
@@ -417,6 +420,8 @@ body.template-thumbnail-body { width: 360px; min-width: 0; height: 510px; overfl
 
 .resume-page { --section-space: 14px; --entry-space: 10px; --body-line: 1.42; position: relative; width: 210mm; height: 297mm; min-height: 297mm; margin: 0 auto; overflow: hidden; padding: 11mm 12.5mm 10mm; color: #303030; background: white; box-shadow: 0 8px 30px rgba(42, 55, 46, .16); font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif; font-size: 11.5px; line-height: var(--body-line); }
 .resume-header { display: flex; justify-content: space-between; gap: 20px; }
+.resume-editor-canvas.resume-page, .content-rich-surface .tiptap { font-family: "SwiftResume Sans", sans-serif; }
+.resume-editor-canvas .identity h1, .resume-editor-canvas .resume-section-heading h2, .resume-editor-canvas b, .resume-editor-canvas strong { font-weight: 700; }
 .resume-header .identity { flex: 1; min-width: 0; }
 .profile-info-grid { display: grid; margin-top: 7px; color: #505050; font-weight: 400; }
 .profile-info-row { display: contents; }

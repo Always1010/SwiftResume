@@ -1,5 +1,15 @@
 # SwiftResume 问题日志
 
+## SR-027：PDF 正文与编辑区的字重、间距和富文本段落结构不一致
+
+- 日期：2026-09-18
+- 状态：已解决
+- 现象或修改背景：项目等富文本模块在 PDF 中的标题层级、段距、列表缩进与 HTML 编辑区明显不同；列表中的多段文字被拼接，右对齐段落仍出现在左侧，嵌套列表符号出现缺字框。
+- 原因分析：两端字体及密度参数独立维护，PDF 只加载 Regular 字体；段落被转换为强制换行，列表项跳过块级转换；默认宽度的段落块按内容收缩，默认二级列表符号不在内置字体中。
+- 解决方案：编辑区与 PDF 使用同套 Noto 常规及粗体字体，PDF 字号和行高由 HTML 参数换算，模块及条目间距跟随密度；段落独立成块，保留缩进、空段、对齐、编号起点与嵌套结构；列表使用字体支持的符号。短项目条目整段分页，超过整页高度的条目允许跨页，标题与后续内容保持关联。新增桌面浏览器几何与内容回归脚本，并更新全部静态预览。
+- 验证方式：37 个测试文件、135 项测试通过，TypeScript 检查及生产构建通过；`npm run test:layout` 验证短绩点、长说明、多条项目及单个超长项目，共 9 页、731 项几何与内容检查，目检所有渲染页。生成 100 套模板首页和三个场景全部页面共 105 张预览，生产包素材与源文件一致；正常桌面浏览器中确认生产版编辑区及两页 PDF 正常显示，控制台无错误。
+- 相关文件：`src/export/typstPdf.ts`、`src/export/typstPdf.test.ts`、`src/export/typstInitialization.test.ts`、`src/model/resume.ts`、`src/model/resume.test.ts`、`src/styles.css`、`src/components/customEditors/ContentBodyEditor.tsx`、`public/fonts/NotoSansCJKsc-Bold.otf`、`scripts/verify-resume-layout.mjs`、`scripts/resume-layout-fixtures.tsx`、`package.json`、`README.md`、`src/templates/previewManifest.json`、`public/template-previews/`
+
 ## SR-026：教育背景固定分栏导致说明拥挤且未靠右
 
 - 日期：2026-09-18

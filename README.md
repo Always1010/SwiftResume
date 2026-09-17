@@ -85,6 +85,7 @@ npm run build
 | `npm run generate:template-previews` | 使用本机 Chrome 或 Edge 预生成 100 套模板首页和三个场景的全部页面 |
 | `npm run preview` | 预览生产构建 |
 | `npm test` | 运行测试 |
+| `npm run test:layout` | 在 1440×1000 桌面浏览器中检查 HTML/PDF 对齐、富文本及分页，渲染图保存到 `.vite/layout-check/`；可用 `CHROME_PATH` 指定浏览器 |
 
 ## 数据保存与备份
 

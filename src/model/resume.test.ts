@@ -17,6 +17,11 @@ import {
 } from "./resume";
 
 describe("resume model", () => {
+  it.each([0, 25, 50, 75, 100])("shares physical font size and baseline spacing between HTML and PDF at density %s", (value) => {
+    const layout = getDensityLayout(value);
+    expect(layout.typstFontSizePt).toBeCloseTo(layout.fontSizePx * .75);
+    expect(layout.typstLeadingEm + 1).toBeCloseTo(layout.bodyLine);
+  });
   it("creates a schema v3 resume with three semantic component types", () => {
     const resume = createDefaultResume();
     expect(isResumeDocument(resume)).toBe(true);

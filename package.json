@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "generate:template-previews": "node scripts/generate-template-previews.mjs",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:layout": "node scripts/verify-resume-layout.mjs"
   },
   "dependencies": {
     "@myriaddreamin/typst-ts-renderer": "^0.7.0",
