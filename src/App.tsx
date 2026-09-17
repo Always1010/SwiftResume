@@ -11,6 +11,7 @@ import { TemplatePickerDialog } from "./components/TemplatePickerDialog";
 import { PdfExportDialog } from "./components/PdfExportDialog";
 import { ResumeCheckDialog } from "./components/ResumeCheckDialog";
 import { VersionsDialog } from "./components/VersionsDialog";
+import { TextImportDialog } from "./components/TextImportDialog";
 import { exportRecord } from "./model/resumeVersions";
 import { createDefaultResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, type ResumeAction, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { createResumeHistory, resumeHistoryReducer } from "./model/resumeHistory";
@@ -57,6 +58,7 @@ export function App() {
   const [pdfResume, setPdfResume] = useState<ResumeDocument | null>(null);
   const [checkOpen, setCheckOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
+  const [textImportOpen, setTextImportOpen] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -479,6 +481,7 @@ export function App() {
           </span>
           <button type="button" className="secondary-button" onClick={() => downloadResume(resume)}>备份当前简历</button>
           <button type="button" className="secondary-button" onClick={() => importRef.current?.click()}>导入 JSON 备份</button>
+          <button type="button" className="secondary-button" disabled={!library} onClick={() => setTextImportOpen(true)}>粘贴旧简历文本</button>
             </div>
           </details>
           <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置</button>
@@ -589,6 +592,7 @@ export function App() {
         onReplaceResume={replaceResumeFromHistory}
       />}
       {newResumeOpen && <NewResumeDialog onSelect={createResume} onClose={() => setNewResumeOpen(false)} />}
+      {textImportOpen && <TextImportDialog onClose={() => setTextImportOpen(false)} onImport={async (document) => { await addResume(document); setTextImportOpen(false); }} />}
       {versionsOpen && library && <VersionsDialog resume={resume} library={library} onClose={() => setVersionsOpen(false)} onUpdate={(value) => dispatch({ type: "update-target", value })} onCreate={async (document) => { await addResume(document); setVersionsOpen(false); }} onSyncContacts={async (ids) => {
         const currentLibrary = await persistCurrentResume();
         if (!currentLibrary) throw new Error("简历库尚未就绪");
