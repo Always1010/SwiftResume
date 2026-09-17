@@ -1,0 +1,65 @@
+/* Workspace layout is independent of the A4 output and print styles. */
+@media screen {
+  body { min-width: 320px; }
+  .app-shell { display: grid; grid-template-rows: auto auto minmax(0, 1fr); height: 100dvh; min-height: 0; overflow: hidden; }
+  .topbar { position: relative; display: flex; flex-wrap: wrap; gap: 12px 18px; padding: 12px 20px; }
+  .brand { flex: none; }
+  .document-manager { width: clamp(180px, 22vw, 320px); margin-right: auto; }
+  .topbar-actions { flex-wrap: wrap; gap: 8px; }
+  .workspace-controls { display: flex; align-items: center; gap: 12px; padding: 9px 20px; border-bottom: 1px solid var(--border); background: #f8faf8; }
+  .workspace-view-options { display: flex; gap: 6px; margin-left: auto; }
+  .workspace { position: relative; height: auto; min-height: 0; grid-template-columns: 220px minmax(440px, 1.1fr) minmax(0, 1fr); }
+  .workspace.modules-hidden { grid-template-columns: minmax(440px, 1.1fr) minmax(0, 1fr); }
+  .workspace.preview-hidden { grid-template-columns: 220px minmax(0, 1fr); }
+  .workspace.preview-hidden.modules-hidden { grid-template-columns: minmax(0, 1fr); }
+  .workspace .resume-editor-scroller { min-height: 0; padding: 20px 20px 60px; container-type: inline-size; }
+  .workspace .resume-editor-canvas { width: 100%; max-width: 850px; padding: 28px; }
+  .workspace .resume-editor-hint { position: static; line-height: 1.6; text-align: center; }
+  .workspace .preview-panel { min-height: 0; grid-template-rows: auto minmax(0, 1fr); }
+  .workspace .preview-scroller { min-height: 0; padding: 20px 16px 40px; }
+  .preview-toolbar select { max-width: 130px; border: 1px solid var(--border); border-radius: 6px; padding: 5px; color: #35423a; background: white; font-size: 11px; }
+  .file-menu { position: relative; }
+  .file-menu summary { cursor: pointer; list-style: none; }
+  .file-menu-content { position: absolute; top: calc(100% + 10px); right: 0; z-index: 30; display: grid; width: 220px; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: white; box-shadow: 0 12px 35px #17302326; }
+  .file-menu-content button { text-align: left; }
+  .workspace .sidebar { padding: 18px 10px; }
+  .workspace .module-row { grid-template-columns: 12px minmax(0, 1fr) auto; gap: 4px; padding-inline: 5px; }
+  @container (max-width: 640px) {
+    .content-heading-fields { grid-template-columns: 1fr; }
+    .content-heading-fields .field:last-child input { text-align: left; }
+    .content-editor-notice, .content-body-label { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .inline-module-editor { padding: 14px 8px; }
+    .section-title-input { width: 100%; }
+  }
+  @media (max-width: 1499px) {
+    .workspace.modules-open { grid-template-columns: minmax(440px, 1.1fr) minmax(0, 1fr); }
+    .workspace.preview-hidden.modules-open { grid-template-columns: minmax(0, 1fr); }
+    .workspace .sidebar { position: absolute; z-index: 15; inset: 0 auto 0 0; width: 245px; box-shadow: 10px 0 30px #17302326; }
+  }
+  @media (max-width: 1099px) {
+    .workspace, .workspace.modules-hidden, .workspace.modules-open { grid-template-columns: minmax(0, 1fr); }
+    .workspace.mobile-preview > .resume-editor-scroller { display: none; }
+    .workspace .resume-editor-canvas { max-width: 790px; }
+    .topbar { gap: 10px; }
+    .topbar-actions { margin-left: auto; }
+  }
+  @media (max-width: 640px) {
+    .topbar { padding: 10px 12px; }
+    .brand small, .brand strong, .standalone-preview-button { display: none; }
+    .brand-mark { width: 32px; height: 32px; }
+    .document-manager { flex: 1; width: auto; }
+    .topbar-actions { width: 100%; }
+    .topbar-actions .save-status { margin-right: auto; }
+    .workspace-controls { padding: 8px 12px; gap: 6px; flex-wrap: wrap; }
+    .workspace .resume-editor-scroller { padding: 12px 8px 40px; }
+    .workspace .resume-editor-canvas { padding: 18px 12px; }
+    .workspace .resume-editor-canvas .resume-header { flex-wrap: wrap; }
+    .workspace .field-grid { grid-template-columns: 1fr; }
+    .workspace .photo-control { flex-wrap: wrap; }
+    .workspace .photo-control-body { min-width: 180px; }
+  }
+}
+
+@media print {
+  .workspace-controls, .file-menu { display: none !important; }
+}

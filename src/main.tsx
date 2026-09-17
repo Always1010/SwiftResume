@@ -6,6 +6,7 @@ import { TemplateThumbnailCapture } from "./components/TemplateThumbnailCapture"
 import { normalizeResumeTemplateId } from "./model/resume";
 import "./styles.css";
 import "./editorModes.css";
+import "./workspace.css";
 
 const parameters = new URLSearchParams(window.location.search);
 const standalonePreview = parameters.get("view") === "preview";

@@ -1,5 +1,5 @@
 export type ExportEngine = "typst" | "browser";
-export type PreviewZoom = 70 | 80 | 90 | 100;
+export type PreviewZoom = "fit" | 70 | 80 | 90 | 100;
 export type SyncDelay = 0 | 100 | 300;
 export type SaveDelay = 300 | 500 | 1000;
 
@@ -23,7 +23,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   saveDelayMs: 500,
   exportEngine: "typst",
   showOverflowWarning: true,
-  previewZoom: 100,
+  previewZoom: "fit",
   previewOpen: true,
 };
 
@@ -31,7 +31,7 @@ const STORAGE_KEY = "swift-resume:settings";
 
 const allowedSyncDelays = new Set<SyncDelay>([0, 100, 300]);
 const allowedSaveDelays = new Set<SaveDelay>([300, 500, 1000]);
-const allowedZooms = new Set<PreviewZoom>([70, 80, 90, 100]);
+const allowedZooms = new Set<PreviewZoom>(["fit", 70, 80, 90, 100]);
 
 export function normalizeSettings(value: unknown): AppSettings {
   if (!value || typeof value !== "object") return DEFAULT_SETTINGS;
