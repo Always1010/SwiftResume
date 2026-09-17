@@ -138,7 +138,7 @@ export function TemplateGallery({ selectedId, resume, onSelect }: {
                   onClick={() => onSelect(template.id)}
                 >
                   <LazyTemplateImage template={template} rootRef={railRef} />
-                  <span className="template-gallery-copy"><strong>{template.name}</strong><small>{recommendation ? `${recommendation.match}% · ${recommendation.reason}` : template.tags.slice(0, 2).join(" · ")}</small></span>
+                  <span className="template-gallery-copy"><strong>{template.name}</strong><small>{recommendation ? recommendation.reason : template.tags.slice(0, 2).join(" · ")}</small></span>
                 </button>
                 <button type="button" className={`template-compare-toggle ${comparing ? "active" : ""}`} aria-label={`${comparing ? "移出" : "加入"}${template.name}模板对比`} aria-pressed={comparing} onClick={() => toggleCompare(template.id)}>{comparing ? "✓ 已选" : "＋ 对比"}</button>
                 <button type="button" className={`template-favorite ${favorite ? "active" : ""}`} aria-label={`${favorite ? "取消收藏" : "收藏"}${template.name}模板`} aria-pressed={favorite} onClick={() => toggleFavorite(template.id)}>★</button>
