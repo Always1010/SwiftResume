@@ -109,7 +109,8 @@ interface ResumePreviewProps {
   thumbnail?: boolean;
 }
 
-// HTML above is used only for editable content blocks, never for final pages.
+// The editor and experimental HTML print route share the views above.
+// This component retains the existing Typst PDF preview.
 export function ResumePreview({ resume, zoom, templateId, onPageCountChange, thumbnail = false }: ResumePreviewProps) {
   const document = templateId ? { ...resume, theme: { ...resume.theme, templateId } } : resume;
   const { blob, updating, error, retry } = useTypstPreview(document);

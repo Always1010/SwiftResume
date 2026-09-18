@@ -1,0 +1,22 @@
+.html-print-app { padding-bottom: 32px; }
+.html-print-toolbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 16px; padding: 14px 24px; background: white; border-bottom: 1px solid var(--border); }
+.html-print-toolbar > div { flex: 1; display: grid; gap: 4px; }
+.html-print-toolbar span, .html-print-help { color: #536259; font-size: 13px; }
+.html-print-toolbar select { padding: 6px; border: 1px solid var(--border); border-radius: 6px; }
+.html-print-help { max-width: 1000px; margin: 16px auto; padding: 0 24px; line-height: 1.7; }
+.html-print-status { text-align: center; }
+.html-resume-pages { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+.resume-page.resume-editor-canvas.html-resume { flex: none; width: 210mm; max-width: none; height: 297mm; min-height: 297mm; padding: 28px; margin: 0; overflow: hidden; font-family: "SwiftResume Browser Sans", sans-serif; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.html-resume-content { display: flow-root; }
+.resume-page.resume-editor-canvas.html-resume-source { position: fixed; left: -10000px; top: 0; height: auto; overflow: visible; visibility: hidden; pointer-events: none; }
+.html-resume .resume-editable-block { border-color: transparent; box-shadow: none; }
+@media print {
+  body.html-print-body, .html-print-body #root, .html-print-app { margin: 0; padding: 0; min-width: 0; min-height: 0; background: white; }
+  .html-print-toolbar, .html-print-help, .html-print-status, .html-resume-source { display: none !important; }
+  .html-print-stage { zoom: 1 !important; }
+  .html-resume-pages { display: block; }
+  .resume-page.html-resume { break-inside: avoid; break-after: page; box-shadow: none; border-radius: 0; }
+  .resume-page.html-resume:last-child { break-after: auto; }
+}
+@font-face { font-family: "SwiftResume Browser Sans"; src: url("/fonts/SwiftResumeBrowserSans-Regular.woff") format("woff"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "SwiftResume Browser Sans"; src: url("/fonts/SwiftResumeBrowserSans-Bold.woff") format("woff"); font-weight: 700; font-style: normal; font-display: swap; }

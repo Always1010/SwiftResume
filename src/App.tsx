@@ -481,14 +481,14 @@ export function App() {
   });
   usePreviewPublisher(activeResumeId, resume, ready, applyRemoteResume);
 
-  const openStandalonePreview = () => {
+  const openStandalonePreview = (view = "preview") => {
     if (!activeResumeId) return;
     const url = new URL(window.location.href);
     url.search = "";
     url.hash = "";
-    url.searchParams.set("view", "preview");
+    url.searchParams.set("view", view);
     url.searchParams.set("resumeId", activeResumeId);
-    window.open(url.toString(), `swift-resume-preview-${activeResumeId}`)?.focus();
+    window.open(url.toString(), `swift-resume-${view}-${activeResumeId}`)?.focus();
   };
   usePdfPrintShortcut(() => { if (ready) setCheckOpen(true); });
   const exportPdf = () => setPdfResume(resume);
@@ -505,6 +505,7 @@ export function App() {
         </div>
         <div className="topbar-actions">
           <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置</button>
+          <button type="button" className="secondary-button" onClick={() => openStandalonePreview("html-print")}>HTML 打印预览（试用）</button>
           <button type="button" className="primary-button export-button" disabled={!ready} onClick={() => setCheckOpen(true)}>导出 PDF</button>
         </div>
       </header>
@@ -556,7 +557,7 @@ export function App() {
                   {[70, 80, 90, 100].map((value) => <option key={value} value={value}>{value}%</option>)}
                 </select>
               </div>
-              <button type="button" className="secondary-button" onClick={openStandalonePreview}>↗ 独立预览</button>
+              <button type="button" className="secondary-button" onClick={() => openStandalonePreview()}>↗ 独立预览</button>
               <label className="density-control">
                 <span>紧凑</span>
                 <input
