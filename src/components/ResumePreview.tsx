@@ -109,13 +109,14 @@ interface ResumePreviewProps {
   zoom: number | "fit";
   templateId?: ResumeTemplateId;
   onPageCountChange?: (pageCount: number) => void;
+  onReadyChange?: (ready: boolean) => void;
   thumbnail?: boolean;
 }
 
-// The editor and experimental HTML print route share the views above.
-// This component retains the existing Typst PDF preview.
+// The editor, HTML preview and browser printing share the views above.
+// The output setting selects HTML or the existing Typst PDF preview.
 export function ResumePreview(props: ResumePreviewProps) {
-  if (props.engine === "html") return <Suspense fallback={<p role="status">正在加载 HTML 预览…</p>}><HtmlCanvasPreview resume={props.resume} zoom={props.zoom} onPageCountChange={props.onPageCountChange} /></Suspense>;
+  if (props.engine === "html") return <Suspense fallback={<p role="status">正在加载 HTML 预览…</p>}><HtmlCanvasPreview resume={props.resume} zoom={props.zoom} onPageCountChange={props.onPageCountChange} onReadyChange={props.onReadyChange} /></Suspense>;
   return <TypstPreview {...props} />;
 }
 

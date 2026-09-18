@@ -1,7 +1,8 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { flushSync } from "react-dom";
 import { HtmlResumePages } from "../src/components/HtmlPrintPreview";
-import { createDefaultResume, type RichTextNode } from "../src/model/resume";
+import { createDefaultResume, getDensityLayout, type RichTextNode } from "../src/model/resume";
 import { getDocument, PDFWorker } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import "../src/styles.css";
@@ -26,7 +27,7 @@ const body: RichTextNode[] = [
 if (name === "long-entry") body.push(...Array.from({ length: 70 }, (_, i) => paragraph(`段落 ${i + 1}：验证长项目分页，不能截断或遗漏内容。`)));
 if (name === "long-paragraph") body.push(paragraph("超长段落开始" + "验证连续长段落和中文自动换行，保留全部内容与标点。".repeat(240) + "超长段落结束"));
 if (name === "table") body.push({ type: "table", content: Array.from({ length: 65 }, (_, i) => ({ type: "tableRow", content: ["第一列", "第二列"].map((text) => ({ type: "tableCell", content: [paragraph(`${text}数据 ${i + 1}`)] })) })) });
-resume.sections = [education, { id: "projects", type: "content", title: "项目经历", enabled: true, entries: Array.from({ length: name === "multipage" ? 16 : 1 }, (_, i) => ({ id: `p${i}`, title: `轻量级 HTTP 服务器 ${i + 1}`, subtitle: "核心开发", date: "2024.07 — 2024.09", body: { type: "doc", content: body } })) }];
+resume.sections = [education, { id: "projects", type: "content", title: "项目经历", enabled: true, entries: Array.from({ length: name === "multipage" ? 16 : name === "density-multipage" ? 8 : 1 }, (_, i) => ({ id: `p${i}`, title: `轻量级 HTTP 服务器 ${i + 1}`, subtitle: "核心开发", date: "2024.07 — 2024.09", body: { type: "doc", content: body } })) }];
 const zoom = name === "zoom" ? 0.7 : 1;
 if (name === "gap" && resume.sections[1].type === "content") {
   const entry = resume.sections[1].entries[0];
@@ -37,10 +38,14 @@ const normalized = (text: string) => text.replace(/\s/g, "");
 const root = document.getElementById("root")!;
 document.body.classList.add("html-print-body");
 // This module is served by the verification harness, never by the production app.
-declare global { interface Window { htmlResult: unknown; verifyPrintedPdf: (data: string) => Promise<unknown>; } }
-createRoot(root).render(<main className="html-print-app"><div className="html-print-stage" style={{ zoom }}><HtmlResumePages resume={resume} onReady={(count, error) => {
+declare global { interface Window { htmlResult: unknown; verifyPrintedPdf: (data: string) => Promise<unknown>; verifyDensityUpdates: () => Promise<unknown>; } }
+let currentResume = resume;
+let completions = 0;
+const renderer = createRoot(root);
+const render = () => renderer.render(<main className="html-print-app"><div className="html-print-stage" style={{ zoom }}><HtmlResumePages resume={currentResume} onReady={(count, error) => {
   if (error) { window.htmlResult = { error }; return; }
   if (!count) return;
+  completions++;
   try {
     const source = document.querySelector<HTMLElement>(".html-resume-source")!;
     const pages = Array.from(document.querySelectorAll<HTMLElement>(".html-resume-pages > .html-resume"));
@@ -70,6 +75,7 @@ createRoot(root).render(<main className="html-print-app"><div className="html-pr
     window.htmlResult = { count, name, zoom, text: normalized(source.textContent!), pages: pages.map((page) => { const r = page.getBoundingClientRect(); return { x: r.x, y: r.y + scrollY, width: r.width, height: r.height }; }) };
   } catch (failure) { window.htmlResult = { error: String(failure) }; }
 }} /></div></main>);
+render();
 
 window.verifyPrintedPdf = async (data) => {
   const original = structuredClone(resume);
@@ -101,4 +107,49 @@ window.verifyPrintedPdf = async (data) => {
     }
     return { pdfPages: pdf.numPages, verified: true };
   } finally { await task.destroy(); worker.destroy(); nativeWorker.terminate(); }
+};
+
+
+window.verifyDensityUpdates = async () => {
+  const visible = document.querySelector<HTMLElement>(".html-resume-pages")!;
+  const firstPage = visible.firstElementChild!;
+  const firstText = firstPage.querySelector(".resume-rich-text p")!;
+  const sourceText = document.querySelector(".html-resume-source .resume-rich-text p")!;
+  const nextFrame = () => new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`等待动画帧超时，页面状态：${document.visibilityState}`)), 2000);
+    requestAnimationFrame(() => { clearTimeout(timer); resolve(); });
+  });
+  const samples: number[] = [];
+  const fontLoad = document.fonts.load.bind(document.fonts);
+  let fontRequests = 0;
+  document.fonts.load = (...args) => { fontRequests++; return fontLoad(...args); };
+  try {
+    const before = completions;
+    for (const value of [12, 95, 35, 70, 0, 100, 44]) {
+      currentResume = { ...resume, theme: { ...resume.theme, density: value } };
+      flushSync(render);
+      assert(visible.firstElementChild === firstPage, "快速更新时清空或替换了页壳");
+      assert(Math.abs(parseFloat(getComputedStyle(firstPage).fontSize) - getDensityLayout(value).fontSizePx) < 0.01, "滑块变化未立即应用字号");
+    }
+    await nextFrame();
+    assert(completions === before + 1, "同一帧的连续更新应合并成一次分页");
+    for (let step = 0; step < 90; step++) {
+      const value = step < 45 ? step * 2 : (89 - step) * 2;
+      const started = performance.now();
+      currentResume = { ...resume, theme: { ...resume.theme, density: value } };
+      flushSync(render);
+      assert(visible.children.length > 0, "拖动期间出现空白预览");
+      assert(visible.firstElementChild === firstPage, "不应重建原有页壳");
+      if (name !== "density-multipage") assert(firstPage.querySelector(".resume-rich-text p") === firstText, "分页未变时不应重建正文");
+      assert(document.querySelector(".html-resume-source .resume-rich-text p") === sourceText, "密度调整不应重建源富文本");
+      await nextFrame();
+      samples.push(performance.now() - started);
+    }
+    assert(fontRequests === 0, "调节密度不应重复请求已经准备好的字体");
+    const expected = getDensityLayout(currentResume.theme.density).fontSizePx;
+    assert(Math.abs(parseFloat(getComputedStyle(firstPage).fontSize) - expected) < 0.01, "旧分页结果覆盖了最新密度");
+    assert(!document.querySelector(".html-resume-measure")!.childNodes.length, "测量 DOM 应在完成后释放");
+    samples.sort((a, b) => a - b);
+    return { frames: samples.length, p95FrameMs: Math.round(samples[Math.floor(samples.length * 0.95)]), fontRequests, finalDensity: currentResume.theme.density };
+  } finally { document.fonts.load = fontLoad; }
 };

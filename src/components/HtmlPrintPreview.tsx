@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { getDensityLayout, type ResumeDocument } from "../model/resume";
 import { loadResumeById } from "../storage/resumeStorage";
 import { usePreviewSubscriber } from "../sync/previewSync";
@@ -6,12 +6,24 @@ import { paginateHtml } from "../export/htmlPagination";
 import { ResumeProfileView, ResumeSectionView } from "./ResumePreview";
 import "../htmlPrint.css";
 import { loadPrintJob } from "../export/htmlPrintJobs";
+import { commitHtmlPages, prepareHtmlFonts } from "../export/htmlPreviewUpdates";
 
-export function HtmlResumePages({ resume, onReady }: { resume: ResumeDocument; onReady?: (pages: number, error: string) => void }) {
+const HtmlResumeContent = memo(function HtmlResumeContent({ resume }: { resume: ResumeDocument }) {
+  return <div className="html-resume-content">
+    <section className="resume-editable-block profile-block"><ResumeProfileView resume={resume} /></section>
+    {resume.sections.filter((section) => section.enabled).map((section) => <section key={section.id} className="resume-editable-block section-block"><ResumeSectionView section={section} /></section>)}
+  </div>;
+}, (previous, next) => previous.resume.profile === next.resume.profile && previous.resume.sections === next.resume.sections);
+
+export function HtmlResumePages({ resume, onReady, onUpdating }: { resume: ResumeDocument; onReady?: (pages: number, error: string) => void; onUpdating?: (updating: boolean) => void }) {
   const source = useRef<HTMLDivElement>(null);
   const pages = useRef<HTMLDivElement>(null);
+  const measure = useRef<HTMLDivElement>(null);
+  const photo = useRef<{ url: string; request: Promise<void> } | null>(null);
   const callback = useRef(onReady);
+  const updatingCallback = useRef(onUpdating);
   callback.current = onReady;
+  updatingCallback.current = onUpdating;
   const density = getDensityLayout(resume.theme.density);
   const style = {
     "--resume-accent": resume.theme.accent,
@@ -21,40 +33,68 @@ export function HtmlResumePages({ resume, onReady }: { resume: ResumeDocument; o
     "--resume-font-size": `${density.fontSizePx}px`,
     fontSize: `${density.fontSizePx}px`,
   } as CSSProperties;
-  useEffect(() => {
+  useLayoutEffect(() => {
     let cancelled = false;
-    callback.current?.(0, "");
-    pages.current?.replaceChildren();
-    async function prepare() {
-      try {
-        await Promise.all([document.fonts.load('400 12px "SwiftResume Browser Sans"'), document.fonts.load('700 12px "SwiftResume Browser Sans"')]);
-        await document.fonts.ready;
-        await Promise.all(Array.from(source.current?.querySelectorAll("img") ?? []).map((img) => img.decode()));
-        if (cancelled || !source.current || !pages.current) return;
-        const count = paginateHtml(source.current, pages.current);
-        callback.current?.(count, "");
-      } catch (error) {
-        if (!cancelled) callback.current?.(0, error instanceof Error ? error.message : "排版失败，请重新打开预览。");
-      }
+    let frame = 0;
+    updatingCallback.current?.(true);
+    // Apply density immediately to existing text. Reflow comes from CSS, without
+    // recreating the rich text or putting the preview back into its initial state.
+    for (const page of Array.from(pages.current?.children ?? [])) {
+      (page as HTMLElement).style.cssText = source.current!.style.cssText;
     }
-    void prepare();
-    return () => { cancelled = true; };
+    const schedule = () => {
+      if (cancelled) return;
+      frame = window.requestAnimationFrame(() => {
+        if (cancelled || !source.current || !measure.current || !pages.current) return;
+        try {
+          const count = paginateHtml(source.current, measure.current);
+          commitHtmlPages(measure.current, pages.current);
+          callback.current?.(count, "");
+        } catch (error) {
+          callback.current?.(0, error instanceof Error ? error.message : "排版失败，请重新打开预览。");
+        } finally {
+          measure.current.replaceChildren();
+          updatingCallback.current?.(false);
+        }
+      });
+    };
+    const pending: Promise<void>[] = [];
+    const fonts = prepareHtmlFonts();
+    if (fonts) pending.push(fonts);
+    const img = source.current?.querySelector("img");
+    if (img && !(img.complete && img.naturalWidth > 0)) {
+      if (photo.current?.url !== img.src) photo.current = { url: img.src, request: img.decode() };
+      pending.push(photo.current.request);
+    } else if (!img) photo.current = null;
+    if (pending.length) {
+      void Promise.all(pending).then(schedule).catch((error: unknown) => {
+        if (cancelled) return;
+        photo.current = null;
+        callback.current?.(0, error instanceof Error ? error.message : "字体或照片加载失败，请重试。");
+        updatingCallback.current?.(false);
+      });
+    } else schedule();
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
   }, [resume]);
   return <>
     <div ref={source} className="resume-page resume-editor-canvas resume-template-classic html-resume html-resume-source" style={style} aria-hidden="true">
-      <div className="html-resume-content">
-        <section className="resume-editable-block profile-block"><ResumeProfileView resume={resume} /></section>
-        {resume.sections.filter((section) => section.enabled).map((section) => <section key={section.id} className="resume-editable-block section-block"><ResumeSectionView section={section} /></section>)}
-      </div>
+      <HtmlResumeContent resume={resume} />
     </div>
+    <div ref={measure} className="html-resume-measure" aria-hidden="true" />
     <div ref={pages} className="html-resume-pages" aria-label="HTML 简历分页预览" />
   </>;
 }
 
-export function HtmlCanvasPreview({ resume, zoom = "fit", onPageCountChange }: { resume: ResumeDocument; zoom?: number | "fit"; onPageCountChange?: (count: number) => void }) {
+export function HtmlCanvasPreview({ resume, zoom = "fit", onPageCountChange, onReadyChange }: { resume: ResumeDocument; zoom?: number | "fit"; onPageCountChange?: (count: number) => void; onReadyChange?: (ready: boolean) => void }) {
   const viewport = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState(1);
-  const [state, setState] = useState({ count: 0, error: "" });
+  const [updating, setUpdating] = useState(true);
+  const [state, setState] = useState<{ count: number; error: string; resume: ResumeDocument | null }>({ count: 0, error: "", resume: null });
+  const ready = !updating && !state.error && state.count > 0 && state.resume === resume;
+  useLayoutEffect(() => { onReadyChange?.(ready); }, [ready, onReadyChange]);
   useEffect(() => {
     const element = viewport.current;
     if (!element) return;
@@ -64,10 +104,13 @@ export function HtmlCanvasPreview({ resume, zoom = "fit", onPageCountChange }: {
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  return <div ref={viewport} className="preview-scroller html-canvas-preview" aria-label="HTML 简历预览" aria-busy={!state.count && !state.error}>
-    {state.error ? <p role="alert">{state.error}</p> : !state.count && <p role="status">正在加载字体并分页…</p>}
+  return <div ref={viewport} className="preview-scroller html-canvas-preview" aria-label="HTML 简历预览" aria-busy={!ready}>
+    {state.error ? <p role="alert">{state.error}{state.count > 0 && "，下方保留上次预览。"}</p> : !state.count && <p role="status">正在加载字体并分页…</p>}
     <div className="html-canvas-stage" style={{ zoom: zoom === "fit" ? fit : zoom / 100 }}>
-      <HtmlResumePages resume={resume} onReady={(count, error) => { setState({ count, error }); onPageCountChange?.(count); }} />
+      <HtmlResumePages resume={resume} onUpdating={setUpdating} onReady={(count, error) => {
+        setState((current) => ({ count: count || current.count, error, resume: error ? null : resume }));
+        if (count > 0) onPageCountChange?.(count);
+      }} />
     </div>
   </div>;
 }

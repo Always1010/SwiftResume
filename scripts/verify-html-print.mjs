@@ -40,7 +40,7 @@ const evaluate = async (expression) => {
 try {
   await server.listen();
   const port = server.httpServer.address().port;
-  browser = spawn(browserPath, ["--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--window-size=1440,1000", "about:blank"], { windowsHide: true, stdio: ["ignore", "ignore", "pipe"] });
+  browser = spawn(browserPath, ["--headless=new", "--disable-gpu", "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows", "--no-first-run", "--no-default-browser-check", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--window-size=1440,1000", "about:blank"], { windowsHide: true, stdio: ["ignore", "ignore", "pipe"] });
   const debugUrl = await new Promise((resolveUrl, reject) => {
     let buffer = "";
     const timer = setTimeout(() => reject(new Error("浏览器启动超时")), 20_000);
@@ -58,8 +58,10 @@ try {
     if (message.error) item.reject(new Error(JSON.stringify(message.error))); else item.resolve(message.result);
   };
   await command("Page.enable");
-  for (const name of ["short", "multipage", "long-entry", "long-paragraph", "table", "zoom", "gap"]) {
+  const cases = process.argv.slice(2);
+  for (const name of cases.length ? cases : ["short", "multipage", "long-entry", "long-paragraph", "table", "zoom", "gap", "density", "density-multipage"]) {
     await command("Page.navigate", { url: `http://127.0.0.1:${port}/html-print-check?case=${name}` });
+    await command("Page.bringToFront");
     let result;
     const deadline = Date.now() + 60_000;
     while (Date.now() < deadline) {
@@ -68,6 +70,13 @@ try {
       await new Promise((done) => setTimeout(done, 150));
     }
     if (!result || result.error) throw new Error(`${name}: ${result?.error ?? "未生成预览"}`);
+    if (name.startsWith("density")) {
+      const metrics = await evaluate("window.verifyDensityUpdates()");
+      result = await evaluate("window.htmlResult");
+      if (result.error) throw new Error(result.error);
+      result.densityUpdates = metrics;
+      console.log(`${name}: ${JSON.stringify(metrics)}`);
+    }
     for (const [i, clip] of result.pages.entries()) {
       const screenshot = await command("Page.captureScreenshot", { format: "png", captureBeyondViewport: true, clip: { ...clip, scale: 1 } });
       await writeFile(join(output, `${name}-html-${i + 1}.png`), Buffer.from(screenshot.data, "base64"));

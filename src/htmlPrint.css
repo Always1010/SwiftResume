@@ -14,11 +14,12 @@
 .html-gallery-hidden { display: none; }
 .resume-page.resume-editor-canvas.html-resume { flex: none; width: 210mm; max-width: none; height: 297mm; min-height: 297mm; padding: 28px; margin: 0; overflow: hidden; font-family: "SwiftResume Browser Sans", sans-serif; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 .html-resume-content { display: flow-root; }
+.html-resume-measure { position: fixed; left: -10000px; top: 0; width: 210mm; visibility: hidden; pointer-events: none; }
 .resume-page.resume-editor-canvas.html-resume-source { position: fixed; left: -10000px; top: 0; height: auto; overflow: visible; visibility: hidden; pointer-events: none; }
 .html-resume .resume-editable-block { border-color: transparent; box-shadow: none; }
 @media print {
   body.html-print-body, .html-print-body #root, .html-print-app { margin: 0; padding: 0; min-width: 0; min-height: 0; background: white; }
-  .html-print-toolbar, .html-print-help, .html-print-status, .html-resume-source { display: none !important; }
+  .html-print-toolbar, .html-print-help, .html-print-status, .html-resume-source, .html-resume-measure { display: none !important; }
   .html-print-stage { zoom: 1 !important; }
   .html-resume-pages { display: block; }
   .resume-page.html-resume { break-inside: avoid; break-after: page; box-shadow: none; border-radius: 0; }
