@@ -18,8 +18,8 @@
 .scene-thumbnail .typst-preview { height: 100%; }
 .scene-full-preview > .typst-preview { height: 65vh; }
 .template-thumbnail-capture .typst-preview { height: 510px; }
-/* Never print the HTML editor or a low-resolution preview canvas as a resume. */
+/* The separate HTML print route provides its own printable page tree. */
 @media print {
-  body #root { display: none !important; }
-  body::after { display: block; padding: 24mm; content: "请在 SwiftResume 中选择“导出 PDF”，再点击“打印 PDF”打印正式文件。"; font: 14pt sans-serif; color: black; }
+  body:not(.html-print-body) #root { display: none !important; }
+  body:not(.html-print-body)::after { display: block; padding: 24mm; content: "请在 SwiftResume 中选择“导出 PDF”，再点击“打印 PDF”打印正式文件。"; font: 14pt sans-serif; color: black; }
 }

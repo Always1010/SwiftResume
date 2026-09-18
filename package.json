@@ -9,7 +9,8 @@
     "generate:template-previews": "node scripts/generate-template-previews.mjs",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:layout": "node scripts/verify-resume-layout.mjs"
+    "test:layout": "node scripts/verify-resume-layout.mjs",
+    "test:html-print": "node scripts/verify-html-print.mjs"
   },
   "dependencies": {
     "@myriaddreamin/typst-ts-renderer": "^0.7.0",
