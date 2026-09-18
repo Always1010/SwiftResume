@@ -21,7 +21,7 @@ document.body.classList.toggle("template-thumbnail-body", thumbnailCapture);
 async function renderApp() {
   if (htmlPrintPreview) {
     const { HtmlPrintPreview } = await import("./components/HtmlPrintPreview");
-    createRoot(document.getElementById("root")!).render(<StrictMode><HtmlPrintPreview resumeId={previewResumeId} /></StrictMode>);
+    createRoot(document.getElementById("root")!).render(<StrictMode><HtmlPrintPreview resumeId={previewResumeId} jobId={parameters.get("job") ?? ""} /></StrictMode>);
     return;
   }
   // The capture module and its PDF.js renderer are development tooling only.

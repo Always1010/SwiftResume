@@ -77,7 +77,7 @@ export function ResumeEditorCanvas({
 
   return (
     <main className="resume-editor-scroller panel" aria-label="整页简历编辑区" onClick={handleBoundaryClick}>
-      <div className="resume-editor-hint">点击文字或模块编辑内容；最终排版请查看 PDF 预览。</div>
+      <div className="resume-editor-hint">点击文字或模块编辑内容；最终排版请查看右侧或独立预览。</div>
       {resume.profile.name.includes("【示例】") && <div className="sample-notice"><span>当前是虚构示例，请逐项替换为自己的真实经历。</span>{onClearContent && <button type="button" className="text-button" onClick={onClearContent}>清空示例，保留结构</button>}</div>}
       <div className="resume-editor-canvas resume-page resume-template-classic" style={canvasStyle}>
         <section
