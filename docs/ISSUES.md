@@ -1,5 +1,15 @@
 # SwiftResume 问题日志
 
+## SR-030：调节 HTML 排版密度时预览反复清空闪烁
+
+- 日期：2026-09-18
+- 状态：已解决
+- 现象或修改背景：连续拖动紧凑／宽松滑块时，HTML 预览反复消失并显示加载提示，需要停下来等待分页，难以观察文字间距变化。
+- 原因分析：每次简历变化都将页数归零并清空可见分页，重复等待字体与照片，再直接在可见容器重建页面。
+- 解决方案：保留可见页面，密度 CSS 立即生效；按动画帧合并更新并取消旧任务，在隐藏容器测量后统一提交最新分页；复用页壳、未变化正文和已加载字体／照片，保持滚动位置。导出通过独立就绪状态等待最新分页，避免保留的旧页数误放行。
+- 验证方式：40 个测试文件、143 项测试通过，TypeScript 检查及生产构建通过；九组真实 HTML/PDF 对照场景覆盖文字、字体样式、页数和边界，单页与多页各连续更新 90 次，检查无空白预览、同帧合并、节点复用与无重复字体加载。桌面页面连续调整密度后，页数随内容正常变化，滚动位置保持，控制台无错误；最终 PDF 使用 Poppler 渲染目检。
+- 相关文件：`src/components/HtmlPrintPreview.tsx`、`src/components/ResumePreview.tsx`、`src/components/ResumeExportDialog.tsx`、`src/components/ResumeExportDialog.test.tsx`、`src/export/htmlPreviewUpdates.ts`、`src/export/htmlPreviewUpdates.test.ts`、`src/htmlPrint.css`、`scripts/html-print-fixtures.tsx`、`scripts/verify-html-print.mjs`
+
 ## SR-029：HTML 分页把可分段项目整体移走造成大块留白
 
 - 日期：2026-09-18
