@@ -13,6 +13,7 @@ import {
   normalizeDensity,
   normalizeResumeDocument,
   RESUME_TEMPLATE_IDS,
+  reorderProfileDetail,
   reorderSection,
 } from "./resume";
 
@@ -123,6 +124,13 @@ describe("resume model", () => {
     expect(reordered[2].id).toBe(sections[0].id);
   });
 
+  it("reorders profile details without mutating the input", () => {
+    const details = createDefaultResume().profile.details;
+    const reordered = reorderProfileDetail(details, details[0].id, details[1].id);
+    expect(reordered[1].id).toBe(details[0].id);
+    expect(details[0].id).not.toBe(reordered[0].id);
+  });
+
   it("rejects obsolete schema v2 documents instead of migrating them", () => {
     const obsolete = { ...createDefaultResume(), schemaVersion: 2 };
     expect(normalizeResumeDocument(obsolete)).toBeNull();
@@ -148,6 +156,14 @@ describe("resume model", () => {
     expect(normalized?.profile.photoSource).toBe(originalPhoto);
     expect(normalized?.profile.photoBackground).toBe("transparent");
     expect(normalized?.profile.photoCrop).toEqual({ zoom: 1, offsetX: 0, offsetY: 0 });
+  });
+
+  it("preserves the former job-status layout when normalizing details without width settings", () => {
+    const legacy = createDefaultResume();
+    legacy.profile.details = legacy.profile.details.map((detail) => ({ id: detail.id, label: detail.label, value: detail.value }));
+    const normalized = normalizeResumeDocument(legacy);
+    expect(normalized?.profile.details[0].fullWidth).toBe(false);
+    expect(normalized?.profile.details[1].fullWidth).toBe(true);
   });
 
   it("normalizes density values and interpolates layout continuously", () => {

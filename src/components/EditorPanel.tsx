@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
 import type { ContentEntry, ContentSection, EducationSection, ProfilePhotoCrop, ResumeDocument, ResumeProfile, ResumeSection } from "../model/resume";
-import { createPurposeEntry, DEFAULT_PROFILE_PHOTO_CROP } from "../model/resume";
+import { createPurposeEntry, DEFAULT_PROFILE_PHOTO_CROP, reorderProfileDetail } from "../model/resume";
 import { createCroppedPhoto, drawCroppedPhoto, loadPhotoImage } from "../model/profilePhoto";
 import { ContentBodyEditor } from "./customEditors/ContentBodyEditor";
 import { PhotoBackgroundPicker } from "./PhotoBackgroundPicker";
@@ -122,6 +122,17 @@ function ProfileEditor({ profile, onChange }: { profile: ResumeProfile; onChange
   const update = <K extends keyof ResumeProfile>(key: K, value: ResumeProfile[K]) => onChange({ ...profile, [key]: value });
   const [cropSource, setCropSource] = useState<string | null>(null);
   const [cropInitial, setCropInitial] = useState<ProfilePhotoCrop>({ ...DEFAULT_PROFILE_PHOTO_CROP });
+  const [draggedDetailId, setDraggedDetailId] = useState<string | null>(null);
+  const [detailDropTargetId, setDetailDropTargetId] = useState<string | null>(null);
+  const startDetailDrag = (event: DragEvent<HTMLButtonElement>, id: string) => {
+    setDraggedDetailId(id);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", id);
+  };
+  const finishDetailDrag = () => {
+    setDraggedDetailId(null);
+    setDetailDropTargetId(null);
+  };
   const uploadPhoto = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -192,12 +203,39 @@ function ProfileEditor({ profile, onChange }: { profile: ResumeProfile; onChange
       )}
       <div className="subheading-row">
         <h3>扩展信息</h3>
-        <button type="button" className="text-button" onClick={() => update("details", [...profile.details, { id: makeId(), label: "", value: "" }])}>＋ 添加字段</button>
+        <button type="button" className="text-button" onClick={() => update("details", [...profile.details, { id: makeId(), label: "", value: "", fullWidth: false }])}>＋ 添加字段</button>
       </div>
       {profile.details.map((detail) => (
-        <div className="detail-row" key={detail.id}>
+        <div
+          className={`detail-row ${draggedDetailId === detail.id ? "dragging" : ""} ${detailDropTargetId === detail.id && draggedDetailId !== detail.id ? "drop-target" : ""}`}
+          key={detail.id}
+          onDragEnter={() => draggedDetailId && setDetailDropTargetId(detail.id)}
+          onDragOver={(event) => {
+            if (!draggedDetailId) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            if (draggedDetailId) update("details", reorderProfileDetail(profile.details, draggedDetailId, detail.id));
+            finishDetailDrag();
+          }}
+        >
+          <button
+            type="button"
+            className="detail-drag-handle"
+            draggable
+            aria-label={`拖动“${detail.label || "未命名字段"}”排序`}
+            title="拖动排序"
+            onDragStart={(event) => startDetailDrag(event, detail.id)}
+            onDragEnd={finishDetailDrag}
+          >⋮⋮</button>
           <input aria-label="字段名称" value={detail.label} placeholder="字段名称" onChange={(event) => update("details", profile.details.map((item) => item.id === detail.id ? { ...item, label: event.target.value } : item))} />
           <input aria-label="字段内容" value={detail.value} placeholder="字段内容" onChange={(event) => update("details", profile.details.map((item) => item.id === detail.id ? { ...item, value: event.target.value } : item))} />
+          <label className="detail-full-width" title="开启后，该字段从左列开始并占满一整行">
+            <input type="checkbox" checked={Boolean(detail.fullWidth)} onChange={(event) => update("details", profile.details.map((item) => item.id === detail.id ? { ...item, fullWidth: event.target.checked } : item))} />
+            <span>独占一行</span>
+          </label>
           <button type="button" className="icon-button danger" onClick={() => update("details", profile.details.filter((item) => item.id !== detail.id))}>×</button>
         </div>
       ))}

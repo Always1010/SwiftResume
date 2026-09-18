@@ -96,7 +96,14 @@ export interface ResumeProfile {
   photoSource: string;
   photoBackground: string;
   photoCrop: ProfilePhotoCrop;
-  details: Array<{ id: string; label: string; value: string }>;
+  details: ProfileDetail[];
+}
+
+export interface ProfileDetail {
+  id: string;
+  label: string;
+  value: string;
+  fullWidth?: boolean;
 }
 
 interface SectionBase {
@@ -242,8 +249,8 @@ export function createDefaultResume(): ResumeDocument {
       photoBackground: DEFAULT_PHOTO_BACKGROUND,
       photoCrop: { ...DEFAULT_PROFILE_PHOTO_CROP },
       details: [
-        { id: makeId(), label: "学历", value: "本科" },
-        { id: makeId(), label: "求职状态", value: "在职，服务器允许的话可以随时到岗" },
+        { id: makeId(), label: "学历", value: "本科", fullWidth: false },
+        { id: makeId(), label: "求职状态", value: "在职，服务器允许的话可以随时到岗", fullWidth: true },
       ],
     },
     sections: [
@@ -414,7 +421,7 @@ export function createResumeFromTemplate(template: ResumeCreationTemplate, withE
   resume.profile = {
     ...resume.profile, name: example.name, headline: scene.role, location: "杭州",
     phone: "【填写你的手机】", email: example.email,
-    details: example.details.map((detail) => ({ ...detail, id: makeId() })),
+    details: example.details.map((detail) => ({ ...detail, id: makeId(), fullWidth: false })),
   };
   resume.sections = example.sections.map((section): ResumeSection => {
     const base = { id: makeId(), title: section.title, enabled: true };
@@ -520,6 +527,16 @@ export function reorderSection(sections: ResumeSection[], sourceId: string, targ
   return next;
 }
 
+export function reorderProfileDetail(details: ProfileDetail[], sourceId: string, targetId: string): ProfileDetail[] {
+  const from = details.findIndex((detail) => detail.id === sourceId);
+  const to = details.findIndex((detail) => detail.id === targetId);
+  if (from < 0 || to < 0 || from === to) return details;
+  const next = [...details];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
+}
+
 export function resumeReducer(state: ResumeDocument, action: ResumeAction): ResumeDocument {
   if (action.type === "replace") return action.value;
   const updatedAt = new Date().toISOString();
@@ -560,6 +577,10 @@ export function normalizeResumeDocument(value: unknown): ResumeDocument | null {
     offsetX: Number.isFinite(offsetX) ? Math.min(100, Math.max(-100, offsetX)) : DEFAULT_PROFILE_PHOTO_CROP.offsetX,
     offsetY: Number.isFinite(offsetY) ? Math.min(100, Math.max(-100, offsetY)) : DEFAULT_PROFILE_PHOTO_CROP.offsetY,
   };
+  resume.profile.details = resume.profile.details.map((detail) => ({
+    ...detail,
+    fullWidth: typeof detail.fullWidth === "boolean" ? detail.fullWidth : detail.label.trim() === "求职状态",
+  }));
   resume.theme.density = normalizeDensity(resume.theme.density);
   resume.theme.templateId = normalizeResumeTemplateId(resume.theme.templateId);
   return resume;

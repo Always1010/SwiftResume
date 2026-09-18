@@ -29,12 +29,15 @@ describe("ResumeSectionView", () => {
     expect(html).toContain("profile-info-grid");
   });
 
-  it("places email and degree in the second cell of the same information grid", () => {
+  it("aligns paired details with the contact columns and spans configured full-width details", () => {
+    const resume = createDefaultResume();
+    resume.profile.details.splice(1, 0, { id: "site", label: "个人网站", value: "example.com" });
     const host = document.createElement("div");
-    host.innerHTML = renderToStaticMarkup(<ResumeProfileView resume={createDefaultResume()} />);
+    host.innerHTML = renderToStaticMarkup(<ResumeProfileView resume={resume} />);
     const rows = host.querySelectorAll(".profile-info-row");
     expect(rows[0].children[1].textContent).toContain("邮箱：");
-    expect(rows[1].children[1].textContent).toBe("学历：本科");
+    expect(rows[1].children[0].textContent).toBe("学历：本科");
+    expect(rows[1].children[1].textContent).toBe("个人网站：example.com");
     expect((rows[2].children[0] as HTMLElement).style.gridColumn).toBe("1 / -1");
   });
 

@@ -16,12 +16,9 @@ export function profileInfoRows(profile: ResumeProfile): ProfileInfoRow[] {
   let pending: ProfileInfoRow | undefined;
   const flush = () => { if (pending) rows.push(pending); pending = undefined; };
   for (const detail of details) {
-    if (detail.label.trim() === "求职状态") {
+    if (detail.fullWidth) {
       flush();
       rows.push({ id: detail.id, left: label(detail) });
-    } else if (["学历", "最高学历"].includes(detail.label.trim())) {
-      rows.push({ id: pending?.id ?? detail.id, left: pending?.left ?? "", right: label(detail) });
-      pending = undefined;
     } else if (pending) {
       pending.right = label(detail);
       flush();
