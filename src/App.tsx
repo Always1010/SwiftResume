@@ -8,6 +8,7 @@ import { NewResumeDialog } from "./components/NewResumeDialog";
 import { PhotoBackgroundPicker } from "./components/PhotoBackgroundPicker";
 import { ResumeEditorCanvas } from "./components/ResumeEditorCanvas";
 import { ResumePreview } from "./components/ResumePreview";
+import { openPreviewWindow } from "./export/openPreviewWindow";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { TemplatePickerDialog } from "./components/TemplatePickerDialog";
@@ -481,14 +482,9 @@ export function App() {
   });
   usePreviewPublisher(activeResumeId, resume, ready, applyRemoteResume);
 
-  const openStandalonePreview = (view = "preview") => {
+  const openStandalonePreview = (view: "preview" | "html-print" = "preview") => {
     if (!activeResumeId) return;
-    const url = new URL(window.location.href);
-    url.search = "";
-    url.hash = "";
-    url.searchParams.set("view", view);
-    url.searchParams.set("resumeId", activeResumeId);
-    window.open(url.toString(), `swift-resume-${view}-${activeResumeId}`)?.focus();
+    openPreviewWindow(view, activeResumeId);
   };
   usePdfPrintShortcut(() => { if (ready) setCheckOpen(true); });
   const exportPdf = () => setPdfResume(resume);
