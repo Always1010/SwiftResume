@@ -1,6 +1,6 @@
 // Paginate the browser's own DOM at content boundaries. The resulting nodes are
 // used unchanged for screen preview and printing; no canvas/text reconstruction.
-type Boundary = { node: Node; offset: number };
+type Boundary = { node: Node; offset: number; preferred?: boolean };
 
 export function paginateHtml(source: HTMLElement, destination: HTMLElement): number {
   const original = source.querySelector<HTMLElement>(".html-resume-content")!;
@@ -14,7 +14,7 @@ export function paginateHtml(source: HTMLElement, destination: HTMLElement): num
   const scale = page.getBoundingClientRect().width / parseFloat(style.width);
   const capacity = page.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) - 1;
   const boundaries: Boundary[] = [];
-  const after = (node: Node) => boundaries.push({ node: node.parentNode!, offset: Array.prototype.indexOf.call(node.parentNode!.childNodes, node) + 1 });
+  const after = (node: Node, preferred = false) => boundaries.push({ node: node.parentNode!, offset: Array.prototype.indexOf.call(node.parentNode!.childNodes, node) + 1, preferred });
 
   original.querySelectorAll<HTMLElement>("li, .resume-flow-entry, section").forEach((node, i) => { node.dataset.printNode = String(i); });
   original.querySelectorAll<HTMLOListElement>("ol").forEach((list) => {
@@ -26,7 +26,10 @@ export function paginateHtml(source: HTMLElement, destination: HTMLElement): num
   function collect(element: HTMLElement) {
     // Reserve room for a section/entry heading on the first page of an entry.
     const short = element.getBoundingClientRect().height / scale < capacity - 80;
-    if (element.matches(".resume-header, .education-entry, tr") || (short && element.matches(".resume-flow-entry, li, p, blockquote, table"))) {
+    if (element.matches(".resume-flow-entry")) {
+      Array.from(element.children).forEach((child) => collect(child as HTMLElement));
+      after(element, true);
+    } else if (element.matches(".resume-header, .education-entry, tr") || (short && element.matches("li, p, blockquote, table"))) {
       after(element);
     } else if (element.matches("p") && !short) {
       const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
@@ -44,7 +47,7 @@ export function paginateHtml(source: HTMLElement, destination: HTMLElement): num
     } else after(element);
   }
   Array.from(original.children).forEach((child) => collect(child as HTMLElement));
-  boundaries.push({ node: original, offset: original.childNodes.length });
+  boundaries.push({ node: original, offset: original.childNodes.length, preferred: true });
 
   let start: Boundary = { node: original, offset: 0 };
   let cursor = 0;
@@ -94,6 +97,16 @@ export function paginateHtml(source: HTMLElement, destination: HTMLElement): num
     if (best < cursor) {
       destination.replaceChildren();
       throw new Error("有内容超过一页可用高度，请缩短个人信息或拆分过高的表格行后重试。");
+    }
+    // Keep entries whole only when doing so leaves a modest gap. Otherwise use
+    // paragraph/list boundaries within the next entry to fill the current page.
+    if (!boundaries[best].preferred) {
+      for (let index = best - 1; index >= cursor; index--) {
+        if (!boundaries[index].preferred) continue;
+        render(boundaries[index]);
+        if (capacity - currentContent.getBoundingClientRect().height / scale <= 140) best = index;
+        break;
+      }
     }
     render(boundaries[best]);
     // Range endpoints may leave an empty continuation at the very end.

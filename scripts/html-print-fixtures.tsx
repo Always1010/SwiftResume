@@ -27,6 +27,10 @@ if (name === "long-paragraph") body.push(paragraph("超长段落开始" + "验�
 if (name === "table") body.push({ type: "table", content: Array.from({ length: 65 }, (_, i) => ({ type: "tableRow", content: ["第一列", "第二列"].map((text) => ({ type: "tableCell", content: [paragraph(`${text}数据 ${i + 1}`)] })) })) });
 resume.sections = [education, { id: "projects", type: "content", title: "项目经历", enabled: true, entries: Array.from({ length: name === "multipage" ? 16 : 1 }, (_, i) => ({ id: `p${i}`, title: `轻量级 HTTP 服务器 ${i + 1}`, subtitle: "核心开发", date: "2024.07 — 2024.09", body: { type: "doc", content: body } })) }];
 const zoom = name === "zoom" ? 0.7 : 1;
+if (name === "gap" && resume.sections[1].type === "content") {
+  const entry = resume.sections[1].entries[0];
+  resume.sections[1].entries = [30, 22].map((length, i) => ({ ...entry, id: `gap-${i}`, title: `留白测试项目 ${i + 1}`, body: { type: "doc", content: Array.from({ length }, (_, line) => paragraph(`项目 ${i + 1} 段落 ${line + 1}：保留正文并合理跨页。`)) } }));
+}
 const assert = (condition: boolean, message: string) => { if (!condition) throw new Error(message); };
 const normalized = (text: string) => text.replace(/\s/g, "");
 const root = document.getElementById("root")!;
@@ -41,9 +45,11 @@ createRoot(root).render(<main className="html-print-app"><div className="html-pr
     const pages = Array.from(document.querySelectorAll<HTMLElement>(".html-resume-pages > .html-resume"));
     assert(normalized(source.textContent!) === normalized(pages.map((page) => page.textContent).join("")), "分页丢失或重复文字");
     assert(count === pages.length, "页数不一致");
+    if (name === "gap") assert(pages[0].textContent?.includes("留白测试项目 2"), "不能把整个下一项目推到下一页造成大块留白");
     if (["multipage", "long-entry", "long-paragraph", "table"].includes(name)) assert(count > 1, "长内容应分页");
     const properties = ["fontFamily", "fontSize", "fontWeight", "lineHeight", "listStyleType", "paddingLeft", "marginBottom"] as const;
     for (const selector of ["h1", ".resume-section-heading h2", ".resume-rich-text p", ".resume-rich-text li", ".resume-rich-text strong", ".entry-role", ".education-detail"]) {
+      if (!source.querySelector(selector)) continue;
       const expected = getComputedStyle(source.querySelector(selector)!);
       const actual = getComputedStyle(pages[0].querySelector(selector)!);
       for (const property of properties) assert(expected[property] === actual[property], `${selector} ${property} 与原始 HTML 不同`);

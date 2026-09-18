@@ -58,7 +58,7 @@ try {
     if (message.error) item.reject(new Error(JSON.stringify(message.error))); else item.resolve(message.result);
   };
   await command("Page.enable");
-  for (const name of ["short", "multipage", "long-entry", "long-paragraph", "table", "zoom"]) {
+  for (const name of ["short", "multipage", "long-entry", "long-paragraph", "table", "zoom", "gap"]) {
     await command("Page.navigate", { url: `http://127.0.0.1:${port}/html-print-check?case=${name}` });
     let result;
     const deadline = Date.now() + 60_000;
