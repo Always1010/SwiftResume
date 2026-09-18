@@ -164,7 +164,14 @@ button { cursor: pointer; }
 .photo-crop-actions { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
 .subheading-row { margin: 20px 0 10px; }
 .subheading-row h3 { margin: 0; font-size: 13px; }
-.detail-row { display: grid; grid-template-columns: .65fr 1.35fr 28px; gap: 7px; margin-bottom: 8px; }
+.detail-row { display: grid; grid-template-columns: 22px minmax(85px, .65fr) minmax(130px, 1.35fr) auto 28px; align-items: center; gap: 7px; margin-bottom: 8px; border-radius: 9px; transition: background .14s ease, box-shadow .14s ease, opacity .14s ease; }
+.detail-row.dragging { opacity: .45; }
+.detail-row.drop-target { background: #edf7f0; box-shadow: 0 0 0 2px #83b294; }
+.detail-drag-handle { align-self: stretch; border: 0; border-radius: 7px; padding: 0; color: #96a29a; background: transparent; cursor: grab; font-size: 15px; letter-spacing: -3px; }
+.detail-drag-handle:hover, .detail-drag-handle:focus-visible { color: var(--green); background: #eef6f0; outline: none; }
+.detail-drag-handle:active { cursor: grabbing; }
+.detail-full-width { display: inline-flex; align-items: center; gap: 5px; color: #5f6d64; cursor: pointer; font-size: 10px; font-weight: 650; white-space: nowrap; }
+.detail-full-width input { width: 14px; height: 14px; margin: 0; accent-color: var(--green); }
 
 .resume-editor-scroller { min-width: 0; overflow-y: auto; padding: 22px 18px 70px; background: #e9eeea; scroll-behavior: smooth; }
 .resume-editor-hint { position: sticky; z-index: 5; top: 0; width: fit-content; margin: 0 auto 12px; border: 1px solid #d5e4da; border-radius: 999px; padding: 6px 12px; color: #527060; background: rgba(248, 251, 249, .94); box-shadow: 0 2px 9px rgba(30, 50, 38, .07); font-size: 10px; font-weight: 650; }
