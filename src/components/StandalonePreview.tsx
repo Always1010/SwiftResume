@@ -1,6 +1,7 @@
 import { usePdfPrintShortcut } from "../export/usePdfPrintShortcut";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { PdfExportDialog } from "./PdfExportDialog";
+import { ResumeExportDialog } from "./ResumeExportDialog";
+import { useOutputEngine } from "../settings/useOutputEngine";
 import { ResumeCheckDialog } from "./ResumeCheckDialog";
 import { exportRecord } from "../model/resumeVersions";
 import type { ResumeDocument } from "../model/resume";
@@ -52,6 +53,7 @@ function readTemplateGalleryWidth() {
 }
 
 export function StandalonePreview({ resumeId }: { resumeId: string }) {
+  const engine = useOutputEngine();
   const [resume, setResume] = useState<ResumeDocument | null>(null);
   const [error, setError] = useState("");
   const [pageCount, setPageCount] = useState(1);
@@ -213,12 +215,12 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
       </header>
       <div
         ref={workspaceRef}
-        className="standalone-preview-workspace"
+        className={`standalone-preview-workspace ${engine === "html" ? "html-standalone-workspace" : ""}`}
         style={{ "--template-gallery-width": `${galleryWidth}px` } as CSSProperties}
       >
-        {previewResume && <TemplateGallery selectedId={previewResume.theme.templateId} resume={previewResume} onSelect={(templateId) => updateAppearance({ theme: { templateId } })} />}
+        {previewResume && engine === "typst" && <TemplateGallery selectedId={previewResume.theme.templateId} resume={previewResume} onSelect={(templateId) => updateAppearance({ theme: { templateId } })} />}
         <div
-          className={`template-gallery-resizer ${resizingGallery ? "active" : ""}`}
+          className={`template-gallery-resizer ${engine === "html" ? "html-gallery-hidden" : ""} ${resizingGallery ? "active" : ""}`}
           role="separator"
           aria-label="调整模板中心宽度"
           aria-orientation="vertical"
@@ -249,7 +251,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
         <section className="standalone-preview-main">
           {previewResume && (
             <div className="standalone-appearance-bar">
-              <div className="standalone-template-summary"><strong>{selectedTemplate?.name}</strong><span>{selectedTemplate?.description}</span></div>
+              <div className="standalone-template-summary"><strong>{engine === "html" ? "HTML/CSS · 经典版式" : selectedTemplate?.name}</strong><span>{engine === "html" ? "在设置中切换输出方式；Typst 模板选择已保留" : selectedTemplate?.description}</span></div>
               <label className="density-control">
                 <span>紧凑</span>
                 <input aria-label="独立预览排版密度" type="range" min="0" max="100" step="1" value={previewResume.theme.density} onChange={(event) => updateAppearance({ theme: { density: Number(event.target.value) } })} />
@@ -267,14 +269,14 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
             </div>
           )}
           <div ref={viewportRef} className="standalone-preview-viewport">
-            {previewResume ? <ResumePreview resume={previewResume} zoom={fitWidth ? "fit" : zoom} templateId={previewResume.theme.templateId} onPageCountChange={updatePageCount} /> : (
+            {previewResume ? <ResumePreview engine={engine} resume={previewResume} zoom={fitWidth ? "fit" : zoom} templateId={previewResume.theme.templateId} onPageCountChange={updatePageCount} /> : (
               <div className="standalone-preview-empty"><strong>{error || "正在读取简历…"}</strong>{error && <span>你可以关闭此页面并重新打开独立预览。</span>}</div>
             )}
           </div>
         </section>
       </div>
       {checkOpen && previewResume && <ResumeCheckDialog resume={previewResume} onClose={() => setCheckOpen(false)} onContinue={() => { setCheckOpen(false); setPdfResume(previewResume); }} />}
-      {pdfResume && <PdfExportDialog resume={pdfResume} onDownloaded={(filename) => {
+      {pdfResume && <ResumeExportDialog engine={engine} resume={pdfResume} onDownloaded={(filename) => {
         const current = resumeRef.current;
         if (!current) return;
         const next = { ...current, lastExport: exportRecord(pdfResume, filename), updatedAt: new Date(Math.max(Date.now(), Date.parse(current.updatedAt) + 1)).toISOString() };

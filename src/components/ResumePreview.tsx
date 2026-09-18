@@ -4,8 +4,10 @@ import type { ContentEntry, ResumeDocument, ResumeSection, ResumeTemplateId } fr
 import { renderContentRichText } from "../model/contentRichText";
 import { EDUCATION_LAYOUT, PROFILE_LAYOUT, profileInfoRows } from "../model/resumeLayout";
 import "../typstPreview.css";
+import type { OutputEngine } from "../settings/appSettings";
 
 const PdfCanvasPreview = lazy(() => import("./PdfCanvasPreview"));
+const HtmlCanvasPreview = lazy(() => import("./HtmlPrintPreview").then((module) => ({ default: module.HtmlCanvasPreview })));
 
 function SectionHeading({ children }: { children: string }) {
   return <div className="resume-section-heading"><h2>{children}</h2><span /></div>;
@@ -102,6 +104,7 @@ export function ResumeSectionView({ section }: { section: ResumeSection }) {
 }
 
 interface ResumePreviewProps {
+  engine?: OutputEngine;
   resume: ResumeDocument;
   zoom: number | "fit";
   templateId?: ResumeTemplateId;
@@ -111,7 +114,12 @@ interface ResumePreviewProps {
 
 // The editor and experimental HTML print route share the views above.
 // This component retains the existing Typst PDF preview.
-export function ResumePreview({ resume, zoom, templateId, onPageCountChange, thumbnail = false }: ResumePreviewProps) {
+export function ResumePreview(props: ResumePreviewProps) {
+  if (props.engine === "html") return <Suspense fallback={<p role="status">正在加载 HTML 预览…</p>}><HtmlCanvasPreview resume={props.resume} zoom={props.zoom} onPageCountChange={props.onPageCountChange} /></Suspense>;
+  return <TypstPreview {...props} />;
+}
+
+function TypstPreview({ resume, zoom, templateId, onPageCountChange, thumbnail = false }: ResumePreviewProps) {
   const document = templateId ? { ...resume, theme: { ...resume.theme, templateId } } : resume;
   const { blob, updating, error, retry } = useTypstPreview(document);
   const [thumbnailImage, setThumbnailImage] = useState<{ blob: Blob; source: string } | null>(null);

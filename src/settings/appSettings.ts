@@ -1,4 +1,5 @@
 export type PreviewZoom = "fit" | 70 | 80 | 90 | 100;
+export type OutputEngine = "html" | "typst";
 export type SyncDelay = 0 | 100 | 300;
 export type SaveDelay = 300 | 500 | 1000;
 
@@ -11,6 +12,7 @@ export interface AppSettings {
   showOverflowWarning: boolean;
   previewZoom: PreviewZoom;
   previewOpen: boolean;
+  outputEngine: OutputEngine;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -22,6 +24,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   showOverflowWarning: true,
   previewZoom: "fit",
   previewOpen: true,
+  outputEngine: "html",
 };
 
 const STORAGE_KEY = "swift-resume:settings";
@@ -35,6 +38,7 @@ export function normalizeSettings(value: unknown): AppSettings {
   const candidate = value as Partial<AppSettings>;
   return {
     version: 1,
+    outputEngine: candidate.outputEngine === "typst" ? "typst" : "html",
     liveSync: typeof candidate.liveSync === "boolean" ? candidate.liveSync : DEFAULT_SETTINGS.liveSync,
     diskBackupEnabled: typeof candidate.diskBackupEnabled === "boolean"
       ? candidate.diskBackupEnabled

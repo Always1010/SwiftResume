@@ -4,8 +4,10 @@ import { getResumeTemplate } from "../templates/registry";
 import { Modal } from "./Modal";
 import { ResumePreview } from "./ResumePreview";
 import { TemplateGallery } from "./TemplateGallery";
+import type { OutputEngine } from "../settings/appSettings";
 
-export function TemplatePickerDialog({ resume, onApply, onClose }: {
+export function TemplatePickerDialog({ resume, onApply, onClose, engine = "typst" }: {
+  engine?: OutputEngine;
   resume: ResumeDocument;
   onApply: (theme: ResumeDocument["theme"]) => void;
   onClose: () => void;
@@ -19,10 +21,10 @@ export function TemplatePickerDialog({ resume, onApply, onClose }: {
       <button type="button" className="secondary-button" onClick={onClose} aria-label="关闭模板选择">关闭</button>
     </header>
     <div className="template-picker-body">
-      <TemplateGallery resume={preview} selectedId={theme.templateId} onSelect={(templateId) => setTheme((current) => ({ ...current, templateId }))} />
+      {engine === "typst" ? <TemplateGallery resume={preview} selectedId={theme.templateId} onSelect={(templateId) => setTheme((current) => ({ ...current, templateId }))} /> : <aside className="html-template-notice"><strong>HTML/CSS · 经典版式</strong><p>可在右侧调节密度和配色。其他模板可切换为 Typst 后使用，原来的模板选择会保留。</p></aside>}
       <section className="template-picker-preview" aria-label="试用效果">
         <div className="preview-toolbar">
-          <strong>{getResumeTemplate(theme.templateId).name}</strong>
+          <strong>{engine === "html" ? "HTML/CSS · 经典版式" : getResumeTemplate(theme.templateId).name}</strong>
           <span className="page-count-badge">预览 {pageCount} 页</span>
           <label className="density-control"><span>紧凑</span><input type="range" min="0" max="100" aria-label="试用排版密度" value={theme.density} onChange={(event) => {
             const density = Number(event.target.value);
@@ -33,7 +35,7 @@ export function TemplatePickerDialog({ resume, onApply, onClose }: {
             setTheme((current) => ({ ...current, accent }));
           }} /></label>
         </div>
-        <ResumePreview resume={preview} zoom="fit" onPageCountChange={setPageCount} />
+        <ResumePreview engine={engine} resume={preview} zoom="fit" onPageCountChange={setPageCount} />
       </section>
     </div>
     <footer className="workspace-dialog-footer">

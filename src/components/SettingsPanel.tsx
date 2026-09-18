@@ -101,7 +101,11 @@ export function SettingsPanel({
                 <option value={1000}>1 秒</option>
               </select>
             </label>
-            <div className="setting-row"><div><strong>统一 PDF 排版</strong><p>预览、下载和打印均使用 Typst 生成的同一份 PDF。</p></div></div>
+            <label className="setting-row"><div><strong>预览与 PDF 输出方式</strong><p>同时应用于右侧预览、独立预览、导出和打印。HTML/CSS 使用经典版式，通过浏览器另存为 PDF；Typst 支持全部模板并直接下载。</p></div>
+              <select aria-label="预览与 PDF 输出方式" value={settings.outputEngine} onChange={(event) => update("outputEngine", event.target.value === "typst" ? "typst" : "html")}>
+                <option value="html">HTML/CSS（默认）</option><option value="typst">Typst</option>
+              </select>
+            </label>
           </div>
 
           <div className="settings-group">

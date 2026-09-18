@@ -6,6 +6,12 @@
 .html-print-help { max-width: 1000px; margin: 16px auto; padding: 0 24px; line-height: 1.7; }
 .html-print-status { text-align: center; }
 .html-resume-pages { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+.preview-scroller.html-canvas-preview { display: block; width: 100%; height: 100%; min-height: 0; overflow: auto; padding: 20px; }
+.html-canvas-stage { width: max-content; min-width: 100%; }
+.html-canvas-preview .html-resume-pages { align-items: center; }
+.html-template-notice { padding: 24px; color: #536259; line-height: 1.8; }
+.standalone-preview-workspace.html-standalone-workspace { grid-template-columns: minmax(0, 1fr); }
+.html-gallery-hidden { display: none; }
 .resume-page.resume-editor-canvas.html-resume { flex: none; width: 210mm; max-width: none; height: 297mm; min-height: 297mm; padding: 28px; margin: 0; overflow: hidden; font-family: "SwiftResume Browser Sans", sans-serif; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 .html-resume-content { display: flow-root; }
 .resume-page.resume-editor-canvas.html-resume-source { position: fixed; left: -10000px; top: 0; height: auto; overflow: visible; visibility: hidden; pointer-events: none; }

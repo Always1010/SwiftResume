@@ -12,7 +12,7 @@ import { openPreviewWindow } from "./export/openPreviewWindow";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { TemplatePickerDialog } from "./components/TemplatePickerDialog";
-import { PdfExportDialog } from "./components/PdfExportDialog";
+import { ResumeExportDialog } from "./components/ResumeExportDialog";
 import { ResumeCheckDialog } from "./components/ResumeCheckDialog";
 import { VersionsDialog } from "./components/VersionsDialog";
 import { TextImportDialog } from "./components/TextImportDialog";
@@ -501,7 +501,6 @@ export function App() {
         </div>
         <div className="topbar-actions">
           <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置</button>
-          <button type="button" className="secondary-button" onClick={() => openStandalonePreview("html-print")}>HTML 打印预览（试用）</button>
           <button type="button" className="primary-button export-button" disabled={!ready} onClick={() => setCheckOpen(true)}>导出 PDF</button>
         </div>
       </header>
@@ -576,12 +575,12 @@ export function App() {
                 onChange={(photoBackground) => dispatch({ type: "update-profile", value: { ...resume.profile, photoBackground } })}
               />
             </div>
-            <ResumePreview resume={resume} zoom={settings.previewZoom} onPageCountChange={handlePageCount} />
+            <ResumePreview engine={settings.outputEngine} resume={resume} zoom={settings.previewZoom} onPageCountChange={handlePageCount} />
           </section>
         ) : null}
       </div>
       {checkOpen && <ResumeCheckDialog resume={resume} onClose={() => setCheckOpen(false)} onContinue={() => { setCheckOpen(false); exportPdf(); }} onLocate={(id) => { setCheckOpen(false); locateResumeBlock(id); }} />}
-      {pdfResume && <PdfExportDialog resume={pdfResume} onDownloaded={(filename) => dispatch({ type: "record-export", value: exportRecord(pdfResume, filename) })} onClose={() => setPdfResume(null)} />}
+      {pdfResume && <ResumeExportDialog engine={settings.outputEngine} resume={pdfResume} onDownloaded={(filename) => dispatch({ type: "record-export", value: exportRecord(pdfResume, filename) })} onClose={() => setPdfResume(null)} />}
       {undoLabel === "删除模块" && <div className="undo-notice" role="status">模块已删除<button type="button" onClick={() => changeHistory("undo")}>撤销删除</button></div>}
       {settingsOpen && <SettingsPanel
         settings={settings}
@@ -633,7 +632,7 @@ export function App() {
         const next = documents.reduce((lib, item) => updateResumeSummary(lib, item.id, item.resume), currentLibrary);
         await saveDocuments(documents, next); libraryRef.current = next; setLibrary(next);
       }} />}
-      {templatePickerOpen && <TemplatePickerDialog resume={resume} onClose={() => setTemplatePickerOpen(false)} onApply={(theme) => {
+      {templatePickerOpen && <TemplatePickerDialog engine={settings.outputEngine} resume={resume} onClose={() => setTemplatePickerOpen(false)} onApply={(theme) => {
         dispatch({ type: "update-theme", value: theme });
         setTemplatePickerOpen(false);
       }} />}

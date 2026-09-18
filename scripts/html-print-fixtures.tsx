@@ -8,6 +8,7 @@ import "../src/styles.css";
 import "../src/editorModes.css";
 import "../src/workspace.css";
 import "../src/htmlPrint.css";
+import { savePrintJob, loadPrintJob } from "../src/export/htmlPrintJobs";
 
 const name = new URLSearchParams(location.search).get("case") ?? "short";
 const paragraph = (text: string): RichTextNode => ({ type: "paragraph", content: [{ type: "text", text }] });
@@ -71,6 +72,13 @@ createRoot(root).render(<main className="html-print-app"><div className="html-pr
 }} /></div></main>);
 
 window.verifyPrintedPdf = async (data) => {
+  const original = structuredClone(resume);
+  const jobId = crypto.randomUUID();
+  const url = await savePrintJob(jobId, original);
+  original.profile.name = "保存后修改，不应改变快照";
+  const saved = await loadPrintJob(jobId);
+  assert(saved?.profile.name === resume.profile.name, "打印快照不能随原数据修改");
+  assert(new URL(url).searchParams.get("job") === jobId, "打印链接缺少快照标识");
   const nativeWorker = new Worker(workerUrl, { type: "module" });
   const worker = new PDFWorker({ port: nativeWorker } as never);
   const task = getDocument({ data: Uint8Array.from(atob(data), (char) => char.charCodeAt(0)), worker, useSystemFonts: false });

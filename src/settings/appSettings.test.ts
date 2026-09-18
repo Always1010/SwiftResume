@@ -3,8 +3,14 @@ import { DEFAULT_SETTINGS, normalizeSettings } from "./appSettings";
 
 describe("app settings", () => {
   it("enables live synchronization by default", () => {
+    expect(normalizeSettings(null).outputEngine).toBe("html");
     expect(normalizeSettings(null).liveSync).toBe(true);
     expect(normalizeSettings(null).diskBackupEnabled).toBe(true);
+  });
+  it("migrates old settings to HTML and preserves an explicit Typst selection", () => {
+    expect(normalizeSettings({ previewZoom: 80 }).outputEngine).toBe("html");
+    expect(normalizeSettings({ outputEngine: "invalid" }).outputEngine).toBe("html");
+    expect(normalizeSettings({ outputEngine: "typst" }).outputEngine).toBe("typst");
   });
 
   it("preserves supported values", () => {
