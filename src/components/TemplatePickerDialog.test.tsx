@@ -4,15 +4,17 @@ import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createBlankResume } from "../model/resume";
 import { TemplatePickerDialog } from "./TemplatePickerDialog";
+import { ResumePreview } from "./ResumePreview";
+import { TemplateGallery } from "./TemplateGallery";
 
 vi.mock("./Modal", () => ({ Modal: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
-vi.mock("./ResumePreview", () => ({ ResumePreview: () => null }));
-vi.mock("./TemplateGallery", () => ({ TemplateGallery: ({ onSelect }: { onSelect: (id: string) => void }) => <button onClick={() => onSelect("minimal")}>试用极简</button> }));
+vi.mock("./ResumePreview", () => ({ ResumePreview: vi.fn(() => null) }));
+vi.mock("./TemplateGallery", () => ({ TemplateGallery: vi.fn(({ onSelect }: { onSelect: (id: string) => void }) => <button onClick={() => onSelect("minimal")}>试用极简</button>) }));
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 let root: ReturnType<typeof createRoot>;
 afterEach(() => { act(() => root.unmount()); document.body.innerHTML = ""; });
 
-function setup() {
+function setup(engine: "html" | "typst" = "typst") {
   const container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -20,7 +22,7 @@ function setup() {
   const original = structuredClone(resume);
   const onApply = vi.fn();
   const onClose = vi.fn();
-  act(() => root.render(<TemplatePickerDialog resume={resume} onApply={onApply} onClose={onClose} />));
+  act(() => root.render(<TemplatePickerDialog engine={engine} resume={resume} onApply={onApply} onClose={onClose} />));
   const click = (text: string) => act(() => [...container.querySelectorAll("button")].find((button) => button.textContent === text)!.click());
   return { resume, original, onApply, onClose, click };
 }
@@ -40,5 +42,10 @@ describe("template trial", () => {
     expect(onApply).not.toHaveBeenCalled();
     click("应用样式");
     expect(onApply).toHaveBeenCalledExactlyOnceWith({ ...resume.theme, templateId: "minimal" });
+  });
+  it("keeps the template gallery and live template preview available for HTML", () => {
+    setup("html");
+    expect(TemplateGallery).toHaveBeenCalledWith(expect.objectContaining({ engine: "html" }), undefined);
+    expect(ResumePreview).toHaveBeenCalledWith(expect.objectContaining({ engine: "html" }), undefined);
   });
 });

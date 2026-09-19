@@ -215,12 +215,12 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
       </header>
       <div
         ref={workspaceRef}
-        className={`standalone-preview-workspace ${engine === "html" ? "html-standalone-workspace" : ""}`}
+        className="standalone-preview-workspace"
         style={{ "--template-gallery-width": `${galleryWidth}px` } as CSSProperties}
       >
-        {previewResume && engine === "typst" && <TemplateGallery selectedId={previewResume.theme.templateId} resume={previewResume} onSelect={(templateId) => updateAppearance({ theme: { templateId } })} />}
+        {previewResume && <TemplateGallery engine={engine} selectedId={previewResume.theme.templateId} resume={previewResume} onSelect={(templateId) => updateAppearance({ theme: { templateId } })} />}
         <div
-          className={`template-gallery-resizer ${engine === "html" ? "html-gallery-hidden" : ""} ${resizingGallery ? "active" : ""}`}
+          className={`template-gallery-resizer ${resizingGallery ? "active" : ""}`}
           role="separator"
           aria-label="调整模板中心宽度"
           aria-orientation="vertical"
@@ -251,7 +251,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
         <section className="standalone-preview-main">
           {previewResume && (
             <div className="standalone-appearance-bar">
-              <div className="standalone-template-summary"><strong>{engine === "html" ? "HTML/CSS · 经典版式" : selectedTemplate?.name}</strong><span>{engine === "html" ? "在设置中切换输出方式；Typst 模板选择已保留" : selectedTemplate?.description}</span></div>
+              <div className="standalone-template-summary"><strong>{selectedTemplate?.name}</strong><span>{selectedTemplate?.description}</span></div>
               <label className="density-control">
                 <span>紧凑</span>
                 <input aria-label="独立预览排版密度" type="range" min="0" max="100" step="1" value={previewResume.theme.density} onChange={(event) => updateAppearance({ theme: { density: Number(event.target.value) } })} />

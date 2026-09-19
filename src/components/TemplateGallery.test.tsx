@@ -28,7 +28,7 @@ describe("TemplateGallery", () => {
     root = createRoot(container);
     const resume = createDefaultResume();
     resume.profile.name = "真实简历内容";
-    act(() => root!.render(<TemplateGallery selectedId="blueprint" resume={resume} onSelect={() => undefined} />));
+    act(() => root!.render(<TemplateGallery engine="html" selectedId="blueprint" resume={resume} onSelect={() => undefined} />));
     act(() => [...container.querySelectorAll("button")].find((button) => button.textContent === "全部模板")!.click());
     const images = [...container.querySelectorAll(".template-thumbnail-frame img")];
     expect(images).toHaveLength(100);
@@ -41,5 +41,6 @@ describe("TemplateGallery", () => {
     act(() => [...container.querySelectorAll("button")].find((button) => button.textContent === "并排对比")!.click());
     expect(ResumePreview).toHaveBeenCalledTimes(2);
     expect(vi.mocked(ResumePreview).mock.calls.every(([props]) => props.resume.profile.name === "真实简历内容")).toBe(true);
+    expect(vi.mocked(ResumePreview).mock.calls.every(([props]) => props.engine === "html")).toBe(true);
   });
 });
