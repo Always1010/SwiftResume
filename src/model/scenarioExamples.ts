@@ -16,6 +16,10 @@ type ExampleSection =
 
 interface ScenarioExample {
   name: string;
+  age: string;
+  gender: string;
+  location: string;
+  phone: string;
   email: string;
   details: { label: string; value: string }[];
   sections: ExampleSection[];
@@ -25,6 +29,10 @@ interface ScenarioExample {
 export const SCENARIO_EXAMPLES: Record<Exclude<ResumeCreationTemplate, "default" | "blank">, ScenarioExample> = {
   graduate: {
     name: "【示例】林晨",
+    age: "22",
+    gender: "男",
+    location: "杭州",
+    phone: "138 0000 1001",
     email: "linchen@example.com",
     details: [{ label: "毕业时间", value: "2026 年 6 月" }, { label: "求职意向", value: "前端开发 / 应届校招" }],
     sections: [
@@ -105,6 +113,10 @@ export const SCENARIO_EXAMPLES: Record<Exclude<ResumeCreationTemplate, "default"
   },
   experienced: {
     name: "【示例】周予安",
+    age: "27",
+    gender: "男",
+    location: "上海",
+    phone: "138 0000 1002",
     email: "zhouyuan@example.com",
     details: [{ label: "工作经验", value: "3 年前端开发" }, { label: "业务方向", value: "商家后台 / 数据产品" }],
     sections: [
@@ -189,6 +201,10 @@ export const SCENARIO_EXAMPLES: Record<Exclude<ResumeCreationTemplate, "default"
   },
   "career-change": {
     name: "【示例】许知夏",
+    age: "26",
+    gender: "男",
+    location: "杭州",
+    phone: "138 0000 1003",
     email: "xuzhixia@example.com",
     details: [{ label: "求职意向", value: "产品助理 / 用户增长产品" }, { label: "经历方向", value: "用户运营转产品" }],
     sections: [

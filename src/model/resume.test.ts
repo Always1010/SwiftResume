@@ -29,6 +29,7 @@ describe("resume model", () => {
     expect(resume.schemaVersion).toBe(4);
     expect(resume.theme.templateId).toBe("classic");
     expect(resume.profile.photo).toBe(DEFAULT_PROFILE_PHOTO);
+    expect(DEFAULT_PROFILE_PHOTO).toContain("neutral-professional-avatar.png");
     expect(resume.profile.photoSource).toBe(DEFAULT_PROFILE_PHOTO);
     expect(resume.profile.photoBackground).toBe("transparent");
     expect(resume.profile.photoCrop).toEqual({ zoom: 1, offsetX: 0, offsetY: 0 });

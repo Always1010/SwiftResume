@@ -26,7 +26,7 @@ export type ResumeTemplateId = typeof RESUME_TEMPLATE_IDS[number];
 export type ResumeCreationTemplate = "default" | "blank" | "graduate" | "experienced" | "career-change";
 export type SectionPurpose = "work" | "project" | "skills" | "summary" | "custom";
 export const DEFAULT_RESUME_TEMPLATE: ResumeTemplateId = "classic";
-export const DEFAULT_PROFILE_PHOTO = "./sample/fictional-engineer.png";
+export const DEFAULT_PROFILE_PHOTO = "./sample/neutral-professional-avatar.png";
 export const DEFAULT_PHOTO_BACKGROUND = "transparent";
 
 export interface ProfilePhotoCrop {
@@ -421,8 +421,16 @@ export function createResumeFromTemplate(template: ResumeCreationTemplate, withE
     return resume;
   }
   resume.profile = {
-    ...resume.profile, name: example.name, headline: scene.role, location: "杭州",
-    phone: "【填写你的手机】", email: example.email,
+    ...resume.profile,
+    name: example.name,
+    headline: scene.role,
+    age: example.age,
+    gender: example.gender,
+    location: example.location,
+    phone: example.phone,
+    email: example.email,
+    photo: DEFAULT_PROFILE_PHOTO,
+    photoSource: DEFAULT_PROFILE_PHOTO,
     details: example.details.map((detail) => ({ ...detail, id: makeId(), fullWidth: false })),
   };
   resume.sections = example.sections.map((section): ResumeSection => {
