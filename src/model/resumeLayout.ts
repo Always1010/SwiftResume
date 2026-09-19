@@ -6,6 +6,16 @@ export const EDUCATION_LAYOUT = { maxLeftPercent: 45, columnGapPx: 12 };
 
 export interface ProfileInfoRow { id: string; left: string; right?: string }
 
+export function profilePrimaryInfo(profile: ResumeProfile) {
+  const age = profile.age.trim().replace(/岁$/, "");
+  const gender = profile.gender.trim();
+  const location = profile.location.trim().replace(/^现居\s*[：:]?\s*/, "");
+  return {
+    ageGender: [age ? `${age}岁` : "", gender].filter(Boolean).join(" · "),
+    location: location ? `现居：${location}` : "",
+  };
+}
+
 export function profileInfoRows(profile: ResumeProfile): ProfileInfoRow[] {
   const rows: ProfileInfoRow[] = [];
   if (profile.phone || profile.email) {

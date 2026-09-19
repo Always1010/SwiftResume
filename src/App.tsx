@@ -627,7 +627,7 @@ export function App() {
         const documents = await Promise.all(ids.map(async (id) => {
           const document = await loadResumeById(id);
           if (!document) throw new Error("无法读取部分所选版本，尚未写入任何变更");
-          return { id, resume: { ...document, profile: { ...document.profile, phone: resume.profile.phone, email: resume.profile.email, location: resume.profile.location }, updatedAt: new Date().toISOString() } };
+          return { id, resume: { ...document, profile: { ...document.profile, age: resume.profile.age, gender: resume.profile.gender, phone: resume.profile.phone, email: resume.profile.email, location: resume.profile.location }, updatedAt: new Date().toISOString() } };
         }));
         const next = documents.reduce((lib, item) => updateResumeSummary(lib, item.id, item.resume), currentLibrary);
         await saveDocuments(documents, next); libraryRef.current = next; setLibrary(next);

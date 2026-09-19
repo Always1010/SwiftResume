@@ -4,7 +4,7 @@ import * as compilerWrapper from "@myriaddreamin/typst-ts-web-compiler";
 import compilerWasmUrl from "@myriaddreamin/typst-ts-web-compiler/wasm?url";
 import { DEFAULT_PROFILE_PHOTO, getDensityLayout, type ContentEntry, type RichTextDocument, type RichTextNode, type ResumeDocument, type ResumeSection, type ResumeTemplateId } from "../model/resume";
 import { getResumeTemplate } from "../templates/registry";
-import { EDUCATION_LAYOUT, PROFILE_LAYOUT, profileInfoRows } from "../model/resumeLayout";
+import { EDUCATION_LAYOUT, PROFILE_LAYOUT, profileInfoRows, profilePrimaryInfo } from "../model/resumeLayout";
 
 const asString = (value: string) => JSON.stringify(value);
 const withUnit = (value: number, unit: string) => `${Math.round(value * 100) / 100}${unit}`;
@@ -223,7 +223,8 @@ function profileSource(resume: ResumeDocument, templateId: ResumeTemplateId, pho
   const infoGrid = infoCells.length
     ? `#v(5.25pt)\n#layout(size => grid(columns: ${singleColumn ? "(1fr,)" : `(calc.min(${firstColumn}, size.width * 0.45), 1fr)`}, column-gutter: ${PROFILE_LAYOUT.columnGapEm}em, row-gutter: ${PROFILE_LAYOUT.rowGapPx * .75}pt, ${infoCells.join(",\n")}))`
     : "";
-  const contact = [resume.profile.ageGender, resume.profile.location].filter(Boolean).join("    ");
+  const primaryInfo = profilePrimaryInfo(resume.profile);
+  const contact = [primaryInfo.ageGender, primaryInfo.location].filter(Boolean).join("    ");
   const photoImage = photoPath ? `image(${asString(photoPath)}, width: 27mm, height: 35mm, fit: "cover")` : "";
   const photo = photoImage && /^#[0-9a-f]{6}$/i.test(resume.profile.photoBackground)
     ? `block(width: 27mm, height: 35mm, fill: rgb(${asString(resume.profile.photoBackground)}), ${photoImage})`

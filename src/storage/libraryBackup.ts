@@ -9,9 +9,9 @@ function validNode(node: unknown, depth = 0): node is RichTextNode {
   return (node.text === undefined || typeof node.text === "string") && (node.attrs === undefined || object(node.attrs)) && (node.marks === undefined || Array.isArray(node.marks) && node.marks.every((m) => object(m) && typeof m.type === "string" && (m.attrs === undefined || object(m.attrs)))) && (node.content === undefined || Array.isArray(node.content) && node.content.every((n) => validNode(n, depth + 1)));
 }
 export function readCurrentDocument(value: unknown, snapshot = false): ResumeDocument | null {
-  if (!object(value) || value.schemaVersion !== 3 || !strings(value, ["title", "updatedAt"]) || !object(value.profile) || !object(value.theme) || !Array.isArray(value.sections)) return null;
+  if (!object(value) || value.schemaVersion !== 4 || !strings(value, ["title", "updatedAt"]) || !object(value.profile) || !object(value.theme) || !Array.isArray(value.sections)) return null;
   const profile = value.profile;
-  if (!strings(profile, ["name", "headline", "ageGender", "location", "phone", "email", "photo"]) || !Array.isArray(profile.details) || !profile.details.every((d) => object(d) && strings(d, ["id", "label", "value"]) && (d.fullWidth === undefined || typeof d.fullWidth === "boolean"))) return null;
+  if (!strings(profile, ["name", "headline", "age", "gender", "location", "phone", "email", "photo"]) || !Array.isArray(profile.details) || !profile.details.every((d) => object(d) && strings(d, ["id", "label", "value"]) && (d.fullWidth === undefined || typeof d.fullWidth === "boolean"))) return null;
   if (typeof value.theme.accent !== "string" || !/^#[0-9a-f]{6}$/i.test(value.theme.accent) || typeof value.theme.density !== "number" || !Number.isFinite(value.theme.density)) return null;
   const ids = new Set<string>();
   for (const section of value.sections) {

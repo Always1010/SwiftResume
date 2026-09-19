@@ -88,7 +88,8 @@ export type SectionType = "education" | "content";
 export interface ResumeProfile {
   name: string;
   headline: string;
-  ageGender: string;
+  age: string;
+  gender: string;
   location: string;
   phone: string;
   email: string;
@@ -161,7 +162,7 @@ export interface ContentSection extends SectionBase {
 export type ResumeSection = EducationSection | ContentSection;
 
 export interface ResumeDocument {
-  schemaVersion: 3;
+  schemaVersion: 4;
   title: string;
   profile: ResumeProfile;
   theme: { accent: string; density: Density; templateId: ResumeTemplateId };
@@ -233,15 +234,16 @@ export function createContentEntry(): ContentEntry {
 
 export function createDefaultResume(): ResumeDocument {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     title: "搞笑反差示例简历",
     updatedAt: new Date().toISOString(),
     theme: { accent: "#596d82", density: DEFAULT_DENSITY, templateId: DEFAULT_RESUME_TEMPLATE },
     profile: {
       name: "林同学（BACKEND-007）",
       headline: "后端开发工程师｜擅长把线上事故解释成预期之外的压力测试",
-      ageGender: "24岁 · 男",
-      location: "现居：X省",
+      age: "24",
+      gender: "男",
+      location: "X省",
       phone: "138 0000 0000",
       email: "backend007@example.com",
       photo: DEFAULT_PROFILE_PHOTO,
@@ -390,7 +392,7 @@ export function createBlankResume(): ResumeDocument {
     ...resume,
     title: "未命名简历",
     profile: {
-      name: "", headline: "", ageGender: "", location: "", phone: "", email: "", photo: "",
+      name: "", headline: "", age: "", gender: "", location: "", phone: "", email: "", photo: "",
       photoSource: "", photoBackground: DEFAULT_PHOTO_BACKGROUND, photoCrop: { ...DEFAULT_PROFILE_PHOTO_CROP }, details: [],
     },
     sections: [],
@@ -553,7 +555,7 @@ export function resumeReducer(state: ResumeDocument, action: ResumeAction): Resu
 export function isResumeDocument(value: unknown): value is ResumeDocument {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<ResumeDocument>;
-  return candidate.schemaVersion === 3 && typeof candidate.title === "string" && Boolean(candidate.profile) && Boolean(candidate.theme) && Array.isArray(candidate.sections);
+  return candidate.schemaVersion === 4 && typeof candidate.title === "string" && Boolean(candidate.profile) && Boolean(candidate.theme) && Array.isArray(candidate.sections);
 }
 
 export function normalizeResumeDocument(value: unknown): ResumeDocument | null {
