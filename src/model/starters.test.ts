@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
-import { clearResumeContent, createPurposeEntry, createQuickSection, createResumeFromTemplate, DEFAULT_PROFILE_PHOTO, normalizeResumeDocument, type ResumeDocument } from "./resume";
+import { clearResumeContent, createDefaultResume, createPurposeEntry, createQuickSection, createResumeFromTemplate, DEFAULT_PROFILE_PHOTO, normalizeResumeDocument, type ResumeDocument } from "./resume";
 import { plainText, writingGuide } from "./writingGuide";
 import { checkResume } from "./resumeChecks";
 
-it("creates complete, distinct career examples with matching layouts", () => {
+it("creates distinct career examples with the shared default layout", () => {
   const documents = (["graduate", "experienced", "career-change"] as const).map((scene) => createResumeFromTemplate(scene));
-  expect(new Set(documents.map((r) => r.theme.templateId)).size).toBe(3);
+  expect(documents.every((resume) => JSON.stringify(resume.theme) === JSON.stringify(createDefaultResume().theme))).toBe(true);
   expect(new Set(documents.map((r) => r.profile.headline)).size).toBe(3);
   for (const resume of documents) {
     expect(resume.profile.name).toContain("【示例】");

@@ -2,31 +2,26 @@
   "scenarios": {
     "graduate": [
       {
-        "file": "scenario-graduate-1-9dd3ce15d3f2.png",
+        "file": "scenario-graduate-1-5d2150550122.png",
         "width": 1200,
         "height": 1698
       }
     ],
     "experienced": [
       {
-        "file": "scenario-experienced-1-c4be30a9418a.png",
-        "width": 1200,
-        "height": 1698
-      },
-      {
-        "file": "scenario-experienced-2-45f6d3c3e577.png",
+        "file": "scenario-experienced-1-f478b1fb3637.png",
         "width": 1200,
         "height": 1698
       }
     ],
     "career-change": [
       {
-        "file": "scenario-career-change-1-fed982b77279.png",
+        "file": "scenario-career-change-1-f7bf32b85a41.png",
         "width": 1200,
         "height": 1698
       },
       {
-        "file": "scenario-career-change-2-4ce10968f2a8.png",
+        "file": "scenario-career-change-2-535c1f426fdf.png",
         "width": 1200,
         "height": 1698
       }
