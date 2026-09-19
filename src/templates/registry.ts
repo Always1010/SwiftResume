@@ -162,3 +162,8 @@ export const RESUME_TEMPLATES: readonly ResumeTemplateDefinition[] = [
 export function getResumeTemplate(id: ResumeTemplateId) {
   return RESUME_TEMPLATES.find((template) => template.id === id) ?? RESUME_TEMPLATES[0];
 }
+
+export function getResumeTemplatePageClasses(id: ResumeTemplateId) {
+  const template = getResumeTemplate(id);
+  return `resume-template-${template.renderBase} resume-variant-${template.styleVariant} resume-template-${template.id}`;
+}

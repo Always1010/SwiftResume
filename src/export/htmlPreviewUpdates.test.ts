@@ -4,7 +4,7 @@ import { commitHtmlPages } from "./htmlPreviewUpdates";
 
 afterEach(() => { document.body.innerHTML = ""; vi.unstubAllGlobals(); });
 it("retains unchanged page text nodes and scroll position while updating changed pages", () => {
-  document.body.innerHTML = '<div class="html-canvas-preview"><div id="visible"><div><div><p>第一页</p></div></div><div><div><p>旧文字</p></div></div></div></div><div id="measure"><div style="font-size:12px"><div><p>第一页</p></div></div><div><div><p>新文字</p></div></div><div><div><p>第三页</p></div></div></div>';
+  document.body.innerHTML = '<div class="html-canvas-preview"><div id="visible"><div class="resume-template-classic" data-template="classic"><div><p>第一页</p></div></div><div><div><p>旧文字</p></div></div></div></div><div id="measure"><div class="resume-template-minimal resume-variant-soft" data-template="pure" style="font-size:12px"><div><p>第一页</p></div></div><div><div><p>新文字</p></div></div><div><div><p>第三页</p></div></div></div>';
   const visible = document.getElementById("visible")!;
   const first = visible.querySelector("p")!;
   const secondPage = visible.children[1];
@@ -16,6 +16,8 @@ it("retains unchanged page text nodes and scroll position while updating changed
   expect(visible.children[1]).toBe(secondPage);
   expect(visible.textContent).toBe("第一页新文字第三页");
   expect((visible.firstElementChild as HTMLElement).style.fontSize).toBe("12px");
+  expect(visible.firstElementChild?.className).toBe("resume-template-minimal resume-variant-soft");
+  expect((visible.firstElementChild as HTMLElement).dataset.template).toBe("pure");
   expect(viewport.scrollTop).toBe(300);
   expect(viewport.scrollLeft).toBe(70);
   document.getElementById("measure")!.lastElementChild!.remove();

@@ -7,11 +7,12 @@ import { ResumeProfileView, ResumeSectionView } from "./ResumePreview";
 import "../htmlPrint.css";
 import { loadPrintJob } from "../export/htmlPrintJobs";
 import { commitHtmlPages, prepareHtmlFonts } from "../export/htmlPreviewUpdates";
+import { getResumeTemplatePageClasses } from "../templates/registry";
 
 const HtmlResumeContent = memo(function HtmlResumeContent({ resume }: { resume: ResumeDocument }) {
   return <div className="html-resume-content">
-    <section className="resume-editable-block profile-block"><ResumeProfileView resume={resume} /></section>
-    {resume.sections.filter((section) => section.enabled).map((section) => <section key={section.id} className="resume-editable-block section-block"><ResumeSectionView section={section} /></section>)}
+    <section className="resume-editable-block profile-block resume-flow-header"><ResumeProfileView resume={resume} /></section>
+    {resume.sections.filter((section) => section.enabled).map((section) => <section key={section.id} className="resume-editable-block section-block resume-flow-section"><ResumeSectionView section={section} /></section>)}
   </div>;
 }, (previous, next) => previous.resume.profile === next.resume.profile && previous.resume.sections === next.resume.sections);
 
@@ -25,6 +26,7 @@ export function HtmlResumePages({ resume, onReady, onUpdating }: { resume: Resum
   callback.current = onReady;
   updatingCallback.current = onUpdating;
   const density = getDensityLayout(resume.theme.density);
+  const templateClasses = getResumeTemplatePageClasses(resume.theme.templateId);
   const style = {
     "--resume-accent": resume.theme.accent,
     "--section-space": `${density.sectionSpacePx}px`,
@@ -80,7 +82,7 @@ export function HtmlResumePages({ resume, onReady, onUpdating }: { resume: Resum
     };
   }, [resume]);
   return <>
-    <div ref={source} className="resume-page resume-editor-canvas resume-template-classic html-resume html-resume-source" style={style} aria-hidden="true">
+    <div ref={source} className={`resume-page ${templateClasses} html-resume html-resume-source`} data-template={resume.theme.templateId} style={style} aria-hidden="true">
       <HtmlResumeContent resume={resume} />
     </div>
     <div ref={measure} className="html-resume-measure" aria-hidden="true" />

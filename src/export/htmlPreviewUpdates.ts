@@ -24,6 +24,9 @@ export function commitHtmlPages(measured: HTMLElement, visible: HTMLElement) {
     const current = visible.children[index];
     if (!current) { visible.append(next.cloneNode(true)); return; }
     const currentPage = current as HTMLElement;
+    currentPage.className = (next as HTMLElement).className;
+    if ((next as HTMLElement).dataset.template) currentPage.dataset.template = (next as HTMLElement).dataset.template;
+    else delete currentPage.dataset.template;
     currentPage.style.cssText = (next as HTMLElement).style.cssText;
     if (!current.firstElementChild?.isEqualNode(next.firstElementChild)) {
       current.replaceChildren(...Array.from(next.childNodes, (node) => node.cloneNode(true)));

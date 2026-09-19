@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RESUME_TEMPLATE_IDS } from "../model/resume";
-import { RESUME_TEMPLATES, getResumeTemplate } from "./registry";
+import { RESUME_TEMPLATES, getResumeTemplate, getResumeTemplatePageClasses } from "./registry";
 
 describe("resume template registry", () => {
   it("registers one hundred unique output templates", () => {
@@ -15,5 +15,10 @@ describe("resume template registry", () => {
       expect(RESUME_TEMPLATE_IDS).toContain(template.renderBase);
       expect(template.tags.length).toBeGreaterThan(0);
     }
+  });
+
+  it("maps catalog templates to their HTML base layout and visual variant", () => {
+    expect(getResumeTemplatePageClasses("consultant")).toBe("resume-template-swiss resume-variant-soft resume-template-consultant");
+    expect(getResumeTemplatePageClasses("classic")).toBe("resume-template-classic resume-variant-original resume-template-classic");
   });
 });

@@ -21,10 +21,10 @@ export function TemplatePickerDialog({ resume, onApply, onClose, engine = "typst
       <button type="button" className="secondary-button" onClick={onClose} aria-label="关闭模板选择">关闭</button>
     </header>
     <div className="template-picker-body">
-      {engine === "typst" ? <TemplateGallery resume={preview} selectedId={theme.templateId} onSelect={(templateId) => setTheme((current) => ({ ...current, templateId }))} /> : <aside className="html-template-notice"><strong>HTML/CSS · 经典版式</strong><p>可在右侧调节密度和配色。其他模板可切换为 Typst 后使用，原来的模板选择会保留。</p></aside>}
+      <TemplateGallery engine={engine} resume={preview} selectedId={theme.templateId} onSelect={(templateId) => setTheme((current) => ({ ...current, templateId }))} />
       <section className="template-picker-preview" aria-label="试用效果">
         <div className="preview-toolbar">
-          <strong>{engine === "html" ? "HTML/CSS · 经典版式" : getResumeTemplate(theme.templateId).name}</strong>
+          <strong>{getResumeTemplate(theme.templateId).name}</strong>
           <span className="page-count-badge">预览 {pageCount} 页</span>
           <label className="density-control"><span>紧凑</span><input type="range" min="0" max="100" aria-label="试用排版密度" value={theme.density} onChange={(event) => {
             const density = Number(event.target.value);

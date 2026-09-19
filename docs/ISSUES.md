@@ -1,5 +1,15 @@
 # SwiftResume 问题日志
 
+## SR-032：HTML/CSS 输出模式隐藏模板中心且始终使用经典版式
+
+- 日期：2026-09-19
+- 状态：已解决
+- 现象或修改背景：切换到默认的 HTML/CSS 输出方式后，“排版样式”只显示经典版式提示，已有 100 套模板无法浏览或更换；HTML 预览和打印也始终套用经典模板。
+- 原因分析：HTML 分页源页面把模板类名固定为 `resume-template-classic`，模板选择弹窗和独立预览又按输出引擎主动隐藏模板画廊；增量提交分页时也没有同步页壳类名，运行中更换模板后旧样式会残留。
+- 解决方案：统一从模板注册表生成 HTML 的基础版式、视觉变体和具体模板类名；HTML 工作台、样式试用、独立预览、并排对比和打印全部开放模板中心并消费当前模板；分页提交同步类名与模板标识，同时恢复模板所需的语义容器和低优先级默认字体，让基础样式与派生变体正常覆盖。
+- 验证方式：40 个测试文件、149 项测试通过，TypeScript 检查及生产构建通过；正常桌面窗口中确认 HTML 模式显示 100 套模板，试用“咨询顾问”时映射为瑞士网格基础版式与柔和变体，应用后主工作台继续使用相同模板，页面样式和模板标识同步更新。
+- 相关文件：`src/templates/registry.ts`、`src/components/HtmlPrintPreview.tsx`、`src/components/TemplateGallery.tsx`、`src/components/TemplatePickerDialog.tsx`、`src/components/StandalonePreview.tsx`、`src/components/SettingsPanel.tsx`、`src/export/htmlPreviewUpdates.ts`、`src/htmlPrint.css`、`src/styles.css`、`docs/HTML_PRINT_TRIAL.md`
+
 ## SR-031：扩展信息依赖字段名称固定列位且无法调整顺序
 
 - 日期：2026-09-18

@@ -9,6 +9,7 @@ import type { TemplateRecommendation } from "../templates/recommender";
 import { ResumePreview } from "./ResumePreview";
 import { TemplateFinder } from "./TemplateFinder";
 import { templatePreviewUrl } from "../templates/staticPreviews";
+import type { OutputEngine } from "../settings/appSettings";
 
 const FAVORITES_KEY = "swift-resume-template-favorites";
 
@@ -22,10 +23,11 @@ function readFavorites() {
   }
 }
 
-export function TemplateGallery({ selectedId, resume, onSelect }: {
+export function TemplateGallery({ selectedId, resume, onSelect, engine = "typst" }: {
   selectedId: ResumeTemplateId;
   resume: ResumeDocument;
   onSelect: (templateId: ResumeTemplateId) => void;
+  engine?: OutputEngine;
 }) {
   const railRef = useRef<HTMLElement>(null);
   const [mode, setMode] = useState<"finder" | "browse">("finder");
@@ -132,7 +134,7 @@ export function TemplateGallery({ selectedId, resume, onSelect }: {
                 const definition = RESUME_TEMPLATES.find((item) => item.id === templateId)!;
                 const previewResume = { ...resume, theme: { ...resume.theme, templateId } };
                 return <article className="template-compare-item" key={templateId}>
-                  <div className="template-compare-paper"><ResumePreview resume={previewResume} zoom="fit" templateId={templateId} /></div>
+                  <div className="template-compare-paper"><ResumePreview engine={engine} resume={previewResume} zoom="fit" templateId={templateId} /></div>
                   <footer><div><strong>{definition.name}</strong><span>{definition.description}</span></div><button type="button" onClick={() => { onSelect(templateId); setCompareOpen(false); }}>使用这套</button></footer>
                 </article>;
               })}
