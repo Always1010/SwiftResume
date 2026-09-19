@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { clearResumeContent, createPurposeEntry, createQuickSection, createResumeFromTemplate, normalizeResumeDocument, type ResumeDocument } from "./resume";
+import { clearResumeContent, createPurposeEntry, createQuickSection, createResumeFromTemplate, DEFAULT_PROFILE_PHOTO, normalizeResumeDocument, type ResumeDocument } from "./resume";
 import { plainText, writingGuide } from "./writingGuide";
 import { checkResume } from "./resumeChecks";
 
@@ -9,6 +9,13 @@ it("creates complete, distinct career examples with matching layouts", () => {
   expect(new Set(documents.map((r) => r.profile.headline)).size).toBe(3);
   for (const resume of documents) {
     expect(resume.profile.name).toContain("【示例】");
+    expect(resume.profile.age).not.toBe("");
+    expect(resume.profile.gender).toBe("男");
+    expect(resume.profile.location).not.toBe("");
+    expect(resume.profile.phone).toMatch(/^138 0000 100[1-3]$/);
+    expect(resume.profile.email).toContain("@example.com");
+    expect(resume.profile.photo).toBe(DEFAULT_PROFILE_PHOTO);
+    expect(resume.profile.photoSource).toBe(DEFAULT_PROFILE_PHOTO);
     expect(checkResume(resume).some((c) => c.id === "profile:sample")).toBe(true);
     for (const section of resume.sections) {
       if (section.type === "content") expect(plainText(section.entries[0].body).length).toBeGreaterThan(40);
@@ -31,6 +38,7 @@ it("clears examples without changing the chosen structure or layout", () => {
     if (section.type === "content") expect(plainText(section.entries[0].body)).toBe("");
   }
   expect(createResumeFromTemplate("graduate", false).profile.name).toBe("");
+  expect(createResumeFromTemplate("graduate", false).profile.photo).toBe("");
   expect(createResumeFromTemplate("blank").sections).toHaveLength(0);
 });
 
