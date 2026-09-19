@@ -8,6 +8,10 @@
   .topbar-actions { flex-wrap: wrap; gap: 8px; }
   .workspace-controls { display: flex; align-items: center; gap: 12px; padding: 9px 20px; border-bottom: 1px solid var(--border); background: #f8faf8; }
   .workspace-view-options { display: flex; gap: 6px; margin-left: auto; }
+  .workspace-standalone-preview-entry { flex: 0 0 auto; flex-shrink: 0; border: 1px solid var(--green-dark); border-radius: 8px; padding: 9px 14px; color: white; background: var(--green-dark); box-shadow: 0 3px 9px rgba(16, 83, 56, .22); font-size: 12px; font-weight: 750; line-height: 1.2; white-space: nowrap; }
+  .workspace-standalone-preview-entry:hover { border-color: #083c28; background: #083c28; box-shadow: 0 5px 13px rgba(16, 83, 56, .3); }
+  .workspace-standalone-preview-entry:focus-visible { outline: 3px solid #78ba93; outline-offset: 3px; }
+  .workspace-standalone-preview-entry:disabled { cursor: not-allowed; opacity: .55; }
   .workspace { position: relative; height: auto; min-height: 0; grid-template-columns: 220px minmax(440px, 1.1fr) minmax(0, 1fr); }
   .workspace.modules-hidden { grid-template-columns: minmax(440px, 1.1fr) minmax(0, 1fr); }
   .workspace.preview-hidden { grid-template-columns: 220px minmax(0, 1fr); }
@@ -68,14 +72,10 @@
 .workspace-dialog-header p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .workspace-dialog-footer { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; padding: 14px 24px; border-top: 1px solid var(--border); background: white; }
 .workspace-dialog-footer > span { margin-right: auto; color: var(--muted); font-size: 12px; }
-.template-picker-body { display: grid; grid-template-columns: minmax(260px, 350px) minmax(0, 1fr); min-height: 0; }
-.template-picker-preview { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; min-width: 0; background: #e8ece8; }
-.template-picker-preview .preview-scroller { padding: 18px 20px 40px; }
 @media (max-width: 700px) {
   .workspace-dialog { width: calc(100vw - 12px); height: calc(100dvh - 12px); border-radius: 10px; }
   .workspace-dialog-header, .workspace-dialog-footer { padding: 12px; }
   .workspace-dialog-header h2 { font-size: 16px; }
-  .template-picker-body { grid-template-columns: minmax(0, 1fr); overflow: auto; grid-template-rows: minmax(260px, 45%) minmax(300px, 55%); }
 }
 
 .flow-dialog { width: min(920px, calc(100vw - 32px)); max-height: 90vh; padding: 24px; overflow: auto; color: var(--text); }

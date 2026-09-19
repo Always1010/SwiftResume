@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { openPreviewWindow } from "./openPreviewWindow";
 
 afterEach(() => vi.restoreAllMocks());
-it("opens print and preview pages without a parent window association", () => {
+it("opens preview and print pages in a detached, secure window", () => {
   const open = vi.spyOn(window, "open").mockReturnValue(null);
   for (const view of ["preview", "html-print"] as const) {
     openPreviewWindow(view, "resume with spaces");

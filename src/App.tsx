@@ -11,7 +11,7 @@ import { ResumePreview } from "./components/ResumePreview";
 import { openPreviewWindow } from "./export/openPreviewWindow";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
-import { TemplatePickerDialog } from "./components/TemplatePickerDialog";
+import { WorkspaceStandalonePreviewEntry } from "./components/WorkspaceStandalonePreviewEntry";
 import { ResumeExportDialog } from "./components/ResumeExportDialog";
 import { ResumeCheckDialog } from "./components/ResumeCheckDialog";
 import { VersionsDialog } from "./components/VersionsDialog";
@@ -69,7 +69,6 @@ export function App() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [newResumeOpen, setNewResumeOpen] = useState(false);
-  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [modulesOpen, setModulesOpen] = useState(() => window.innerWidth >= 1500);
   const [compactWorkspace, setCompactWorkspace] = useState(() => window.innerWidth < 1100);
   const [mobilePreview, setMobilePreview] = useState(false);
@@ -507,7 +506,6 @@ export function App() {
       <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => { void importFile(event.target.files?.[0]); event.target.value = ""; }} />
       <nav className="workspace-controls" aria-label="工作区布局">
         <button type="button" className="secondary-button" aria-expanded={modulesOpen} onClick={() => setModulesOpen(!modulesOpen)}>{modulesOpen ? "收起模块" : "简历模块"}</button>
-        <button type="button" className="secondary-button" disabled={!ready} onClick={() => setTemplatePickerOpen(true)}>排版样式</button>
         {compactWorkspace ? <details className="workspace-more"><summary className="secondary-button">更多</summary><div className="workspace-more-panel">
         <button type="button" className="secondary-button" disabled={!library} onClick={() => setVersionsOpen(true)}>岗位版本</button>
         <HistoryActions undoLabel={undoLabel} redoLabel={redoLabel} onUndo={() => changeHistory("undo")} onRedo={() => changeHistory("redo")} />
@@ -519,6 +517,7 @@ export function App() {
           <button type="button" className={`secondary-button ${!previewVisible ? "active" : ""}`} aria-pressed={!previewVisible} onClick={() => { setMobilePreview(false); setSettings((current) => ({ ...current, previewOpen: false })); }}>专注编辑</button>
           <button type="button" className={`secondary-button ${previewVisible ? "active" : ""}`} aria-pressed={previewVisible} onClick={() => { setMobilePreview(true); setSettings((current) => ({ ...current, previewOpen: true })); }}>{compactWorkspace ? "查看预览" : "编辑＋预览"}</button>
         </div>
+        <WorkspaceStandalonePreviewEntry disabled={!activeResumeId} onOpen={() => openStandalonePreview()} />
       </nav>
       <div className={`workspace ${previewVisible ? "" : "preview-hidden"} ${modulesOpen ? "modules-open" : "modules-hidden"} ${compactWorkspace && previewVisible ? "mobile-preview" : ""}`}>
         {modulesOpen && <Sidebar resume={resume} selectedId={selectedId} onSelect={locateResumeBlock} onAdd={(section) => {
@@ -552,7 +551,6 @@ export function App() {
                   {[70, 80, 90, 100].map((value) => <option key={value} value={value}>{value}%</option>)}
                 </select>
               </div>
-              <button type="button" className="secondary-button" onClick={() => openStandalonePreview()}>↗ 独立预览</button>
               <label className="density-control">
                 <span>紧凑</span>
                 <input
@@ -631,10 +629,6 @@ export function App() {
         }));
         const next = documents.reduce((lib, item) => updateResumeSummary(lib, item.id, item.resume), currentLibrary);
         await saveDocuments(documents, next); libraryRef.current = next; setLibrary(next);
-      }} />}
-      {templatePickerOpen && <TemplatePickerDialog engine={settings.outputEngine} resume={resume} onClose={() => setTemplatePickerOpen(false)} onApply={(theme) => {
-        dispatch({ type: "update-theme", value: theme });
-        setTemplatePickerOpen(false);
       }} />}
       {backupPromptOpen && !newResumeOpen && backupStatus !== "unsupported" && <BackupSetupPrompt
         status={backupStatus}
