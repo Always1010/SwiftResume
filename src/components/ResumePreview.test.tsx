@@ -46,7 +46,12 @@ describe("ResumeSectionView", () => {
     resume.profile.details.splice(1, 0, { id: "site", label: "个人网站", value: "example.com" });
     const host = document.createElement("div");
     host.innerHTML = renderToStaticMarkup(<ResumeProfileView resume={resume} />);
+    const grid = host.querySelector(".profile-info-grid") as HTMLElement;
     const rows = host.querySelectorAll(".profile-info-row");
+    expect(grid.style.gridTemplateColumns).toBe("");
+    expect(grid.style.getPropertyValue("--profile-info-columns")).toBe("minmax(0, min(13em, 45%)) minmax(0, 1fr)");
+    expect(grid.style.getPropertyValue("--profile-info-column-gap")).toBe("1.9em");
+    expect(grid.style.getPropertyValue("--profile-info-row-gap")).toBe("5px");
     expect(rows[0].children[1].textContent).toContain("邮箱：");
     expect(rows[1].children[0].textContent).toBe("学历：本科");
     expect(rows[1].children[1].textContent).toBe("个人网站：example.com");

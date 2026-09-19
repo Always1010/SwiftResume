@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type ReactNode } from "react";
+import { lazy, Suspense, useState, type CSSProperties, type ReactNode } from "react";
 import { useTypstPreview } from "../export/useTypstPreview";
 import type { ContentEntry, ResumeDocument, ResumeSection, ResumeTemplateId } from "../model/resume";
 import { renderContentRichText } from "../model/contentRichText";
@@ -8,6 +8,11 @@ import type { OutputEngine } from "../settings/appSettings";
 
 const PdfCanvasPreview = lazy(() => import("./PdfCanvasPreview"));
 const HtmlCanvasPreview = lazy(() => import("./HtmlPrintPreview").then((module) => ({ default: module.HtmlCanvasPreview })));
+const PROFILE_INFO_GRID_STYLE = {
+  "--profile-info-columns": `minmax(0, min(${PROFILE_LAYOUT.firstColumnEm}em, 45%)) minmax(0, 1fr)`,
+  "--profile-info-column-gap": `${PROFILE_LAYOUT.columnGapEm}em`,
+  "--profile-info-row-gap": `${PROFILE_LAYOUT.rowGapPx}px`,
+} as CSSProperties;
 
 function SectionHeading({ children }: { children: string }) {
   return <div className="resume-section-heading"><h2>{children}</h2><span /></div>;
@@ -65,10 +70,7 @@ function ResumeProfileContent({ resume }: { resume: ResumeDocument }) {
           {primaryInfo.ageGender && <span>{primaryInfo.ageGender}</span>}
           {primaryInfo.location && <span>{primaryInfo.location}</span>}
         </div>
-        {infoRows.length > 0 && <div className="profile-info-grid" style={{
-          gridTemplateColumns: `minmax(0, min(${PROFILE_LAYOUT.firstColumnEm}em, 45%)) minmax(0, 1fr)`,
-          columnGap: `${PROFILE_LAYOUT.columnGapEm}em`, rowGap: PROFILE_LAYOUT.rowGapPx,
-        }}>{infoRows.map((row) => (
+        {infoRows.length > 0 && <div className="profile-info-grid" style={PROFILE_INFO_GRID_STYLE}>{infoRows.map((row) => (
           <div className="profile-info-row" key={row.id}>
             <span style={row.right === undefined ? { gridColumn: "1 / -1" } : undefined}>{row.left}</span>
             {row.right !== undefined && <span>{row.right}</span>}
