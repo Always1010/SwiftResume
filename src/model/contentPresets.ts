@@ -1,10 +1,10 @@
-import type { ResumeCreationTemplate, ResumeTemplateId, SectionPurpose } from "./resume";
+import type { ResumeCreationTemplate, SectionPurpose } from "./resume";
 
 export const SCENARIOS = [
-  { id: "graduate", title: "应届生 / 实习", role: "校招前端开发", description: "包含教育、实习、三个项目、技能与校园荣誉。", style: "graduate" },
-  { id: "experienced", title: "已有工作经验", role: "前端工程师", description: "用两段工作经历和三个项目展示技术行动与成果。", style: "executive" },
-  { id: "career-change", title: "转行求职", role: "运营转产品", description: "从运营经历到产品协作，展示用户研究、需求与交付。", style: "minimal" },
-] as const satisfies ReadonlyArray<{ id: ResumeCreationTemplate; title: string; role: string; description: string; style: ResumeTemplateId }>;
+  { id: "graduate", title: "应届生 / 实习", role: "校招前端开发", description: "包含教育、实习、三个项目、技能与校园荣誉。" },
+  { id: "experienced", title: "已有工作经验", role: "前端工程师", description: "用两段工作经历和三个项目展示技术行动与成果。" },
+  { id: "career-change", title: "转行求职", role: "运营转产品", description: "从运营经历到产品协作，展示用户研究、需求与交付。" },
+] as const satisfies ReadonlyArray<{ id: ResumeCreationTemplate; title: string; role: string; description: string }>;
 
 export const MODULE_PRESETS: Record<SectionPurpose, { title: string; subtitle: string; date: string; lines: string[]; skeleton: string[]; list?: boolean }> = {
   work: { title: "【示例】远山科技", subtitle: "前端工程师", date: "2023.07 – 2026.06", list: true,
