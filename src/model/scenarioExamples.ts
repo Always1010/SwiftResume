@@ -288,7 +288,7 @@ export const SCENARIO_EXAMPLES: Record<Exclude<ResumeCreationTemplate, "default"
       },
       {
         type: "education", title: "教育背景",
-        items: [{ school: "【示例】江南工商大学", date: "2019.09 – 2023.06", major: "市场营销", degree: "本科", detail: "主修消费者行为、市场调研、统计学与管理信息系统；课程实践中独立设计问卷并完成用户分群分析。2025 – 2026 年通过项目实践补充产品需求、原型设计与 SQL 基础。" }],
+        items: [{ school: "【示例】江南工商大学", date: "2019.09 – 2023.06", major: "市场营销", degree: "本科", detail: "GPA 3.7/4.0" }],
       },
     ],
   },
