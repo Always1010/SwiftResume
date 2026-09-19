@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, type ReactNode } from "react";
 import { useTypstPreview } from "../export/useTypstPreview";
 import type { ContentEntry, ResumeDocument, ResumeSection, ResumeTemplateId } from "../model/resume";
 import { renderContentRichText } from "../model/contentRichText";
-import { EDUCATION_LAYOUT, PROFILE_LAYOUT, profileInfoRows } from "../model/resumeLayout";
+import { EDUCATION_LAYOUT, PROFILE_LAYOUT, profileInfoRows, profilePrimaryInfo } from "../model/resumeLayout";
 import "../typstPreview.css";
 import type { OutputEngine } from "../settings/appSettings";
 
@@ -55,14 +55,15 @@ function sectionItems(section: ResumeSection): PreviewFlowItem[] {
 
 function ResumeProfileContent({ resume }: { resume: ResumeDocument }) {
   const infoRows = profileInfoRows(resume.profile);
+  const primaryInfo = profilePrimaryInfo(resume.profile);
   return (
     <header className="resume-header">
       <div className="identity">
         <h1>{resume.profile.name || "姓名"}</h1>
         {resume.profile.headline && <p className="headline">{resume.profile.headline}</p>}
         <div className="contact-row primary-contact-row">
-          {resume.profile.ageGender && <span>{resume.profile.ageGender}</span>}
-          {resume.profile.location && <span>{resume.profile.location}</span>}
+          {primaryInfo.ageGender && <span>{primaryInfo.ageGender}</span>}
+          {primaryInfo.location && <span>{primaryInfo.location}</span>}
         </div>
         {infoRows.length > 0 && <div className="profile-info-grid" style={{
           gridTemplateColumns: `minmax(0, min(${PROFILE_LAYOUT.firstColumnEm}em, 45%)) minmax(0, 1fr)`,

@@ -328,3 +328,12 @@
 - 解决方案：保留可选标题日期行与正文的统一结构，恢复 Tiptap 的文字样式、对齐、高亮和表格扩展；列表缩进使用编辑器原生命令，普通段落仅增加可持久化的缩进属性，并同步扩展安全预览和 Typst 导出。
 - 验证方式：补充高级格式 JSON 渲染、安全样式清洗及 Typst 格式转换测试，执行完整单元测试和正式构建。
 - 相关文件：`src/components/customEditors/ContentBodyEditor.tsx`、`src/model/contentRichText.ts`、`src/model/richText.ts`、`src/model/contentRichText.test.ts`、`src/model/richText.test.ts`、`src/export/typstPdf.ts`、`src/export/typstPdf.test.ts`、`src/editorModes.css`
+## SR-033：年龄性别与居住地要求用户手工输入展示标点
+
+- 日期：2026-09-19
+- 状态：已解决
+- 现象或修改背景：个人信息编辑器将年龄和性别合并为一个自由文本框，并直接展示居住地原始内容；用户必须手工输入“岁”“·”“现居：”等展示文字，输入困难且不同示例格式不一致。
+- 原因分析：个人信息模型把内容值与展示格式混在同一字段中，HTML 预览和 PDF 导出都只原样输出，没有统一的格式化规则。
+- 解决方案：不兼容升级为 schema v4，将年龄、性别和居住地拆为独立字段；编辑器只收集原始内容，统一格式化为“24岁 · 男”和“现居：杭州”，并让网页预览、PDF 导出及版本比较共用新字段语义。
+- 验证方式：补充独立字段、重复后缀保护、HTML 预览、Typst 输出和旧 schema 拒绝导入测试，执行完整单元测试和正式构建，并在桌面浏览器正常窗口中检查个人信息编辑与预览。
+- 相关文件：`src/model/resume.ts`、`src/model/resumeLayout.ts`、`src/components/EditorPanel.tsx`、`src/components/ResumePreview.tsx`、`src/export/typstPdf.ts`、`src/storage/libraryBackup.ts`

@@ -26,7 +26,7 @@ describe("resume model", () => {
   it("creates a schema v3 resume with three semantic component types", () => {
     const resume = createDefaultResume();
     expect(isResumeDocument(resume)).toBe(true);
-    expect(resume.schemaVersion).toBe(3);
+    expect(resume.schemaVersion).toBe(4);
     expect(resume.theme.templateId).toBe("classic");
     expect(resume.profile.photo).toBe(DEFAULT_PROFILE_PHOTO);
     expect(resume.profile.photoSource).toBe(DEFAULT_PROFILE_PHOTO);
@@ -131,8 +131,8 @@ describe("resume model", () => {
     expect(details[0].id).not.toBe(reordered[0].id);
   });
 
-  it("rejects obsolete schema v2 documents instead of migrating them", () => {
-    const obsolete = { ...createDefaultResume(), schemaVersion: 2 };
+  it("rejects obsolete schemas instead of migrating them", () => {
+    const obsolete = { ...createDefaultResume(), schemaVersion: 3 };
     expect(normalizeResumeDocument(obsolete)).toBeNull();
   });
 

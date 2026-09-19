@@ -29,6 +29,18 @@ describe("ResumeSectionView", () => {
     expect(html).toContain("profile-info-grid");
   });
 
+  it("formats separate age, gender and location fields without requiring punctuation input", () => {
+    const resume = createDefaultResume();
+    resume.profile.age = "25岁";
+    resume.profile.gender = "女";
+    resume.profile.location = "现居: 杭州";
+    const html = renderToStaticMarkup(<ResumeProfileView resume={resume} />);
+    expect(html).toContain("25岁 · 女");
+    expect(html).toContain("现居：杭州");
+    expect(html).not.toContain("25岁岁");
+    expect(html).not.toContain("现居：现居");
+  });
+
   it("aligns paired details with the contact columns and spans configured full-width details", () => {
     const resume = createDefaultResume();
     resume.profile.details.splice(1, 0, { id: "site", label: "个人网站", value: "example.com" });

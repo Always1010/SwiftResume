@@ -110,6 +110,15 @@ describe("Typst source generator", () => {
     expect(source).not.toContain("基本信息");
   });
 
+  it("formats age, gender and residence consistently with the HTML preview", () => {
+    const resume = createDefaultResume();
+    resume.profile.age = "24";
+    resume.profile.gender = "男";
+    resume.profile.location = "杭州";
+    const source = createTypstSource(resume);
+    expect(source).toContain("24岁 · 男    现居：杭州");
+  });
+
   it("generates a distinct source marker and layout for all twenty-nine templates", () => {
     const sources = RESUME_TEMPLATE_IDS.map((templateId) => {
       const resume = createDefaultResume();

@@ -19,7 +19,7 @@ function comparable(resume: ResumeDocument): Map<string, string> {
   result.set("简历名称", resume.title);
   result.set("目标岗位", [resume.target?.company, resume.target?.role, resume.target?.notes].filter(Boolean).join(" · "));
   const { photo, photoSource: _source, photoCrop, photoBackground, ...profile } = resume.profile;
-  result.set("个人信息", Object.entries(profile).map(([key, value]) => `${({ name: "姓名", headline: "求职方向", ageGender: "年龄 / 性别", location: "所在地", phone: "手机", email: "邮箱", details: "扩展信息" } as Record<string, string>)[key]}：${Array.isArray(value) ? value.map((d) => `${d.label}：${d.value}`).join("；") : value}`).join("\n"));
+  result.set("个人信息", Object.entries(profile).map(([key, value]) => `${({ name: "姓名", headline: "求职方向", age: "年龄", gender: "性别", location: "居住地", phone: "手机", email: "邮箱", details: "扩展信息" } as Record<string, string>)[key]}：${Array.isArray(value) ? value.map((d) => `${d.label}：${d.value}`).join("；") : value}`).join("\n"));
   result.set("照片", photo);
   result.set("照片裁切与底色", `缩放：${photoCrop.zoom} 倍；水平：${photoCrop.offsetX}；垂直：${photoCrop.offsetY}；底色：${photoBackground === "transparent" ? "透明" : photoBackground}`);
   result.set("排版样式", `模板：${getResumeTemplate(resume.theme.templateId).name}\n密度：${resume.theme.density}\n强调色：${resume.theme.accent}`);

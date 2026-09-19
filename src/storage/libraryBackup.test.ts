@@ -15,7 +15,7 @@ it("reports malformed records and refuses unsupported versions and nested snapsh
   const resume = createDefaultResume();
   const bad = { ...resume, profile: { ...resume.profile, details: "bad" } };
   expect(parseBackupValue({ format: "swift-resume-library", version: 1, documents: [{ resume }, { resume: bad }] }).skipped).toHaveLength(1);
-  expect(() => parseBackupValue({ ...resume, schemaVersion: 2 })).toThrow();
+  expect(() => parseBackupValue({ ...resume, schemaVersion: 3 })).toThrow();
   expect(readCurrentDocument({ ...resume, sections: [{ ...resume.sections[1], entries: [{ id: "x", title: "", subtitle: "", date: "", body: { type: "doc", content: "bad" } }] }] })).toBeNull();
   resume.lastExport = exportRecord(resume, "1.pdf");
   const snapshot = structuredClone(resume);

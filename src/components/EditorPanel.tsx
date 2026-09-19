@@ -170,8 +170,9 @@ function ProfileEditor({ profile, onChange }: { profile: ResumeProfile; onChange
       <div className="field-grid">
         <Field label="姓名" value={profile.name} onChange={(value) => update("name", value)} />
         <Field label="求职方向" value={profile.headline} onChange={(value) => update("headline", value)} />
-        <Field label="年龄 / 性别" value={profile.ageGender} onChange={(value) => update("ageGender", value)} />
-        <Field label="所在地" value={profile.location} onChange={(value) => update("location", value)} />
+        <Field label="年龄" value={profile.age} placeholder="例如：24" onChange={(value) => update("age", value)} />
+        <Field label="性别" value={profile.gender} placeholder="例如：男" onChange={(value) => update("gender", value)} />
+        <Field label="居住地" value={profile.location} placeholder="例如：杭州" onChange={(value) => update("location", value)} />
         <Field label="手机" value={profile.phone} onChange={(value) => update("phone", value)} />
         <Field label="邮箱" value={profile.email} onChange={(value) => update("email", value)} />
       </div>
