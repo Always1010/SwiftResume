@@ -611,7 +611,7 @@ export function App() {
       <header className="topbar workspace-topbar">
         <div className="brand"><span className="brand-mark">S</span><strong>SwiftResume</strong></div>
         <div className="current-document">
-          <button type="button" className="document-switcher" aria-label={`我的简历：${resume.title || "未命名简历"}`} aria-haspopup="dialog" aria-expanded={libraryOpen} disabled={!library} onClick={() => setLibraryOpen(true)}><span>{resume.title || "未命名简历"}</span><span aria-hidden="true">⌄</span></button>
+          <button type="button" className="document-switcher" data-testid="resume-library-trigger" aria-label="我的简历" aria-describedby="current-resume-name" aria-controls="resume-library-title-dialog" title="打开我的简历" aria-haspopup="dialog" aria-expanded={libraryOpen} disabled={!library} onClick={() => setLibraryOpen(true)}><span id="current-resume-name">{resume.title || "未命名简历"}</span><span aria-hidden="true">⌄</span></button>
           <span role="status" className={`save-status ${saveState}`}>{saveState === "saved" ? "● 已自动保存" : saveState === "saving" ? "● 保存中" : "● 保存失败"}</span>
         </div>
         <div className="topbar-actions">
