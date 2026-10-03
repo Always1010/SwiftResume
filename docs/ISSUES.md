@@ -1,5 +1,16 @@
 # SwiftResume 问题日志
 
+## SR-035：HTML 打印导出缺少可追溯的版本记录
+
+- 日期：2026-10-03
+- 状态：已解决
+- 现象或修改背景：HTML/CSS 路径实际保存 PDF 后，岗位版本仍显示“尚无下载记录”；导出还要先经过独立检查弹窗再进入排版确认，入口文案与浏览器打印行为不一致。
+- 原因分析：版本记录仅连接 Typst 的下载链接，HTML 分支没有等价请求事件；模型和文案把所有导出都限定为下载文件。
+- 解决方案：统一记录下载请求和打印/保存请求，保留请求时的内容快照，兼容旧版下载记录；打印记录不虚构文件名或落盘成功，取消打印仍仅保留请求。内容检查与成品预览合并在一个窗口；HTML 入口统一为“打印 / 保存 PDF”。快照准备失败、预览未就绪、只打开/关闭窗口都不生成记录，旧异步快照不会覆盖新内容。
+- 验证方式：26 项导出、版本、备份与撤销回归测试通过，覆盖请求类型、取消/重试语义、旧记录兼容、快照隔离、过期异步结果与失败场景；TypeScript 检查通过。真实浏览器回归在最终集成后进行。
+- 相关文件：`src/App.tsx`、`src/components/ResumeExportDialog.tsx`、`src/components/PdfExportDialog.tsx`、`src/components/HtmlPrintPreview.tsx`、`src/components/StandalonePreview.tsx`、`src/components/VersionsDialog.tsx`、`src/model/resume.ts`、`src/model/resumeVersions.ts`、`src/storage/libraryBackup.ts` 及对应测试
+
+
 ## SR-034：就地编辑时空格被画布快捷键吞掉
 
 - 日期：2026-10-03

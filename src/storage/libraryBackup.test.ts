@@ -31,3 +31,13 @@ it("restores selected documents atomically as independent new IDs without replac
   merged.documents[0].resume.profile.name = "changed";
   expect(resume.profile.name).not.toBe("changed");
 });
+
+it("round trips print requests and legacy filename-only download records", () => {
+  const resume = createDefaultResume();
+  resume.lastExport = exportRecord(resume, { kind: "print" });
+  expect(readCurrentDocument(JSON.parse(JSON.stringify(resume)))?.lastExport).toEqual(resume.lastExport);
+  resume.lastExport = { at: "2026-10-03T00:00:00.000Z", filename: "legacy.pdf", snapshot: resume.lastExport.snapshot };
+  expect(readCurrentDocument(JSON.parse(JSON.stringify(resume)))?.lastExport).toEqual(resume.lastExport);
+  expect(readCurrentDocument({ ...resume, lastExport: { ...resume.lastExport, kind: "saved" } })).toBeNull();
+  expect(readCurrentDocument({ ...resume, lastExport: { ...resume.lastExport, kind: "print" } })).toBeNull();
+});

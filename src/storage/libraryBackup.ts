@@ -28,7 +28,12 @@ export function readCurrentDocument(value: unknown, snapshot = false): ResumeDoc
     }
   }
   if (value.target !== undefined && (!object(value.target) || !strings(value.target, ["company", "role", "notes"]))) return null;
-  if (value.lastExport !== undefined && (snapshot || !object(value.lastExport) || !strings(value.lastExport, ["at", "filename"]) || !readCurrentDocument(value.lastExport.snapshot, true))) return null;
+  if (value.lastExport !== undefined) {
+    const record = value.lastExport;
+    if (snapshot || !object(record) || typeof record.at !== "string" || !readCurrentDocument(record.snapshot, true)) return null;
+    // Older records have no kind and represent a requested PDF download.
+    if (record.kind === "print" ? record.filename !== undefined : ![undefined, "download"].includes(record.kind as undefined | string) || typeof record.filename !== "string") return null;
+  }
   return normalizeResumeDocument(value);
 }
 export function parseBackupValue(value: unknown): ImportBatch {
