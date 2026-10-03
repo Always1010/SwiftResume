@@ -6,6 +6,7 @@ import "./styles.css";
 import "./editorModes.css";
 import "./historyActions.css";
 import "./workspace.css";
+import "./interface.css";
 
 const parameters = new URLSearchParams(window.location.search);
 const htmlPrintPreview = parameters.get("view") === "html-print";

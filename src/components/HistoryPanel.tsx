@@ -3,6 +3,8 @@ import type { ResumeDocument } from "../model/resume";
 import { deleteHistorySnapshot, listHistorySnapshots, type HistorySnapshot } from "../storage/diskBackup";
 import type { ResumeSummary } from "../storage/resumeStorage";
 import { ResumePreview } from "./ResumePreview";
+import { Modal } from "./Modal";
+import { CloseButton } from "./CloseButton";
 
 interface HistoryPanelProps {
   directory: FileSystemDirectoryHandle;
@@ -73,15 +75,13 @@ export function HistoryPanel({
   };
 
   return (
-    <div className="settings-backdrop" role="presentation">
-      <section className="history-page" role="dialog" aria-modal="true" aria-labelledby="history-title">
+    <Modal titleId="history-title" className="history-page" onClose={() => !busy && onClose()}>
         <header className="settings-header">
           <div>
-            <span className="eyebrow">本地磁盘备份</span>
             <h2 id="history-title">历史版本</h2>
             <p>每份简历最多保留 20 个快照，选择版本后可在右侧完整预览。</p>
           </div>
-          <button type="button" className="settings-close" onClick={onClose} aria-label="关闭历史版本">×</button>
+          <CloseButton onClick={onClose} disabled={busy} label="关闭历史版本" />
         </header>
 
         <div className="history-toolbar">
@@ -140,7 +140,6 @@ export function HistoryPanel({
             >覆盖所选简历</button>
           </div>
         </footer>
-      </section>
-    </div>
+    </Modal>
   );
 }

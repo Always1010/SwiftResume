@@ -105,8 +105,8 @@ export function SettingsPanel({
             </label>
           </div>
 
-          <div className="settings-group">
-            <div className="settings-group-title"><div><h3>编辑预览</h3><p>只影响工作台显示，不改变 PDF 页面尺寸。</p></div></div>
+          <details className="settings-group settings-advanced">
+            <summary>编辑预览</summary>
             <div className="setting-row">
               <div><strong>预览页数</strong><p>在预览工具栏中显示当前简历的实际 A4 页数。</p></div>
               <Toggle label="预览页数" checked={settings.showOverflowWarning} onChange={(value) => update("showOverflowWarning", value)} />
@@ -121,7 +121,7 @@ export function SettingsPanel({
                 <option value={100}>100%</option>
               </select>
             </label>
-          </div>
+          </details>
 
           <div className="settings-group">
             <div className="settings-group-title"><div><h3>本地磁盘备份</h3><p>浏览器内自动保存与磁盘备份是两份数据。清理浏览器数据或卸载扩展可能丢失未备份的简历。</p></div></div>
