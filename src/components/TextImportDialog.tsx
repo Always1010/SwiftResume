@@ -3,13 +3,14 @@ import type { ResumeDocument } from "../model/resume";
 import { parseResumeText } from "../model/textImport";
 import { plainText } from "../model/contentLabels";
 import { Modal } from "./Modal";
+import { CloseButton } from "./CloseButton";
 export function TextImportDialog({ onClose, onImport }: { onClose: () => void; onImport: (resume: ResumeDocument) => Promise<void> }) {
   const [text, setText] = useState("");
   const [draft, setDraft] = useState<ResumeDocument | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   return <Modal titleId="text-import-title" className="flow-dialog" onClose={() => !busy && onClose()}>
-    <h2 id="text-import-title">粘贴已有简历</h2><p>按常见模块标题整理文本。内容只在本机处理；未识别的段落会保留，导入后仍可编辑。</p>
+    <header className="workspace-dialog-header"><div><h2 id="text-import-title">粘贴已有简历</h2><p>按常见模块标题整理文本。内容只在本机处理；未识别的段落会保留，导入后仍可编辑。</p></div><CloseButton onClick={onClose} disabled={busy} label="关闭文本导入" /></header>
     {!draft ? <label className="flow-field">简历文本<textarea rows={16} value={text} maxLength={100_000} onChange={(e) => setText(e.target.value)} placeholder="粘贴从 Word、PDF 或其他地方复制的文字…" /></label> : <>
       <label className="flow-field">新简历名称<input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></label>
       <p>已识别 {draft.sections.length} 个模块。取消勾选的模块不会导入；个人信息也请核对。</p>

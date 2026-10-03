@@ -5,7 +5,6 @@ import { HistoryPanel } from "./components/HistoryPanel";
 import { HistoryActions } from "./components/HistoryActions";
 import { ResumeLibraryDialog } from "./components/ResumeLibraryDialog";
 import { NewResumeDialog } from "./components/NewResumeDialog";
-import { PhotoBackgroundPicker } from "./components/PhotoBackgroundPicker";
 import { ResumeEditorCanvas } from "./components/ResumeEditorCanvas";
 import { ResumePreview } from "./components/ResumePreview";
 import { StandalonePreview } from "./components/StandalonePreview";
@@ -661,32 +660,7 @@ export function App() {
                   {[70, 80, 90, 100].map((value) => <option key={value} value={value}>{value}%</option>)}
                 </select>
               </div>
-              <details className="preview-appearance-controls">
-                <summary className="secondary-button">排版与配色</summary>
-                <div className="preview-appearance-panel">
-              <label className="density-control">
-                <span>紧凑</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  aria-label="排版密度"
-                  value={resume.theme.density}
-                  onChange={(event) => dispatch({ type: "update-theme", value: { density: Number(event.target.value) } })}
-                />
-                <span>宽松</span>
-                <output>{resume.theme.density}</output>
-              </label>
-              <label className="accent-picker" title="强调色"><span>配色</span><input type="color" value={resume.theme.accent} onChange={(event) => dispatch({ type: "update-theme", value: { accent: event.target.value } })} /></label>
-              <PhotoBackgroundPicker
-                compact
-                value={resume.profile.photoBackground}
-                disabled={!resume.profile.photo}
-                onChange={(photoBackground) => dispatch({ type: "update-profile", value: { ...resume.profile, photoBackground } })}
-              />
-                </div>
-              </details>
+
             </div>
             <ResumePreview engine={settings.outputEngine} resume={resume} zoom={settings.previewZoom} onPageCountChange={handlePageCount} />
           </section>

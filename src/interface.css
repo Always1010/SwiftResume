@@ -1,0 +1,54 @@
+/* Application chrome only. Resume templates and printed paper keep their own styles. */
+:root { --border: #e0e5e1; --muted: #748077; --panel: #fff; }
+body { background: #f4f6f4; }
+* { scrollbar-width: thin; scrollbar-color: #bac5bd transparent; }
+*:hover { scrollbar-color: #8f9f95 transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { min-height: 32px; border: 3px solid transparent; border-radius: 8px; background: #bac5bd; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: #8f9f95; background-clip: padding-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+@media (forced-colors: active) { * { scrollbar-color: auto; } }
+.workspace-topbar { min-height: 62px; padding: 10px 22px; box-shadow: none; background: white; }
+.brand-mark { width: 34px; height: 34px; border-radius: 8px; font-size: 19px; }
+.workspace-controls { min-height: 52px; padding: 8px 22px; background: white; border-bottom: 1px solid var(--border); }
+.workspace-controls .secondary-button { background: transparent; }
+.history-actions-label { display: none; }
+.workspace { background: var(--border); }
+.resume-editor-scroller, .preview-panel, .standalone-preview { background: #f1f4f2; }
+.workspace .resume-editor-canvas { box-shadow: 0 2px 12px #19322308; }
+.resume-editor-hint { background: transparent; box-shadow: none; border: 0; color: #7d8981; }
+.preview-toolbar { min-height: 48px; border-bottom: 1px solid var(--border); background: #fafcfb; }
+.workspace-standalone-preview-entry { border-radius: 7px; box-shadow: none; }
+.primary-button, .secondary-button, .add-item-button { border-radius: 7px; }
+.workspace-dialog { border-color: var(--border); border-radius: 12px; background: white; box-shadow: 0 18px 60px #102a232b; }
+.workspace-dialog::backdrop { background: #16261e66; backdrop-filter: blur(2px); }
+.workspace-dialog-header { background: white; }
+.flow-dialog { padding: 24px; }
+.flow-dialog h2, .workspace-dialog-header h2, .settings-header h2 { margin: 0; font-size: 20px; line-height: 1.35; }
+.flow-dialog .workspace-dialog-header { align-items: center; padding-bottom: 20px; }
+.flow-dialog .workspace-dialog-header p { margin-top: 5px; }
+.scene-option { border-radius: 9px; border-width: 1px; }
+.scene-option.selected { outline: 1px solid #247352; outline-offset: -1px; }
+.scene-label { gap: 5px; padding: 15px; }
+.scene-label strong { font-size: 15px; }
+.scene-label > span { font-size: 12px; }
+.scene-footer { align-items: center; background: white; }
+.module-picker-options button { border-radius: 7px; }
+.module-sample { background: #f8faf8; border-radius: 9px; }
+.settings-page { border-radius: 12px; background: white; }
+.settings-header { align-items: center; padding: 22px 26px; background: white; }
+.settings-header h2 { margin-bottom: 5px; }
+.settings-content { padding: 18px 26px 26px; }
+.settings-group { border-radius: 8px; }
+.settings-group-title { padding: 16px 18px; background: #f7f9f7; }
+.settings-group-title p, .setting-row p { font-size: 11px; line-height: 1.6; }
+.setting-row { padding: 14px 18px; gap: 20px; }
+.setting-actions { flex-wrap: wrap; justify-content: flex-end; }
+.standalone-preview-toolbar { min-height: 62px; box-shadow: none; }
+.standalone-appearance-bar { background: #fafcfb; }
+.standalone-template-summary > span { display: none; }
+.template-gallery-card { border-radius: 8px; box-shadow: none; }
+.template-gallery-header { box-shadow: none; }
+.workspace-dialog.template-compare-dialog { width: min(1500px, calc(100vw - 48px)); height: min(880px, calc(100dvh - 48px)); padding: 0; }
+.workspace-dialog.history-page { width: min(1300px, calc(100vw - 48px)); height: min(880px, calc(100dvh - 48px)); padding: 0; }
