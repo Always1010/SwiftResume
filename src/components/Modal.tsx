@@ -16,7 +16,7 @@ export function Modal({ titleId, className = "", onClose, children }: {
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
     };
   }, []);
-  return <dialog ref={ref} className={`workspace-dialog ${className}`} aria-labelledby={titleId}
+  return <dialog ref={ref} id={`${titleId}-dialog`} className={`workspace-dialog ${className}`} aria-labelledby={titleId}
     onCancel={(event) => { event.preventDefault(); onClose(); }}>
     {children}
   </dialog>;
