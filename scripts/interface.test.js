@@ -14,3 +14,8 @@ it("keeps duplicate appearance controls out of the editor toolbar", () => {
   const templates = readFileSync(new URL("../src/components/StandalonePreview.tsx", import.meta.url), "utf8");
   expect(templates).toContain("模板预览排版密度"); expect(templates).toContain("模板预览配色");
 });
+
+it("sizes short native dialogs to their content rather than stretching between modal insets", () => {
+  const style = readFileSync(new URL("../src/workspace.css", import.meta.url), "utf8");
+  expect(style).toContain(".flow-dialog[open] { display: block; height: fit-content; }");
+});
