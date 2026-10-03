@@ -6,20 +6,25 @@ import { Modal } from "./Modal";
 
 const PdfCanvasPreview = lazy(() => import("./PdfCanvasPreview"));
 
-export function PdfExportDialog({ resume, onClose, onDownloaded, checks }: {
+export function PdfExportDialog({ resume, onClose, checks, returnLabel = "返回编辑" }: {
   resume: ResumeDocument;
   onClose: () => void;
-  onDownloaded?: (filename: string) => void;
+  returnLabel?: string;
   checks?: ReactNode;
 }) {
   const [pdf, setPdf] = useState<(GeneratedPdf & { url: string }) | null>(null);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
+  const printFrame = useRef<HTMLIFrameElement>(null);
+  const [printReady, setPrintReady] = useState(false);
+  const [printError, setPrintError] = useState("");
   const requestRef = useRef<{ resume: ResumeDocument; attempt: number; promise: Promise<GeneratedPdf> } | null>(null);
   useEffect(() => {
     let active = true;
     let url: string | undefined;
     setPdf(null);
+    setPrintReady(false);
+    setPrintError("");
     setError("");
     if (requestRef.current?.resume !== resume || requestRef.current.attempt !== attempt) {
       requestRef.current = { resume, attempt, promise: getPdfArtifact(resume) };
@@ -39,8 +44,8 @@ export function PdfExportDialog({ resume, onClose, onDownloaded, checks }: {
 
   return <Modal titleId="pdf-export-title" className="pdf-export-dialog" onClose={onClose}>
     <header className="workspace-dialog-header">
-      <div><h2 id="pdf-export-title">确认 PDF 后下载</h2><p>{resume.title || "未命名简历"} · 预览、下载与打印使用同一份 PDF；打印将在新标签页打开，请使用阅读器的打印按钮</p>{checks}</div>
-      <button type="button" className="secondary-button" onClick={onClose}>返回编辑</button>
+      <div><h2 id="pdf-export-title">确认 PDF 后下载</h2><p>{resume.title || "未命名简历"} · 预览、下载与打印使用同一份 PDF；打印在当前标签页打开浏览器打印窗口</p>{checks}</div>
+      <button type="button" className="secondary-button" onClick={onClose}>{returnLabel}</button>
     </header>
     <div className="pdf-preview-content" aria-busy={!pdf && !error}>
       {pdf ? <Suspense fallback={<div className="pdf-export-message" role="status">正在打开 PDF…</div>}><PdfCanvasPreview blob={pdf.blob} /></Suspense> : error ?
@@ -49,8 +54,17 @@ export function PdfExportDialog({ resume, onClose, onDownloaded, checks }: {
     </div>
     <footer className="workspace-dialog-footer">
       <span>{pdf ? `PDF 已生成 · ${Math.max(1, Math.round(pdf.blob.size / 1024))} KB` : "生成和预览均在本机完成"}</span>
-      {pdf && <a className="secondary-button" href={pdf.url} target="_blank" rel="noopener noreferrer" title="打开同一份 PDF，使用阅读器的打印按钮或 Ctrl/Cmd + P">打印 PDF ↗</a>}
-      {pdf && <a className="primary-button" href={pdf.url} download={pdf.filename} onClick={() => onDownloaded?.(pdf.filename)}>下载 PDF</a>}
+      {pdf && <button type="button" className="secondary-button" disabled={!printReady} onClick={() => {
+        setPrintError("");
+        try {
+          if (!printFrame.current?.contentWindow) throw new Error("打印组件尚未就绪");
+          printFrame.current.contentWindow.focus();
+          printFrame.current.contentWindow.print();
+        } catch { setPrintError("当前浏览器无法直接打印这份 PDF，请先下载后打印。"); }
+      }}>打印 PDF</button>}
+      {pdf && <a className="primary-button" href={pdf.url} download={pdf.filename}>下载 PDF</a>}
     </footer>
+    {printError && <p role="alert">{printError}</p>}
+    {pdf && <iframe ref={printFrame} title="PDF 打印组件" className="pdf-print-frame" src={pdf.url} onLoad={() => setPrintReady(true)} aria-hidden="true" tabIndex={-1} />}
   </Modal>;
 }

@@ -280,3 +280,5 @@
 .export-content-checks .flow-list { max-height: 20vh; overflow-y: auto; margin: 8px 0 0; gap: 6px; }
 .export-content-checks .flow-list > li { padding: 7px 10px; font-size: 12px; line-height: 1.6; }
 .export-content-checks .text-button { margin-left: 8px; font-size: 12px; }
+
+.app-shell[hidden], .workspace-preview-screen[hidden] { display: none !important; }

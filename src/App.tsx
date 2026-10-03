@@ -1,5 +1,5 @@
 import { usePdfPrintShortcut } from "./export/usePdfPrintShortcut";
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from "react";
 import { BackupSetupPrompt } from "./components/BackupSetupPrompt";
 import { HistoryPanel } from "./components/HistoryPanel";
 import { HistoryActions } from "./components/HistoryActions";
@@ -8,7 +8,9 @@ import { NewResumeDialog } from "./components/NewResumeDialog";
 import { PhotoBackgroundPicker } from "./components/PhotoBackgroundPicker";
 import { ResumeEditorCanvas } from "./components/ResumeEditorCanvas";
 import { ResumePreview } from "./components/ResumePreview";
-import { openPreviewWindow } from "./export/openPreviewWindow";
+import { StandalonePreview } from "./components/StandalonePreview";
+import { currentWorkspaceView, navigateWorkspace } from "./workspaceNavigation";
+import { readWorkspaceDraft, saveWorkspaceDraft } from "./storage/workspaceDraft";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { WorkspaceStandalonePreviewEntry } from "./components/WorkspaceStandalonePreviewEntry";
@@ -58,6 +60,14 @@ export function App() {
   }, []);
   const [library, setLibrary] = useState<ResumeLibrary | null>(null);
   const [selectedId, setSelectedId] = useState("profile");
+  const [view, setView] = useState(currentWorkspaceView);
+  const [previewVisited, setPreviewVisited] = useState(() => currentWorkspaceView() === "preview");
+  const editorShell = useRef<HTMLDivElement>(null);
+  const editorScroll = useRef(0);
+  const editorFocus = useRef<HTMLElement | null>(null);
+  const editorSelection = useRef<Range | null>(null);
+  const draftSaved = useRef(true);
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
@@ -117,15 +127,72 @@ export function App() {
 
   useEffect(() => {
     let active = true;
-    loadResumeWorkspace().then((workspace) => {
+    loadResumeWorkspace().then(async (workspace) => {
+      const requested = new URLSearchParams(window.location.search).get("resumeId");
+      if (requested && requested !== workspace.library.activeResumeId && workspace.library.resumes.some((item) => item.id === requested)) {
+        const document = await loadResumeById(requested);
+        if (document) workspace = { ...workspace, resume: document, library: { ...workspace.library, activeResumeId: requested } };
+      }
       if (active) {
         setLibrary(workspace.library);
-        dispatch({ type: "replace", value: workspace.resume });
+        const draft = readWorkspaceDraft(workspace.library.activeResumeId, workspace.resume);
+        dispatch({ type: "replace", value: draft?.resume ?? workspace.resume });
+        if (draft) { setSelectedId(draft.selectedId); setEditingId(draft.editingId); editorScroll.current = draft.scrollTop; }
         if (workspace.firstRun) { firstRunRef.current = true; setNewResumeOpen(true); }
       }
     }).catch(() => setSaveState("error")).finally(() => active && setReady(true));
     return () => { active = false; };
   }, []);
+
+
+  useLayoutEffect(() => {
+    if (!ready || !activeResumeId) return;
+    draftSaved.current = saveWorkspaceDraft({ resumeId: activeResumeId, resume, selectedId, editingId, scrollTop: editorScroll.current });
+  }, [ready, activeResumeId, resume, selectedId, editingId]);
+
+  useEffect(() => {
+    const persistDraft = () => {
+      if (!ready || !activeResumeId) return;
+      draftSaved.current = saveWorkspaceDraft({ resumeId: activeResumeId, resume, selectedId, editingId, scrollTop: editorScroll.current });
+    };
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      persistDraft();
+      if (!draftSaved.current && saveState !== "saved") { event.preventDefault(); event.returnValue = ""; }
+    };
+    window.addEventListener("pagehide", persistDraft);
+    window.addEventListener("beforeunload", beforeUnload);
+    return () => { window.removeEventListener("pagehide", persistDraft); window.removeEventListener("beforeunload", beforeUnload); };
+  }, [ready, activeResumeId, resume, selectedId, editingId, saveState]);
+
+  useEffect(() => {
+    const onPop = () => {
+      const next = currentWorkspaceView();
+      if (next === "preview") {
+        const selection = window.getSelection();
+        editorSelection.current = selection?.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+        setPreviewVisited(true);
+      }
+      setPdfResume(null);
+      setView(next);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!ready || view !== "editor") return;
+    const scroller = editorShell.current?.querySelector<HTMLElement>(".resume-editor-scroller");
+    if (scroller) scroller.scrollTop = editorScroll.current;
+    const field = editorFocus.current;
+    if (field?.isConnected) {
+      field.focus({ preventScroll: true });
+      if (field.isContentEditable && editorSelection.current) {
+        const selection = window.getSelection(); selection?.removeAllRanges(); selection?.addRange(editorSelection.current);
+      }
+    }
+  }, [ready, view]);
+
+  useEffect(() => { document.title = `${resume.title || "简历"} · SwiftResume${view === "preview" ? " 模板与预览" : ""}`; }, [resume.title, view]);
 
   useEffect(() => subscribeToSettings(setSettings), []);
 
@@ -513,16 +580,31 @@ export function App() {
   });
   usePreviewPublisher(activeResumeId, resume, ready, applyRemoteResume);
 
-  const openStandalonePreview = (view: "preview" | "html-print" = "preview") => {
-    if (!activeResumeId) return;
-    openPreviewWindow(view, activeResumeId);
+  const openStandalonePreview = () => {
+    if (!activeResumeId || view === "preview") return;
+    const scroller = editorShell.current?.querySelector<HTMLElement>(".resume-editor-scroller");
+    editorScroll.current = scroller?.scrollTop ?? 0;
+    const selection = window.getSelection();
+    editorSelection.current = selection?.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+    setBlockNavigation(null);
+    setPreviewVisited(true);
+    navigateWorkspace("preview", activeResumeId);
+    setView("preview");
+    commitInlineEdit();
+  };
+  const returnToEditor = () => {
+    if (window.history.state?.swiftResumeView === "preview") window.history.back();
+    else { navigateWorkspace("editor", activeResumeId, true); setView("editor"); }
   };
   usePdfPrintShortcut(() => { if (ready) setPdfResume(resume); });
 
   if (!ready) return <main className="startup-status" role="status">正在打开本机简历库…</main>;
 
   return (
-    <div className="app-shell">
+    <>
+    <div className="app-shell" ref={editorShell} hidden={view !== "editor"}
+      onFocusCapture={(event) => { if (event.target.matches('input, textarea, [contenteditable="true"]')) editorFocus.current = event.target; }}
+      onScrollCapture={(event) => { if (view === "editor" && (event.target as HTMLElement).classList.contains("resume-editor-scroller")) editorScroll.current = (event.target as HTMLElement).scrollTop; }}>
       <header className="topbar workspace-topbar">
         <div className="brand"><span className="brand-mark">S</span><strong>SwiftResume</strong></div>
         <div className="current-document">
@@ -612,7 +694,7 @@ export function App() {
           </section>
         ) : null}
       </div>
-      {pdfResume && <ResumeExportDialog engine={settings.outputEngine} resume={pdfResume} onLocate={(id) => { setPdfResume(null); locateResumeBlock(id); }} onClose={() => setPdfResume(null)} />}
+
       {undoLabel === "删除模块" && <div className="undo-notice" role="status">模块已删除<button type="button" onClick={() => changeHistory("undo")}>撤销删除</button></div>}
       {settingsOpen && <SettingsPanel
         settings={settings}
@@ -654,6 +736,15 @@ export function App() {
       {textImportOpen && <TextImportDialog onClose={() => setTextImportOpen(false)} onImport={async (document) => { await addResume(document); setTextImportOpen(false); }} />}
       {importBatch && <RestoreDialog batch={importBatch} onClose={() => setImportBatch(null)} onRestore={restoreSelected} />}
 
+
     </div>
+    {previewVisited && <div className="workspace-preview-screen" hidden={view !== "preview"}>
+      <StandalonePreview resume={resume} engine={settings.outputEngine} saveState={saveState} onBack={returnToEditor} onExport={() => setPdfResume(resume)} onAppearanceChange={(change) => {
+        if (change.theme) dispatch({ type: "update-theme", value: change.theme });
+        if (change.photoBackground !== undefined) dispatch({ type: "update-profile", value: { ...resume.profile, photoBackground: change.photoBackground } });
+      }} />
+    </div>}
+      {pdfResume && <ResumeExportDialog engine={settings.outputEngine} resume={pdfResume} returnLabel={view === "preview" ? "返回模板预览" : "返回编辑"} onLocate={(id) => { setPdfResume(null); navigateWorkspace("editor", activeResumeId, true); setView("editor"); locateResumeBlock(id); }} onClose={() => setPdfResume(null)} />}
+    </>
   );
 }

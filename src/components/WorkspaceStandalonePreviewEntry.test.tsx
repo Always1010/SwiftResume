@@ -22,8 +22,8 @@ it("keeps the standalone preview and template switcher entry visible and actiona
   act(() => root!.render(<WorkspaceStandalonePreviewEntry onOpen={onOpen} />));
 
   const button = container.querySelector("button")!;
-  expect(button.textContent).toBe("模板与预览 ↗");
-  expect(button.getAttribute("aria-label")).toBe("打开独立预览并更换简历模板");
+  expect(button.textContent).toBe("模板与预览");
+  expect(button.getAttribute("aria-label")).toBe("打开模板与预览");
   expect(button.classList.contains("workspace-standalone-preview-entry")).toBe(true);
   act(() => button.click());
   expect(onOpen).toHaveBeenCalledOnce();
