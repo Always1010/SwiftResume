@@ -21,3 +21,14 @@ it("ignores timestamps and IDs but detects content, hidden modules and formattin
   changed.sections[0].enabled = false;
   expect(compareVersions(original, changed).map((d) => d.label)).toContain("模块顺序");
 });
+
+it("records print requests without inventing a saved filename and freezes their exact content", () => {
+  const resume = createDefaultResume();
+  resume.lastExport = exportRecord(resume, "earlier.pdf");
+  const record = exportRecord(resume, { kind: "print" });
+  expect(record.kind).toBe("print");
+  expect(record).not.toHaveProperty("filename");
+  expect(record.snapshot).not.toHaveProperty("lastExport");
+  resume.profile.name = "later edit";
+  expect(record.snapshot.profile.name).not.toBe("later edit");
+});

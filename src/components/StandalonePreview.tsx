@@ -2,7 +2,6 @@ import { usePdfPrintShortcut } from "../export/usePdfPrintShortcut";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ResumeExportDialog } from "./ResumeExportDialog";
 import { useOutputEngine } from "../settings/useOutputEngine";
-import { ResumeCheckDialog } from "./ResumeCheckDialog";
 import { exportRecord } from "../model/resumeVersions";
 import type { ResumeDocument } from "../model/resume";
 import { loadResumeById, saveResumeById } from "../storage/resumeStorage";
@@ -61,7 +60,6 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
   const [manualZoom, setManualZoom] = useState(100);
   const [fitZoom, setFitZoom] = useState(100);
   const [pdfResume, setPdfResume] = useState<ResumeDocument | null>(null);
-  const [checkOpen, setCheckOpen] = useState(false);
   const [styleSyncState, setStyleSyncState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [styleError, setStyleError] = useState("");
   const [galleryWidth, setGalleryWidth] = useState(readTemplateGalleryWidth);
@@ -160,7 +158,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
     };
   }, [galleryMaxWidth, resizingGallery]);
 
-  usePdfPrintShortcut(() => { if (resume) setCheckOpen(true); });
+  usePdfPrintShortcut(() => { if (resume) setPdfResume(resume); });
   const zoom = fitWidth ? fitZoom : manualZoom;
   const title = useMemo(() => resume?.title || "独立预览", [resume?.title]);
   const previewResume = resume;
@@ -209,7 +207,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
             <button type="button" aria-label="放大预览" onClick={() => adjustZoom(10)}>＋</button>
           </div>
           {styleSyncState !== "idle" && <span className={`standalone-sync-status ${styleSyncState === "error" ? "error" : ""}`}>{styleSyncState === "saving" ? "正在自动同步…" : styleSyncState === "error" ? "同步失败" : "已自动同步"}</span>}
-          <button type="button" className="primary-button" disabled={!previewResume} onClick={() => setCheckOpen(true)}>导出 PDF</button>
+          <button type="button" className="primary-button" disabled={!previewResume} onClick={() => setPdfResume(resume)}>{engine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
           <button type="button" className="secondary-button" onClick={() => window.close()}>关闭页面</button>
         </div>
       </header>
@@ -275,13 +273,12 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
           </div>
         </section>
       </div>
-      {checkOpen && previewResume && <ResumeCheckDialog resume={previewResume} onClose={() => setCheckOpen(false)} onContinue={() => { setCheckOpen(false); setPdfResume(previewResume); }} />}
-      {pdfResume && <ResumeExportDialog engine={engine} resume={pdfResume} onDownloaded={(filename) => {
+      {pdfResume && <ResumeExportDialog engine={engine} resume={pdfResume} onExportRequested={(request) => {
         const current = resumeRef.current;
         if (!current) return;
-        const next = { ...current, lastExport: exportRecord(pdfResume, filename), updatedAt: new Date(Math.max(Date.now(), Date.parse(current.updatedAt) + 1)).toISOString() };
+        const next = { ...current, lastExport: exportRecord(pdfResume, request), updatedAt: new Date(Math.max(Date.now(), Date.parse(current.updatedAt) + 1)).toISOString() };
         acceptResume(next);
-        void saveResumeById(resumeId, next).then(() => publishCommittedResume(next)).catch(() => setStyleError("PDF 已下载，但导出记录保存失败"));
+        void saveResumeById(resumeId, next).then(() => publishCommittedResume(next)).catch(() => setStyleError("已发起导出，但记录保存失败，请重试"));
       }} onClose={() => setPdfResume(null)} />}
     </main>
   );

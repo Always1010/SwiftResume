@@ -1,4 +1,4 @@
-import type { ResumeDocument } from "./resume";
+import type { ResumeDocument, ResumeExportRequest } from "./resume";
 import { plainText } from "./writingGuide";
 import { getResumeTemplate } from "../templates/registry";
 export function jobVersion(source: ResumeDocument, company: string, role: string, notes = ""): ResumeDocument {
@@ -9,9 +9,9 @@ export function jobVersion(source: ResumeDocument, company: string, role: string
   copy.updatedAt = new Date().toISOString();
   return copy;
 }
-export function exportRecord(resume: ResumeDocument, filename: string): NonNullable<ResumeDocument["lastExport"]> {
+export function exportRecord(resume: ResumeDocument, request: string | ResumeExportRequest): NonNullable<ResumeDocument["lastExport"]> {
   const { lastExport: _previous, ...snapshot } = structuredClone(resume);
-  return { at: new Date().toISOString(), filename, snapshot };
+  return { at: new Date().toISOString(), ...(typeof request === "string" ? { kind: "download" as const, filename: request } : request), snapshot };
 }
 export interface VersionDifference { label: string; before: string; after: string }
 function comparable(resume: ResumeDocument): Map<string, string> {
