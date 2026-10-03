@@ -99,3 +99,68 @@ describe("ResumeEditorCanvas", () => {
     expect(document.querySelector(`#resume-block-${hiddenSection.id}`)).toBeNull();
   });
 });
+
+
+function renderKeyboardFixture(editing: "profile" | "education" | "content" | null) {
+  const resume = createBlankResume();
+  const education = createSection("education");
+  const content = createSection("content");
+  resume.sections = [education, content];
+  const editingId = editing === "education" ? education.id : editing === "content" ? content.id : editing;
+  const onEdit = vi.fn();
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  roots.push(root);
+  act(() => root.render(<ResumeEditorCanvas resume={resume} selectedId={editingId ?? "profile"} editingId={editingId}
+    onEdit={onEdit} onCloseEditor={() => {}} onProfileChange={() => {}} onSectionChange={() => {}} onDeleteSection={() => {}} />));
+  return { onEdit, education, content };
+}
+
+function keyDown(element: Element, key: string, options: KeyboardEventInit = {}) {
+  const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...options });
+  act(() => { element.dispatchEvent(event); });
+  return event;
+}
+
+it.each(["Enter", " "])("keeps %j keyboard activation on focused view blocks", (key) => {
+  const { onEdit, content } = renderKeyboardFixture(null);
+  for (const id of ["profile", content.id]) {
+    const block = document.getElementById(`resume-block-${id}`)!;
+    expect(block.getAttribute("role")).toBe("button");
+    expect(block.tabIndex).toBe(0);
+    expect(keyDown(block, key).defaultPrevented).toBe(true);
+    expect(onEdit).toHaveBeenLastCalledWith(id);
+  }
+  expect(onEdit).toHaveBeenCalledTimes(2);
+});
+
+it.each(["profile", "education"] as const)("does not swallow spaces or Enter in nested %s fields and buttons", (editing) => {
+  const { onEdit } = renderKeyboardFixture(editing);
+  const controls = document.querySelectorAll(".inline-editor-shell input, .inline-editor-shell textarea, .inline-editor-shell button, .inline-editor-shell select");
+  expect(controls.length).toBeGreaterThan(0);
+  for (const control of controls) {
+    for (const key of [" ", "Enter"]) expect(keyDown(control, key).defaultPrevented).toBe(false);
+  }
+  expect(onEdit).not.toHaveBeenCalled();
+});
+
+it("does not swallow spaces from the rich-text editor or nested text nodes", () => {
+  const { onEdit } = renderKeyboardFixture("content");
+  const body = document.querySelector('[contenteditable="true"]')!;
+  expect(body).not.toBeNull();
+  expect(keyDown(body, " ").defaultPrevented).toBe(false);
+  expect(keyDown(body.querySelector("p")!, " ").defaultPrevented).toBe(false);
+  expect(onEdit).not.toHaveBeenCalled();
+});
+
+it("ignores composition, modifier shortcuts, unrelated keys and nested view targets", () => {
+  const { onEdit } = renderKeyboardFixture(null);
+  const block = document.getElementById("resume-block-profile")!;
+  for (const options of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }, { isComposing: true }]) {
+    expect(keyDown(block, " ", options).defaultPrevented).toBe(false);
+  }
+  expect(keyDown(block, "ArrowDown").defaultPrevented).toBe(false);
+  expect(keyDown(block.firstElementChild!, "Enter").defaultPrevented).toBe(false);
+  expect(onEdit).not.toHaveBeenCalled();
+});
