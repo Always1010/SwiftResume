@@ -1,3 +1,5 @@
+import { Modal } from "./Modal";
+import { CloseButton } from "./CloseButton";
 import type {
   AppSettings,
   PreviewZoom,
@@ -19,6 +21,10 @@ interface SettingsPanelProps {
   onBackupNow: () => void;
   onRestoreBackup: () => void;
   onOpenHistory: () => void;
+  onExportResume: () => void;
+  onExportLibrary: () => void;
+  onImportBackup: () => void;
+  onImportText: () => void;
 }
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
@@ -57,42 +63,33 @@ export function SettingsPanel({
   onAuthorizeBackupDirectory,
   onBackupNow,
   onRestoreBackup,
-  onOpenHistory,
+  onOpenHistory, onExportResume, onExportLibrary, onImportBackup, onImportText,
 }: SettingsPanelProps) {
   const update = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
     onChange({ ...settings, [key]: value });
 
   return (
-    <div className="settings-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="settings-page" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <Modal titleId="settings-title" className="settings-page" onClose={onClose}>
         <header className="settings-header">
           <div>
-            <span className="eyebrow">SwiftResume</span>
             <h2 id="settings-title">设置</h2>
-            <p>调整多页面协作、保存、导出和预览行为。</p>
+            <p>所有设置自动保存</p>
           </div>
-          <button type="button" className="settings-close" onClick={onClose} aria-label="关闭设置">×</button>
+          <CloseButton onClick={onClose} label="关闭设置" />
         </header>
 
         <div className="settings-content">
-          <div className="settings-group">
-            <div className="settings-group-title"><span>01</span><div><h3>多页面协作</h3><p>控制多个 SwiftResume 标签页之间的数据流动。</p></div></div>
-            <div className="setting-row">
-              <div><strong>实时页面同步</strong><p>{syncSupported ? "当前页面的每次修改都会同步到其他已打开页面。" : "当前浏览器不支持 BroadcastChannel。"}</p></div>
-              <Toggle label="实时页面同步" checked={settings.liveSync && syncSupported} onChange={(value) => update("liveSync", value)} />
+          <section className="settings-group">
+            <div className="settings-group-title"><h3>导入与备份</h3></div>
+            <div className="settings-file-tools">
+              <button type="button" className="secondary-button" onClick={onImportText}>粘贴已有简历</button>
+              <button type="button" className="secondary-button" onClick={onImportBackup}>导入 JSON 备份</button>
+              <button type="button" className="secondary-button" onClick={onExportResume}>备份当前简历</button>
+              <button type="button" className="secondary-button" onClick={onExportLibrary}>备份全部简历</button>
             </div>
-            <label className={`setting-row ${!settings.liveSync ? "setting-disabled" : ""}`}>
-              <div><strong>同步延迟</strong><p>即时最流畅；较长延迟适合连续输入大量内容。</p></div>
-              <select disabled={!settings.liveSync} value={settings.syncDelayMs} onChange={(event) => update("syncDelayMs", Number(event.target.value) as SyncDelay)}>
-                <option value={0}>即时同步</option>
-                <option value={100}>100 毫秒</option>
-                <option value={300}>300 毫秒</option>
-              </select>
-            </label>
-          </div>
-
+          </section>
           <div className="settings-group">
-            <div className="settings-group-title"><span>02</span><div><h3>保存与导出</h3><p>内容仅保存在本机，不会上传到服务器。</p></div></div>
+            <div className="settings-group-title"><div><h3>保存与导出</h3><p>内容仅保存在本机，不会上传到服务器。</p></div></div>
             <label className="setting-row">
               <div><strong>自动保存延迟</strong><p>停止编辑后等待多久写入本地数据库。</p></div>
               <select value={settings.saveDelayMs} onChange={(event) => update("saveDelayMs", Number(event.target.value) as SaveDelay)}>
@@ -109,7 +106,7 @@ export function SettingsPanel({
           </div>
 
           <div className="settings-group">
-            <div className="settings-group-title"><span>03</span><div><h3>编辑预览</h3><p>只影响工作台显示，不改变 PDF 页面尺寸。</p></div></div>
+            <div className="settings-group-title"><div><h3>编辑预览</h3><p>只影响工作台显示，不改变 PDF 页面尺寸。</p></div></div>
             <div className="setting-row">
               <div><strong>预览页数</strong><p>在预览工具栏中显示当前简历的实际 A4 页数。</p></div>
               <Toggle label="预览页数" checked={settings.showOverflowWarning} onChange={(value) => update("showOverflowWarning", value)} />
@@ -127,20 +124,20 @@ export function SettingsPanel({
           </div>
 
           <div className="settings-group">
-            <div className="settings-group-title"><span>04</span><div><h3>本地磁盘备份</h3><p>浏览器内自动保存与磁盘备份是两份数据。清理浏览器数据或卸载扩展可能丢失未备份的简历。</p></div></div>
+            <div className="settings-group-title"><div><h3>本地磁盘备份</h3><p>浏览器内自动保存与磁盘备份是两份数据。清理浏览器数据或卸载扩展可能丢失未备份的简历。</p></div></div>
             <div className={`setting-row ${!backupSupported ? "setting-disabled" : ""}`}>
               <div><strong>自动磁盘备份</strong><p>{settings.diskBackupEnabled ? backupStatusLabels[backupStatus] : "已关闭；浏览器内仍会自动保存。"}</p></div>
               <Toggle label="自动磁盘备份" checked={settings.diskBackupEnabled && backupSupported} onChange={(value) => update("diskBackupEnabled", value)} />
             </div>
             <div className="setting-row backup-directory-row">
-              <div><strong>备份目录</strong><p>{backupDirectoryName || "选择 D 盘、移动磁盘或其他可访问目录。"}</p></div>
+              <div><strong>备份目录</strong><p>{backupDirectoryName || "选择本机或移动磁盘中的目录。"}</p></div>
               <div className="setting-actions">
                 {(backupStatus === "permission-required" || backupStatus === "error") && Boolean(backupDirectoryName) && <button type="button" className="secondary-button" onClick={onAuthorizeBackupDirectory}>重新授权</button>}
                 <button type="button" className="secondary-button" disabled={!backupSupported} onClick={onChooseBackupDirectory}>{backupDirectoryName ? "更换目录" : "选择目录"}</button>
               </div>
             </div>
             <div className="setting-row">
-              <div><strong>备份与恢复</strong><p>最新版本保存在 resumes，独立图片保存在 assets，历史快照保存在 history。</p></div>
+              <div><strong>备份与恢复</strong><p>从磁盘备份找回内容。</p></div>
               <div className="setting-actions">
                 <button type="button" className="secondary-button" disabled={!backupDirectoryName || backupStatus !== "ready"} onClick={onOpenHistory}>历史版本</button>
                 <button type="button" className="secondary-button" disabled={!backupDirectoryName} onClick={onRestoreBackup}>从目录恢复</button>
@@ -148,13 +145,24 @@ export function SettingsPanel({
               </div>
             </div>
           </div>
+          <details className="settings-group settings-advanced">
+            <summary>多页面同步</summary>
+            <div className="setting-row">
+              <div><strong>实时页面同步</strong><p>{syncSupported ? "当前页面的每次修改都会同步到其他已打开页面。" : "当前浏览器不支持 BroadcastChannel。"}</p></div>
+              <Toggle label="实时页面同步" checked={settings.liveSync && syncSupported} onChange={(value) => update("liveSync", value)} />
+            </div>
+            <label className={`setting-row ${!settings.liveSync ? "setting-disabled" : ""}`}>
+              <div><strong>同步延迟</strong><p>即时最流畅；较长延迟适合连续输入大量内容。</p></div>
+              <select disabled={!settings.liveSync} value={settings.syncDelayMs} onChange={(event) => update("syncDelayMs", Number(event.target.value) as SyncDelay)}>
+                <option value={0}>即时同步</option>
+                <option value={100}>100 毫秒</option>
+                <option value={300}>300 毫秒</option>
+              </select>
+            </label>
+          </details>
+
         </div>
 
-        <footer className="settings-footer">
-          <span>设置会自动保存，并应用于所有 SwiftResume 页面。</span>
-          <button type="button" className="primary-button" onClick={onClose}>完成</button>
-        </footer>
-      </section>
-    </div>
+    </Modal>
   );
 }
