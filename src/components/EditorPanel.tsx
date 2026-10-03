@@ -4,6 +4,7 @@ import { createPurposeEntry, DEFAULT_PROFILE_PHOTO_CROP, reorderProfileDetail } 
 import { createCroppedPhoto, drawCroppedPhoto, loadPhotoImage } from "../model/profilePhoto";
 import { ContentBodyEditor } from "./customEditors/ContentBodyEditor";
 import { PhotoBackgroundPicker } from "./PhotoBackgroundPicker";
+import { CloseButton } from "./CloseButton";
 import { sectionPurpose, contentLabels } from "../model/contentLabels";
 
 const makeId = () => crypto.randomUUID();
@@ -95,7 +96,7 @@ function PhotoCropDialog({
       <section className="photo-crop-dialog" role="dialog" aria-modal="true" aria-labelledby="photo-crop-title">
         <div className="photo-crop-heading">
           <div><span className="eyebrow">3:4 证件照比例</span><h3 id="photo-crop-title">裁切头像</h3></div>
-          <button type="button" className="icon-button" onClick={onCancel} aria-label="关闭裁切">×</button>
+          <CloseButton onClick={onCancel} disabled={saving} label="关闭裁切" />
         </div>
         <div className={`photo-crop-stage ${background === "transparent" ? "transparent-grid" : ""}`} style={background === "transparent" ? undefined : { backgroundColor: background }}>
           <canvas ref={canvasRef} width="360" height="480" aria-label="头像裁切预览" />

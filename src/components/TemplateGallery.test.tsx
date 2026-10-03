@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, type ComponentProps } from "react";
+import { act, type ComponentProps, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -9,6 +9,7 @@ import { templatePageCountContentKey, type TemplatePageMeasurement } from "../te
 import { TemplateGallery } from "./TemplateGallery";
 import { ResumePreview } from "./ResumePreview";
 
+vi.mock("./Modal", () => ({ Modal: ({ children, className }: { children: ReactNode; className?: string }) => <div role="dialog" className={className}>{children}</div> }));
 vi.mock("./ResumePreview", () => ({ ResumePreview: vi.fn(() => null) }));
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 let root: ReturnType<typeof createRoot> | undefined;
@@ -39,12 +40,13 @@ function openComparison(container: HTMLElement) {
 }
 
 describe("TemplateGallery", () => {
-  it("starts with the recommendation flow", () => {
+  it("starts with directly browsable templates and keeps recommendations optional", () => {
     const html = renderToStaticMarkup(<TemplateGallery selectedId="blueprint" resume={createDefaultResume()} onSelect={() => undefined} />);
     expect(RESUME_TEMPLATES).toHaveLength(100);
     expect(html).toContain("为我推荐");
-    expect(html).toContain("你准备投递什么方向");
-    expect(html).toContain("15 秒找到适合你的样式");
+    expect(html).not.toContain("你准备投递什么方向");
+    expect(html).toContain("搜索模板");
+    expect((html.match(/class="template-gallery-card /g) ?? [])).toHaveLength(100);
   });
 
   it("browses prebuilt images without rendering PDFs, while comparing uses real content", () => {
