@@ -31,3 +31,16 @@ it("offers drag handles and a full-width choice for every profile detail", () =>
   expect(html).toContain("draggable=\"true\"");
   expect(html).toContain("checked=\"\"");
 });
+
+it("keeps writing advice and examples available behind initially closed disclosures", () => {
+  const container = document.createElement("div");
+  container.innerHTML = renderPurpose("work");
+  const advice = container.querySelector<HTMLDetailsElement>(".writing-guidance")!;
+  const example = container.querySelector<HTMLDetailsElement>(".writing-example")!;
+  expect(advice.open).toBe(false);
+  expect(advice.querySelector("summary")?.textContent).toBe("写作建议");
+  expect(advice.textContent).toContain("可核实的成果");
+  expect(example.open).toBe(false);
+  expect(example.textContent).toContain("填入空白正文");
+  expect(container.querySelector(".field input")).not.toBeNull();
+});
