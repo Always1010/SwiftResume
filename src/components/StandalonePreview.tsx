@@ -1,10 +1,5 @@
-import { usePdfPrintShortcut } from "../export/usePdfPrintShortcut";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ResumeExportDialog } from "./ResumeExportDialog";
-import { useOutputEngine } from "../settings/useOutputEngine";
 import type { ResumeDocument } from "../model/resume";
-import { loadResumeById, saveResumeById } from "../storage/resumeStorage";
-import { usePreviewSubscriber } from "../sync/previewSync";
 import { getResumeTemplate } from "../templates/registry";
 import { PhotoBackgroundPicker } from "./PhotoBackgroundPicker";
 import { ResumePreview } from "./ResumePreview";
@@ -18,28 +13,15 @@ export const MIN_TEMPLATE_GALLERY_WIDTH = 220;
 export const DEFAULT_TEMPLATE_GALLERY_WIDTH = 340;
 export const MAX_TEMPLATE_GALLERY_WIDTH = 860;
 const TEMPLATE_GALLERY_WIDTH_KEY = "swift-resume-template-gallery-width";
-const STYLE_SAVE_DELAY_MS = 180;
 
-interface AppearanceChange {
+
+export interface AppearanceChange {
   theme?: Partial<ResumeDocument["theme"]>;
   photoBackground?: string;
 }
 
 export const clampTemplateGalleryWidth = (width: number, availableWidth = MAX_TEMPLATE_GALLERY_WIDTH) =>
   Math.min(Math.max(MIN_TEMPLATE_GALLERY_WIDTH, availableWidth), Math.max(MIN_TEMPLATE_GALLERY_WIDTH, Math.min(MAX_TEMPLATE_GALLERY_WIDTH, width)));
-
-export function updateResumeAppearance(resume: ResumeDocument, change: AppearanceChange, updatedAt?: string): ResumeDocument {
-  const nextUpdatedAt = updatedAt ?? new Date(Math.max(Date.now(), (Date.parse(resume.updatedAt) || 0) + 1)).toISOString();
-  return {
-    ...resume,
-    theme: { ...resume.theme, ...change.theme },
-    profile: {
-      ...resume.profile,
-      photoBackground: change.photoBackground ?? resume.profile.photoBackground,
-    },
-    updatedAt: nextUpdatedAt,
-  };
-}
 
 function readTemplateGalleryWidth() {
   if (typeof window === "undefined") return DEFAULT_TEMPLATE_GALLERY_WIDTH;
@@ -51,57 +33,23 @@ function readTemplateGalleryWidth() {
   }
 }
 
-export function StandalonePreview({ resumeId }: { resumeId: string }) {
-  const engine = useOutputEngine();
-  const [resume, setResume] = useState<ResumeDocument | null>(null);
-  const [error, setError] = useState("");
+export function StandalonePreview({ resume, engine, saveState, onAppearanceChange, onExport, onBack }: {
+  resume: ResumeDocument;
+  engine: import("../settings/appSettings").OutputEngine;
+  saveState: "saving" | "saved" | "error";
+  onAppearanceChange: (change: AppearanceChange) => void;
+  onExport: () => void;
+  onBack: () => void;
+}) {
   const [pageMeasurement, setPageMeasurement] = useState<TemplatePageMeasurement | null>(null);
   const [fitWidth, setFitWidth] = useState(true);
   const [manualZoom, setManualZoom] = useState(100);
   const [fitZoom, setFitZoom] = useState(100);
-  const [pdfResume, setPdfResume] = useState<ResumeDocument | null>(null);
-  const [styleSyncState, setStyleSyncState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [styleError, setStyleError] = useState("");
   const [galleryWidth, setGalleryWidth] = useState(readTemplateGalleryWidth);
   const [galleryMaxWidth, setGalleryMaxWidth] = useState(MAX_TEMPLATE_GALLERY_WIDTH);
   const [resizingGallery, setResizingGallery] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
-  const resumeRef = useRef<ResumeDocument | null>(null);
-  const styleSaveTimerRef = useRef<number | null>(null);
-
-  const acceptResume = useCallback((document: ResumeDocument) => {
-    if (styleSaveTimerRef.current !== null) {
-      window.clearTimeout(styleSaveTimerRef.current);
-      styleSaveTimerRef.current = null;
-    }
-    resumeRef.current = document;
-    setResume(document);
-    setStyleSyncState("saved");
-    setStyleError("");
-  }, []);
-  const publishCommittedResume = usePreviewSubscriber(resumeId, acceptResume);
-
-  useEffect(() => {
-    if (!resumeId) {
-      setError("预览链接缺少简历标识，请从编辑页面重新打开。");
-      return;
-    }
-    let active = true;
-    loadResumeById(resumeId).then((document) => {
-      if (!active) return;
-      if (document) {
-        resumeRef.current = document;
-        setResume(document);
-      }
-      else setError("找不到这份简历，它可能已经被删除。");
-    }).catch(() => active && setError("读取简历失败，请返回编辑页面后重试。"));
-    return () => { active = false; };
-  }, [resumeId]);
-
-  useEffect(() => () => {
-    if (styleSaveTimerRef.current !== null) window.clearTimeout(styleSaveTimerRef.current);
-  }, []);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -120,6 +68,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
     const workspace = workspaceRef.current;
     if (!workspace) return;
     const update = () => {
+      if (!workspace.clientWidth) return; // Keep the chosen width while this screen is hidden.
       const nextMax = Math.min(MAX_TEMPLATE_GALLERY_WIDTH, Math.max(MIN_TEMPLATE_GALLERY_WIDTH, workspace.clientWidth - 8));
       setGalleryMaxWidth(nextMax);
       setGalleryWidth((current) => clampTemplateGalleryWidth(current, nextMax));
@@ -158,12 +107,10 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
     };
   }, [galleryMaxWidth, resizingGallery]);
 
-  usePdfPrintShortcut(() => { if (resume) setPdfResume(resume); });
   const zoom = fitWidth ? fitZoom : manualZoom;
-  const title = useMemo(() => resume?.title || "独立预览", [resume?.title]);
+  const title = useMemo(() => resume.title || "模板与预览", [resume.title]);
   const previewResume = resume;
   const selectedTemplate = resume ? getResumeTemplate(resume.theme.templateId) : null;
-  useEffect(() => { document.title = `${title} · SwiftResume 预览`; }, [title]);
 
   const adjustZoom = (delta: number) => {
     setFitWidth(false);
@@ -177,26 +124,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
     setPageMeasurement((current) => current?.contentKey === contentKey && current.templateId === templateId && current.engine === engine && current.pageCount === value
       ? current : { contentKey, templateId, engine, pageCount: value });
   }, [contentKey, templateId, engine]);
-  const updateAppearance = (change: AppearanceChange) => {
-    const current = resumeRef.current;
-    if (!current) return;
-    const nextResume = updateResumeAppearance(current, change);
-    resumeRef.current = nextResume;
-    setResume(nextResume);
-    setStyleSyncState("saving");
-    setStyleError("");
-    publishCommittedResume(nextResume);
-    if (styleSaveTimerRef.current !== null) window.clearTimeout(styleSaveTimerRef.current);
-    styleSaveTimerRef.current = window.setTimeout(() => {
-      styleSaveTimerRef.current = null;
-      void saveResumeById(resumeId, nextResume).then(() => {
-        if (resumeRef.current === nextResume) setStyleSyncState("saved");
-      }).catch((saveError: unknown) => {
-        setStyleSyncState("error");
-        setStyleError(saveError instanceof Error ? saveError.message : "自动保存样式失败");
-      });
-    }, STYLE_SAVE_DELAY_MS);
-  };
+  const updateAppearance = onAppearanceChange;
 
   return (
     <main className="standalone-preview">
@@ -213,9 +141,9 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
             <output>{zoom}%</output>
             <button type="button" aria-label="放大预览" onClick={() => adjustZoom(10)}>＋</button>
           </div>
-          {styleSyncState !== "idle" && <span className={`standalone-sync-status ${styleSyncState === "error" ? "error" : ""}`}>{styleSyncState === "saving" ? "正在自动同步…" : styleSyncState === "error" ? "同步失败" : "已自动同步"}</span>}
-          <button type="button" className="primary-button" disabled={!previewResume} onClick={() => setPdfResume(resume)}>{engine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
-          <button type="button" className="secondary-button" onClick={() => window.close()}>关闭页面</button>
+          <span role="status" className={`standalone-sync-status ${saveState === "error" ? "error" : ""}`}>{saveState === "saving" ? "保存中…" : saveState === "error" ? "保存失败，请返回编辑重试" : "已自动保存"}</span>
+          <button type="button" className="primary-button" disabled={!previewResume} onClick={onExport}>{engine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
+          <button type="button" className="secondary-button" onClick={onBack}>返回编辑</button>
         </div>
       </header>
       <div
@@ -259,28 +187,26 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
               <div className="standalone-template-summary"><strong>{selectedTemplate?.name}</strong><span>{selectedTemplate?.description}</span></div>
               <label className="density-control">
                 <span>紧凑</span>
-                <input aria-label="独立预览排版密度" type="range" min="0" max="100" step="1" value={previewResume.theme.density} onChange={(event) => updateAppearance({ theme: { density: Number(event.target.value) } })} />
+                <input aria-label="模板预览排版密度" type="range" min="0" max="100" step="1" value={previewResume.theme.density} onChange={(event) => updateAppearance({ theme: { density: Number(event.target.value) } })} />
                 <span>宽松</span>
                 <output>{previewResume.theme.density}</output>
               </label>
-              <label className="accent-picker" title="强调色"><span>配色</span><input aria-label="独立预览配色" type="color" value={previewResume.theme.accent} onChange={(event) => updateAppearance({ theme: { accent: event.target.value } })} /></label>
+              <label className="accent-picker" title="强调色"><span>配色</span><input aria-label="模板预览配色" type="color" value={previewResume.theme.accent} onChange={(event) => updateAppearance({ theme: { accent: event.target.value } })} /></label>
               <PhotoBackgroundPicker
                 compact
                 value={previewResume.profile.photoBackground}
                 disabled={!resume?.profile.photo}
                 onChange={(photoBackground) => updateAppearance({ photoBackground })}
               />
-              {styleError && <span className="standalone-style-error">{styleError}</span>}
             </div>
           )}
           <div ref={viewportRef} className="standalone-preview-viewport">
             {previewResume ? <ResumePreview engine={engine} resume={previewResume} zoom={fitWidth ? "fit" : zoom} templateId={previewResume.theme.templateId} onPageCountChange={updatePageCount} /> : (
-              <div className="standalone-preview-empty"><strong>{error || "正在读取简历…"}</strong>{error && <span>你可以关闭此页面并重新打开独立预览。</span>}</div>
+              <div className="standalone-preview-empty"><strong>正在读取简历…</strong></div>
             )}
           </div>
         </section>
       </div>
-      {pdfResume && <ResumeExportDialog engine={engine} resume={pdfResume} onClose={() => setPdfResume(null)} />}
     </main>
   );
 }
