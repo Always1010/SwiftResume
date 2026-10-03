@@ -8,10 +8,10 @@ const undo = (state: ResumeHistory) => resumeHistoryReducer(state, { type: "undo
 const redo = (state: ResumeHistory) => resumeHistoryReducer(state, { type: "redo", time: 30000 });
 
 describe("document undo history", () => {
-  it("keeps downloaded snapshots across undo without adding an undo step for downloads", () => {
+  it.each(["download", "print"] as const)("keeps %s snapshots across undo without adding an undo step", (kind) => {
     let history = createResumeHistory(createBlankResume());
     history = edit(history, { type: "update-title", value: "投递版" });
-    const record = exportRecord(history.present, "投递版.pdf");
+    const record = exportRecord(history.present, kind === "print" ? { kind } : { kind, filename: "投递版.pdf" });
     history = edit(history, { type: "record-export", value: record });
     expect(history.past).toHaveLength(1);
     const restored = undo(history);

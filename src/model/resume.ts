@@ -161,6 +161,12 @@ export interface ContentSection extends SectionBase {
 
 export type ResumeSection = EducationSection | ContentSection;
 
+export type ResumeExportRequest = { kind: "download"; filename: string } | { kind: "print" };
+export type ResumeExportRecord = {
+  at: string;
+  snapshot: Omit<ResumeDocument, "lastExport">;
+} & (ResumeExportRequest | { kind?: undefined; filename: string });
+
 export interface ResumeDocument {
   schemaVersion: 4;
   title: string;
@@ -169,7 +175,7 @@ export interface ResumeDocument {
   sections: ResumeSection[];
   updatedAt: string;
   target?: { company: string; role: string; notes: string };
-  lastExport?: { at: string; filename: string; snapshot: Omit<ResumeDocument, "lastExport"> };
+  lastExport?: ResumeExportRecord;
 }
 
 export type ResumeAction =

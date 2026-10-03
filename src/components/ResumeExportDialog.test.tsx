@@ -7,7 +7,7 @@ import { savePrintJob } from "../export/htmlPrintJobs";
 import { ResumeExportDialog } from "./ResumeExportDialog";
 
 vi.mock("./Modal", () => ({ Modal: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
-vi.mock("./PdfExportDialog", () => ({ PdfExportDialog: () => <div data-testid="typst-export" /> }));
+vi.mock("./PdfExportDialog", () => ({ PdfExportDialog: ({ onDownloaded }: { onDownloaded: (filename: string) => void }) => <button data-testid="typst-export" onClick={() => onDownloaded("resume.pdf")}>下载 PDF</button> }));
 const previewState = vi.hoisted(() => ({ ready: true }));
 vi.mock("./ResumePreview", () => ({ ResumePreview: ({ onPageCountChange, onReadyChange }: { onPageCountChange: (count: number) => void; onReadyChange: (ready: boolean) => void }) => {
   useEffect(() => { onPageCountChange(2); onReadyChange(previewState.ready); }, [onPageCountChange, onReadyChange]);
@@ -20,15 +20,15 @@ afterEach(() => { act(() => root?.unmount()); document.body.innerHTML = ""; prev
 
 async function render(engine: "html" | "typst") {
   const resume = createDefaultResume();
-  const downloaded = vi.fn();
+  const requested = vi.fn();
   document.body.innerHTML = '<div id="test"></div>';
   root = createRoot(document.getElementById("test")!);
-  await act(async () => root.render(<ResumeExportDialog engine={engine} resume={resume} onClose={() => {}} onDownloaded={downloaded} />));
-  return { resume, downloaded };
+  await act(async () => root.render(<ResumeExportDialog engine={engine} resume={resume} onClose={() => {}} onExportRequested={requested} />));
+  return { resume, requested };
 }
-it("exports HTML through an isolated snapshot link without claiming a completed download", async () => {
+it("prepares HTML through an isolated snapshot link without recording a request yet", async () => {
   vi.mocked(savePrintJob).mockResolvedValue("https://example.test/?view=html-print&job=one");
-  const { resume, downloaded } = await render("html");
+  const { resume, requested } = await render("html");
   expect(savePrintJob).toHaveBeenCalledWith(expect.any(String), resume);
   const link = document.querySelector("a")!;
   expect(link.href).toContain("job=one");
@@ -36,11 +36,14 @@ it("exports HTML through an isolated snapshot link without claiming a completed 
   expect(link.rel).toBe("noopener noreferrer");
   expect(document.querySelector("[data-testid=html-export]")).not.toBeNull();
   expect(document.querySelector("[data-testid=typst-export]")).toBeNull();
-  expect(downloaded).not.toHaveBeenCalled();
+  expect(requested).not.toHaveBeenCalled();
 });
 it("preserves the Typst exporter when selected", async () => {
-  await render("typst");
-  expect(document.querySelector("[data-testid=typst-export]")).not.toBeNull();
+  const { requested } = await render("typst");
+  const button = document.querySelector<HTMLButtonElement>("[data-testid=typst-export]")!;
+  expect(button).not.toBeNull();
+  act(() => button.click());
+  expect(requested).toHaveBeenCalledWith({ kind: "download", filename: "resume.pdf" });
   expect(savePrintJob).not.toHaveBeenCalled();
 });
 it("waits for final pagination even when previous pages remain visible", async () => {
@@ -55,4 +58,49 @@ it("does not offer a print link when saving the snapshot fails", async () => {
   await render("html");
   expect(document.querySelector("[role=alert]")?.textContent).toContain("无法准备打印快照");
   expect(document.querySelector("a")).toBeNull();
+});
+
+it("records only a print request when the prepared HTML link is activated, including retries after cancel", async () => {
+  vi.mocked(savePrintJob).mockResolvedValue("https://example.test/?view=html-print&job=one");
+  const { requested } = await render("html");
+  const link = document.querySelector("a")!;
+  // Prevent jsdom navigation without interfering with React's click handler.
+  link.addEventListener("click", (event) => event.preventDefault());
+  act(() => link.click());
+  expect(requested).toHaveBeenLastCalledWith({ kind: "print" });
+  window.dispatchEvent(new Event("afterprint"));
+  expect(requested).toHaveBeenCalledTimes(1);
+  act(() => link.click());
+  expect(requested).toHaveBeenCalledTimes(2);
+  expect(requested.mock.calls.every(([value]) => value.kind === "print" && !("filename" in value))).toBe(true);
+});
+it("keeps content warnings and their editing destinations in the same export dialog", async () => {
+  vi.mocked(savePrintJob).mockResolvedValue("https://example.test/?view=html-print&job=one");
+  const { resume } = await render("html");
+  const locate = vi.fn();
+  await act(async () => root.render(<ResumeExportDialog engine="html" resume={resume} onClose={() => {}} onLocate={locate} />));
+  expect(document.querySelector(".export-content-checks summary")?.textContent).toContain("项内容待检查");
+  const button = [...document.querySelectorAll("button")].find((item) => item.textContent === "定位修改")!;
+  act(() => button.click());
+  expect(locate).toHaveBeenCalledWith("profile");
+});
+it("does not record a request on close, pending pagination or failed snapshot preparation", async () => {
+  previewState.ready = false;
+  vi.mocked(savePrintJob).mockResolvedValue("https://example.test/?view=html-print&job=pending");
+  const { requested } = await render("html");
+  act(() => [...document.querySelectorAll("button")].find((button) => button.textContent === "返回编辑")!.click());
+  expect(requested).not.toHaveBeenCalled();
+});
+
+it("ignores a stale snapshot preparation after the resume changes", async () => {
+  let resolveOld!: (url: string) => void;
+  vi.mocked(savePrintJob).mockReturnValueOnce(new Promise((resolve) => { resolveOld = resolve; }));
+  const { requested } = await render("html");
+  const next = createDefaultResume();
+  next.title = "New snapshot";
+  vi.mocked(savePrintJob).mockResolvedValueOnce("https://example.test/?view=html-print&job=new");
+  await act(async () => root.render(<ResumeExportDialog engine="html" resume={next} onClose={() => {}} onExportRequested={requested} />));
+  await act(async () => resolveOld("https://example.test/?view=html-print&job=old"));
+  expect(document.querySelector("a")?.href).toContain("job=new");
+  expect(requested).not.toHaveBeenCalled();
 });
