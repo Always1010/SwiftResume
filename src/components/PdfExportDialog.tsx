@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import type { GeneratedPdf } from "../export/typstPdf";
 import { getPdfArtifact } from "../export/pdfArtifact";
 import type { ResumeDocument } from "../model/resume";
@@ -6,10 +6,11 @@ import { Modal } from "./Modal";
 
 const PdfCanvasPreview = lazy(() => import("./PdfCanvasPreview"));
 
-export function PdfExportDialog({ resume, onClose, onDownloaded }: {
+export function PdfExportDialog({ resume, onClose, onDownloaded, checks }: {
   resume: ResumeDocument;
   onClose: () => void;
   onDownloaded?: (filename: string) => void;
+  checks?: ReactNode;
 }) {
   const [pdf, setPdf] = useState<(GeneratedPdf & { url: string }) | null>(null);
   const [error, setError] = useState("");
@@ -38,7 +39,7 @@ export function PdfExportDialog({ resume, onClose, onDownloaded }: {
 
   return <Modal titleId="pdf-export-title" className="pdf-export-dialog" onClose={onClose}>
     <header className="workspace-dialog-header">
-      <div><h2 id="pdf-export-title">确认 PDF 后下载</h2><p>{resume.title || "未命名简历"} · 预览、下载与打印使用同一份 PDF；打印将在新标签页打开，请使用阅读器的打印按钮</p></div>
+      <div><h2 id="pdf-export-title">确认 PDF 后下载</h2><p>{resume.title || "未命名简历"} · 预览、下载与打印使用同一份 PDF；打印将在新标签页打开，请使用阅读器的打印按钮</p>{checks}</div>
       <button type="button" className="secondary-button" onClick={onClose}>返回编辑</button>
     </header>
     <div className="pdf-preview-content" aria-busy={!pdf && !error}>

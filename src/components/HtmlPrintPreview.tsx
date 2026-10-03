@@ -158,10 +158,10 @@ export function HtmlPrintPreview({ resumeId, jobId = "" }: { resumeId: string; j
     <header className="html-print-toolbar">
       <div><strong>HTML/CSS 打印快照</strong><span>{resume?.title} {pageCount > 0 && `· 共 ${pageCount} 页`}</span></div>
       <label>缩放 <select aria-label="HTML 预览缩放" value={zoom} onChange={(event) => setZoom(Number(event.target.value))}>{[70, 85, 100, 115].map((value) => <option key={value} value={value}>{value}%</option>)}</select></label>
-      <button className="primary-button" disabled={!pageCount || !!error} onClick={() => window.print()}>打印 / 另存为 PDF</button>
+      <button className="primary-button" disabled={!pageCount || !!error} onClick={() => window.print()}>打印 / 保存 PDF</button>
       <button className="secondary-button" onClick={() => window.close()}>关闭</button>
     </header>
-    <p className="html-print-help">在打印窗口选择“另存为 PDF”，纸张 A4、缩放 100%、边距无，关闭页眉和页脚，开启背景图形。此页保存导出时的排版；继续编辑后，需要重新导出才能更新快照。</p>
+    <p className="html-print-help">在打印窗口选择“另存为 PDF”，纸张 A4、缩放 100%、边距无，关闭页眉和页脚，开启背景图形。此页保留发起导出时的内容；取消打印后可再次点击“打印 / 保存 PDF”。浏览器不会通知应用文件是否保存。</p>
     {error ? <p className="html-print-status" role="alert">{error}</p> : !pageCount && <p className="html-print-status" role="status">正在加载字体并分页…</p>}
     <div className="html-print-stage" style={{ zoom: zoom / 100 }}>
       {resume && <HtmlResumePages resume={resume} onReady={(count, message) => { setPageCount(count); setError(message); }} />}

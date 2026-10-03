@@ -13,7 +13,6 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { WorkspaceStandalonePreviewEntry } from "./components/WorkspaceStandalonePreviewEntry";
 import { ResumeExportDialog } from "./components/ResumeExportDialog";
-import { ResumeCheckDialog } from "./components/ResumeCheckDialog";
 import { VersionsDialog } from "./components/VersionsDialog";
 import { TextImportDialog } from "./components/TextImportDialog";
 import { RestoreDialog } from "./components/RestoreDialog";
@@ -60,7 +59,6 @@ export function App() {
   const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
   const [pageCount, setPageCount] = useState(1);
   const [pdfResume, setPdfResume] = useState<ResumeDocument | null>(null);
-  const [checkOpen, setCheckOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [textImportOpen, setTextImportOpen] = useState(false);
   const [importBatch, setImportBatch] = useState<ImportBatch | null>(null);
@@ -485,8 +483,7 @@ export function App() {
     if (!activeResumeId) return;
     openPreviewWindow(view, activeResumeId);
   };
-  usePdfPrintShortcut(() => { if (ready) setCheckOpen(true); });
-  const exportPdf = () => setPdfResume(resume);
+  usePdfPrintShortcut(() => { if (ready) setPdfResume(resume); });
 
   if (!ready) return <main className="startup-status" role="status">正在打开本机简历库…</main>;
 
@@ -500,7 +497,7 @@ export function App() {
         </div>
         <div className="topbar-actions">
           <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置</button>
-          <button type="button" className="primary-button export-button" disabled={!ready} onClick={() => setCheckOpen(true)}>导出 PDF</button>
+          <button type="button" className="primary-button export-button" disabled={!ready} onClick={() => setPdfResume(resume)}>{settings.outputEngine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
         </div>
       </header>
       <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => { void importFile(event.target.files?.[0]); event.target.value = ""; }} />
@@ -577,8 +574,7 @@ export function App() {
           </section>
         ) : null}
       </div>
-      {checkOpen && <ResumeCheckDialog resume={resume} onClose={() => setCheckOpen(false)} onContinue={() => { setCheckOpen(false); exportPdf(); }} onLocate={(id) => { setCheckOpen(false); locateResumeBlock(id); }} />}
-      {pdfResume && <ResumeExportDialog engine={settings.outputEngine} resume={pdfResume} onDownloaded={(filename) => dispatch({ type: "record-export", value: exportRecord(pdfResume, filename) })} onClose={() => setPdfResume(null)} />}
+      {pdfResume && <ResumeExportDialog engine={settings.outputEngine} resume={pdfResume} onExportRequested={(request) => dispatch({ type: "record-export", value: exportRecord(pdfResume, request) })} onLocate={(id) => { setPdfResume(null); locateResumeBlock(id); }} onClose={() => setPdfResume(null)} />}
       {undoLabel === "删除模块" && <div className="undo-notice" role="status">模块已删除<button type="button" onClick={() => changeHistory("undo")}>撤销删除</button></div>}
       {settingsOpen && <SettingsPanel
         settings={settings}
