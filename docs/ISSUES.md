@@ -7,7 +7,7 @@
 - 现象或修改背景：将姓名中的“【示例】”改为真实姓名后，编辑区提示消失，但工作、项目、教育经历仍保留示例；最终导出检查却继续提示，前后不一致。
 - 原因分析：画布提示只检查姓名字段，没有复用导出前的整份内容检测；扩展个人信息、模块标题和日期中的占位文字也未纳入检测。
 - 解决方案：画布和导出共用同一检查规则，按未隐藏模块及个人信息统计疑似示例；用一条可展开的摘要减少干扰，并可逐项定位编辑，保留清空内容入口。
-- 验证方式：12 项画布与内容检查测试通过，覆盖改名后保留提醒、扩展字段、模块标题、隐藏模块排除及正确定位；TypeScript 检查通过。真实浏览器回归在最终集成后进行。
+- 验证方式：12 项画布与内容检查测试通过，覆盖改名后保留提醒、扩展字段、模块标题、隐藏模块排除及正确定位；TypeScript 检查通过。真实 Edge 回归与成品核验通过，详见 `docs/UX_RETEST_2026-10-03.md`。
 - 相关文件：`src/components/ResumeEditorCanvas.tsx`、`src/components/ResumeEditorCanvas.test.tsx`、`src/model/resumeChecks.ts`、`src/model/resumeChecks.test.ts`、`src/App.tsx`
 
 
@@ -18,7 +18,7 @@
 - 现象或修改背景：HTML/CSS 路径实际保存 PDF 后，岗位版本仍显示“尚无下载记录”；导出还要先经过独立检查弹窗再进入排版确认，入口文案与浏览器打印行为不一致。
 - 原因分析：版本记录仅连接 Typst 的下载链接，HTML 分支没有等价请求事件；模型和文案把所有导出都限定为下载文件。
 - 解决方案：统一记录下载请求和打印/保存请求，保留请求时的内容快照，兼容旧版下载记录；打印记录不虚构文件名或落盘成功，取消打印仍仅保留请求。内容检查与成品预览合并在一个窗口；HTML 入口统一为“打印 / 保存 PDF”。快照准备失败、预览未就绪、只打开/关闭窗口都不生成记录，旧异步快照不会覆盖新内容。
-- 验证方式：26 项导出、版本、备份与撤销回归测试通过，覆盖请求类型、取消/重试语义、旧记录兼容、快照隔离、过期异步结果与失败场景；TypeScript 检查通过。真实浏览器回归在最终集成后进行。
+- 验证方式：26 项导出、版本、备份与撤销回归测试通过，覆盖请求类型、取消/重试语义、旧记录兼容、快照隔离、过期异步结果与失败场景；TypeScript 检查通过。真实 Edge 回归与成品核验通过，详见 `docs/UX_RETEST_2026-10-03.md`。
 - 相关文件：`src/App.tsx`、`src/components/ResumeExportDialog.tsx`、`src/components/PdfExportDialog.tsx`、`src/components/HtmlPrintPreview.tsx`、`src/components/StandalonePreview.tsx`、`src/components/VersionsDialog.tsx`、`src/model/resume.ts`、`src/model/resumeVersions.ts`、`src/storage/libraryBackup.ts` 及对应测试
 
 
@@ -29,7 +29,7 @@
 - 现象或修改背景：在个人信息及模块正文中依次输入 a、空格、b 后得到 ab，嵌套表单控件的 Enter 默认行为也可能被拦截。
 - 原因分析：画布展示块的键盘激活处理器接收所有冒泡事件，在编辑状态仍对 Enter 和空格调用 preventDefault。
 - 解决方案：只在展示块自身获得焦点且未编辑时处理 Enter / 空格；忽略子控件、已处理事件、输入法组合及带 Ctrl / Meta / Alt 的快捷键，保留原有鼠标与键盘进入编辑功能。真实 PDF 复测又发现 HTML 正文默认折叠连续空格，补充 `white-space: pre-wrap`，使正文预览与打印保留连续空白。
-- 验证方式：8 项画布组件测试通过，覆盖个人信息、教育输入框/多行文本/按钮、真实富文本及嵌套节点空格、展示块键盘激活和组合快捷键；TypeScript 检查与 git diff --check 通过。真实 Edge 逐键验证姓名、多词岗位、正文、中英混排、列表及撤销/恢复通过；输出连续空格样式另补回归测试并重测。
+- 验证方式：8 项画布组件测试通过，覆盖个人信息、教育输入框/多行文本/按钮、真实富文本及嵌套节点空格、展示块键盘激活和组合快捷键；TypeScript 检查与 git diff --check 通过。真实 Edge 逐键验证姓名、多词岗位、正文、中英混排、列表及撤销/恢复通过；输出连续空格样式补充回归后，在最终双页 A4 PDF 中提取到原样 `a  b`，详见 `docs/UX_RETEST_2026-10-03.md`。
 - 相关文件：`src/components/ResumeEditorCanvas.tsx`、`src/components/ResumeEditorCanvas.test.tsx`
 
 
