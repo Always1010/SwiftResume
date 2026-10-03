@@ -39,6 +39,10 @@ export function ResumeEditorCanvas({
   };
 
   const handleViewKeyDown = (event: KeyboardEvent<HTMLElement>, id: string) => {
+    // Only the focused view block owns this activation shortcut. Keyboard events
+    // from nested form controls and the rich-text editor must keep their defaults.
+    if (editingId === id || event.target !== event.currentTarget || event.defaultPrevented) return;
+    if (event.nativeEvent.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
     editBlock(id);
