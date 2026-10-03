@@ -74,6 +74,7 @@ export function App() {
   const [backupDirectory, setBackupDirectory] = useState<FileSystemDirectoryHandle | null>(null);
   const [backupStatus, setBackupStatus] = useState<DiskBackupStatus>(() => isDiskBackupSupported() ? "not-configured" : "unsupported");
   const [backupPromptOpen, setBackupPromptOpen] = useState(false);
+  const [blockNavigation, setBlockNavigation] = useState<{ id: string } | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const firstRunRef = useRef(false);
   const libraryRef = useRef<ResumeLibrary | null>(null);
@@ -210,11 +211,13 @@ export function App() {
       .catch(() => setSaveState("error"));
   };
   const closeInlineEditor = () => {
+    setBlockNavigation(null);
     if (!editingId) return;
     commitInlineEdit();
     setEditingId(null);
   };
   const editResumeBlock = (id: string) => {
+    setBlockNavigation(null);
     if (editingId === id) {
       setSelectedId(id);
       return;
@@ -223,20 +226,40 @@ export function App() {
     setSelectedId(id);
     setEditingId(id);
   };
-  const locateResumeBlock = (id: string) => {
-    if (compactWorkspace) { setMobilePreview(false); setModulesOpen(false); }
-    const targetVisible = id === "profile" || resume.sections.some((section) => section.id === id && section.enabled);
-    if (targetVisible) editResumeBlock(id);
-    else {
+  const locateResumeBlock = (id: string, enabled = true) => {
+    // Hidden modules have no canvas target. Leave their directory controls visible.
+    if (!enabled || resume.sections.some((section) => section.id === id && !section.enabled)) {
       closeInlineEditor();
       setSelectedId(id);
+      return;
     }
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        document.getElementById(`resume-block-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setModulesOpen(false);
+    if (compactWorkspace) setMobilePreview(false);
+    editResumeBlock(id);
+    // A new request also handles selecting the already-open editor or a newly copied module.
+    setBlockNavigation({ id });
+  };
+
+  useEffect(() => {
+    if (!blockNavigation) return;
+    let focusFrame = 0;
+    const layoutFrame = window.requestAnimationFrame(() => {
+      focusFrame = window.requestAnimationFrame(() => {
+        const block = document.getElementById(`resume-block-${blockNavigation.id}`);
+        const scroller = block?.closest<HTMLElement>(".resume-editor-scroller");
+        if (!block || !scroller || document.querySelector('dialog[open], [aria-modal="true"]')) return;
+        const top = scroller.scrollTop + block.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 16;
+        // Scroll only the editor pane; smooth scrolling can leave a newly mounted editor below the fold.
+        scroller.scrollTo({ top: Math.max(0, top), behavior: "instant" });
+        const field = [...block.querySelectorAll<HTMLElement>('.field input:not([disabled]), .field textarea:not([disabled])')]
+          .find((candidate) => !candidate.closest('details:not([open])'))
+          ?? block.querySelector<HTMLElement>('.content-rich-surface [contenteditable="true"]')
+          ?? block.querySelector<HTMLElement>(".section-title-input");
+        field?.focus({ preventScroll: true });
       });
     });
-  };
+    return () => { window.cancelAnimationFrame(layoutFrame); window.cancelAnimationFrame(focusFrame); };
+  }, [blockNavigation]);
   const switchResume = async (resumeId: string) => {
     if (resumeId === activeResumeId) return;
     setSaveState("saving");
@@ -519,9 +542,7 @@ export function App() {
       <div className={`workspace ${previewVisible ? "" : "preview-hidden"} ${modulesOpen ? "modules-open" : "modules-hidden"} ${compactWorkspace && previewVisible ? "mobile-preview" : ""}`}>
         {modulesOpen && <Sidebar resume={resume} selectedId={selectedId} onSelect={locateResumeBlock} onAdd={(section) => {
           setSections([...resume.sections, section]);
-          if (compactWorkspace) { setMobilePreview(false); setModulesOpen(false); }
-          editResumeBlock(section.id);
-          window.requestAnimationFrame(() => document.getElementById(`resume-block-${section.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+          locateResumeBlock(section.id);
         }} onSectionsChange={setSections} onDeleteSection={removeSection} />}
         <ResumeEditorCanvas
           key={activeResumeId}
