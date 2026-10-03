@@ -119,7 +119,7 @@ export function TemplateGallery({ selectedId, resume, onSelect, engine = "typst"
     <aside ref={railRef} className="standalone-template-gallery" aria-label="简历模板画廊">
       <div className="template-gallery-controls">
         <div className="template-gallery-heading">
-          <div><strong>模板中心</strong><small>{mode === "finder" ? "15 秒找到适合你的样式" : `从 ${RESUME_TEMPLATES.length} 套中快速找款`}</small></div>
+          <div><strong>选择模板</strong><small>{mode === "finder" ? "按内容与偏好筛选" : "点击模板查看当前简历的效果"}</small></div>
           <span>{mode === "finder" && !recommendations.length ? "3步" : filteredTemplates.length}</span>
         </div>
         <div className="template-gallery-modes" role="tablist" aria-label="模板查找方式">
@@ -132,12 +132,12 @@ export function TemplateGallery({ selectedId, resume, onSelect, engine = "typst"
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索行业、风格或布局" aria-label="搜索模板" />
             {query && <button type="button" onClick={() => setQuery("")} aria-label="清空模板搜索">×</button>}
           </label>
-          <div className="template-family-tabs" role="group" aria-label="模板分类">
-            {TEMPLATE_FAMILIES.map((item) => (
-              <button key={item.id} type="button" className={family === item.id ? "active" : ""} onClick={() => setFamily(item.id)}>{item.name}</button>
-            ))}
-            <button type="button" className={family === "favorites" ? "active" : ""} onClick={() => setFamily("favorites")}>★ 收藏</button>
-          </div>
+          <label className="template-family-filter"><span>风格分类</span>
+            <select aria-label="模板分类" value={family} onChange={(event) => setFamily(event.target.value as typeof family)}>
+              {TEMPLATE_FAMILIES.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+              <option value="favorites">我的收藏</option>
+            </select>
+          </label>
         </>}
       </div>
       {mode === "finder" && !recommendations.length ? (
@@ -162,11 +162,14 @@ export function TemplateGallery({ selectedId, resume, onSelect, engine = "typst"
                   title={template.description}
                   onClick={() => onSelect(template.id)}
                 >
+                  {selectedId === template.id && <span className="template-current-label">当前使用</span>}
                   <div className="template-thumbnail-frame"><img src={templatePreviewUrl(template.id)} alt={`${template.name}模板示例首页`} loading="lazy" decoding="async" width={420} height={594} /></div>
                   <span className="template-gallery-copy"><strong>{template.name}</strong><small>{recommendation ? recommendation.reason : template.tags.slice(0, 2).join(" · ")}</small><small id={`${measurementLabelId}-${template.id}`} className="template-page-count" title={measuredPages ? `基于当前内容、样式和 ${engine === "html" ? "HTML" : "Typst"} 引擎的实际排版；修改后需重新测量` : "试用这套模板或打开对比后，显示当前内容的实际页数"}>{measuredPages ? `当前内容实测 ${measuredPages} 页` : "页数未测"}</small></span>
                 </button>
+                <div className="template-card-actions">
                 <button type="button" className={`template-compare-toggle ${comparing ? "active" : ""}`} aria-label={`${comparing ? "移出" : "加入"}${template.name}模板对比`} aria-pressed={comparing} onClick={() => toggleCompare(template.id)}>{comparing ? "✓ 已选" : "＋ 对比"}</button>
                 <button type="button" className={`template-favorite ${favorite ? "active" : ""}`} aria-label={`${favorite ? "取消收藏" : "收藏"}${template.name}模板`} aria-pressed={favorite} onClick={() => toggleFavorite(template.id)}>★</button>
+                </div>
               </article>
             );
           })}
