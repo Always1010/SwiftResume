@@ -263,3 +263,25 @@ it("returns from cancelled creation to the same library search, then creates dir
   expect(document.querySelector("#resume-block-profile.editing")).not.toBeNull();
   expect(document.activeElement).toBe(document.querySelector("#resume-block-profile .field input"));
 });
+
+it("opens My resumes through the visible title button and preserves the active editor when closed", async () => {
+  const openWindow = vi.spyOn(window, "open");
+  await mount();
+  await act(async () => document.getElementById("resume-block-profile")!.click());
+  const field = document.querySelector<HTMLInputElement>("#resume-block-profile .field input")!;
+  type(field, "QA entry check");
+  const entry = document.querySelector<HTMLButtonElement>(".document-switcher")!;
+  expect(entry.tagName).toBe("BUTTON"); expect(entry.disabled).toBe(false);
+  expect(entry.getAttribute("aria-haspopup")).toBe("dialog");
+  expect(entry.getAttribute("aria-expanded")).toBe("false");
+  await act(async () => entry.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
+  expect(entry.getAttribute("aria-expanded")).toBe("true");
+  expect(document.getElementById("resume-library-title")?.textContent).toBe("我的简历");
+  expect(document.querySelectorAll(".library-row")).toHaveLength(1);
+  await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="关闭我的简历"]')!.click());
+  expect(document.getElementById("resume-library-title")).toBeNull();
+  expect(entry.getAttribute("aria-expanded")).toBe("false");
+  expect(document.querySelector("#resume-block-profile .field input")).toBe(field);
+  expect(field.value).toBe("QA entry check");
+  expect(openWindow).not.toHaveBeenCalled();
+});
