@@ -130,17 +130,11 @@ export function StandalonePreview({ resume, engine, saveState, onAppearanceChang
     <main className="standalone-preview">
       <header className="standalone-preview-toolbar">
         <div className="standalone-preview-brand">
-          <img src="./icons/icon32.png" alt="" />
-          <div><strong>SwiftResume</strong><span>{title}</span></div>
+          <span className="brand-mark" aria-hidden="true">S</span>
+          <div><strong>模板与预览</strong><span>{title}</span></div>
           {previewResume && <span className="page-count-badge">{currentPageCount ? `共 ${currentPageCount} 页` : "排版中…"}</span>}
         </div>
         <div className="standalone-preview-actions">
-          <button type="button" className={`secondary-button ${fitWidth ? "active" : ""}`} onClick={() => setFitWidth(true)}>适应宽度</button>
-          <div className="standalone-zoom-control" aria-label="预览缩放">
-            <button type="button" aria-label="缩小预览" onClick={() => adjustZoom(-10)}>−</button>
-            <output>{zoom}%</output>
-            <button type="button" aria-label="放大预览" onClick={() => adjustZoom(10)}>＋</button>
-          </div>
           <span role="status" className={`standalone-sync-status ${saveState === "error" ? "error" : ""}`}>{saveState === "saving" ? "保存中…" : saveState === "error" ? "保存失败，请返回编辑重试" : "已自动保存"}</span>
           <button type="button" className="primary-button" disabled={!previewResume} onClick={onExport}>{engine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
           <button type="button" className="secondary-button" onClick={onBack}>返回编辑</button>
@@ -185,6 +179,16 @@ export function StandalonePreview({ resume, engine, saveState, onAppearanceChang
           {previewResume && (
             <div className="standalone-appearance-bar">
               <div className="standalone-template-summary"><strong>{selectedTemplate?.name}</strong><span>{selectedTemplate?.description}</span></div>
+              <div className="standalone-preview-zoom">
+          <button type="button" className={`secondary-button ${fitWidth ? "active" : ""}`} onClick={() => setFitWidth(true)}>适应宽度</button>
+          <div className="standalone-zoom-control" aria-label="预览缩放">
+            <button type="button" aria-label="缩小预览" onClick={() => adjustZoom(-10)}>−</button>
+            <output>{zoom}%</output>
+            <button type="button" aria-label="放大预览" onClick={() => adjustZoom(10)}>＋</button>
+          </div>
+              </div>
+              <details className="standalone-appearance-options"><summary>排版设置</summary>
+                <div className="standalone-appearance-fields">
               <label className="density-control">
                 <span>紧凑</span>
                 <input aria-label="模板预览排版密度" type="range" min="0" max="100" step="1" value={previewResume.theme.density} onChange={(event) => updateAppearance({ theme: { density: Number(event.target.value) } })} />
@@ -198,6 +202,8 @@ export function StandalonePreview({ resume, engine, saveState, onAppearanceChang
                 disabled={!resume?.profile.photo}
                 onChange={(photoBackground) => updateAppearance({ photoBackground })}
               />
+                </div>
+              </details>
             </div>
           )}
           <div ref={viewportRef} className="standalone-preview-viewport">
