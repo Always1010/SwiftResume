@@ -6,6 +6,6 @@ export function WorkspaceStandalonePreviewEntry({ disabled, onOpen }: { disabled
     disabled={disabled}
     onClick={onOpen}
   >
-    ↗ 独立预览 / 更换模板
+    模板与预览 ↗
   </button>;
 }
