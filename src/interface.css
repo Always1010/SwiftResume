@@ -134,3 +134,134 @@ body { background: #f4f6f4; }
   .template-gallery-resizer { border-color: var(--ui-border); background: #eceef0; }
   .template-gallery-resizer span { background: #b5bdc5; box-shadow: none; }
 }
+
+@media screen {
+  body, .app-shell, .standalone-preview { background: var(--ui-canvas); }
+  .workspace-topbar { min-height: 68px; gap: 22px; padding: 12px 24px; border-color: var(--ui-border); }
+  .workspace-topbar .brand strong { color: var(--ui-text); font-size: 15px; letter-spacing: -.25px; }
+  .brand-mark { width: 32px; height: 32px; border-radius: 8px; color: white; background: var(--ui-accent); font-size: 19px; font-weight: 700; }
+  .current-document { gap: 10px; }
+  .current-document .save-status, .standalone-sync-status { color: var(--ui-muted); font-size: 11px; font-weight: 400; }
+  .current-document .save-status.error, .standalone-sync-status.error { color: #a93434; }
+  .current-document .save-status.saving { color: #806014; }
+  .workspace-controls { min-height: 50px; gap: 12px; padding: 8px 24px; border-color: var(--ui-border); background: var(--ui-surface); }
+  .primary-button, .secondary-button, .add-item-button, .workspace-standalone-preview-entry { min-height: 36px; border-radius: var(--ui-radius); padding: 8px 13px; font-size: 12px; font-weight: 600; line-height: 1.4; }
+  .primary-button { border-color: var(--ui-accent); background: var(--ui-accent); color: white; }
+  .primary-button:hover:not(:disabled) { border-color: var(--ui-accent-hover); background: var(--ui-accent-hover); }
+  .secondary-button { color: var(--ui-text); border-color: var(--ui-border); background: white; }
+  .secondary-button:hover:not(:disabled) { color: var(--ui-text); border-color: var(--ui-border-strong); background: var(--ui-subtle); }
+  .secondary-button.active { color: var(--ui-accent); border-color: #adc6ba; background: var(--ui-selected); }
+  .workspace-view-options .secondary-button { border-color: transparent; color: var(--ui-muted); background: transparent; }
+  .workspace-standalone-preview-entry { color: var(--ui-text); border-color: var(--ui-border); background: white; box-shadow: none; }
+  .workspace-standalone-preview-entry:hover { color: var(--ui-accent); border-color: var(--ui-border-strong); background: var(--ui-subtle); }
+  .document-history-actions { gap: 2px; padding: 0 0 0 12px; border: 0; border-left: 1px solid var(--ui-border); border-radius: 0; background: transparent; }
+  .history-action-button.secondary-button { min-height: 32px; box-shadow: none; color: var(--ui-muted); background: transparent; }
+  .history-action-button.secondary-button:hover:not(:disabled) { border-color: transparent; color: var(--ui-text); background: var(--ui-subtle); }
+  .history-action-button.secondary-button:disabled { opacity: .42; }
+  .icon-button { width: 32px; height: 32px; border-radius: 6px; color: var(--ui-muted); }
+  .icon-button:hover { color: var(--ui-text); background: #edf0f2; }
+  .text-button { color: var(--ui-accent); font-weight: 600; }
+  :where(.app-shell, .workspace-dialog, .standalone-preview) :is(button, summary, select, input, textarea, [tabindex]):focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 3px; }
+  .workspace { background: var(--ui-border); }
+  .workspace .resume-editor-scroller, .preview-panel, .standalone-preview-viewport { background: var(--ui-canvas); }
+  .workspace .resume-editor-scroller { padding: 0 24px 60px; }
+  .resume-editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 54px; padding: 12px 0; color: var(--ui-muted); font-family: Inter, "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
+  .workspace-pane-title { margin: 0; color: var(--ui-text); font-size: 12px; font-weight: 600; line-height: 1.5; white-space: nowrap; }
+  .resume-editor-heading > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+  .workspace .resume-editor-canvas { max-width: 850px; border: 1px solid var(--ui-border); border-radius: 10px; padding: 24px; box-shadow: none; }
+  .preview-toolbar { min-height: 54px; padding: 10px 20px; border-color: var(--ui-border); background: var(--ui-canvas); }
+  .preview-toolbar-leading { width: 100%; gap: 10px; }
+  .preview-toolbar-leading select { margin-left: auto; color: var(--ui-text); border-color: var(--ui-border); border-radius: 6px; padding: 6px 9px; font-size: 11px; }
+  .page-count-badge { color: var(--ui-muted); background: #e7eaee; border-radius: 5px; font-size: 10px; font-weight: 500; }
+  .workspace .preview-scroller { padding: 0 24px 40px; }
+  .resume-editable-block.editing { border-color: #adc6ba; border-radius: var(--ui-radius); background: white; box-shadow: 0 0 0 1px #adc6ba; }
+  .resume-editable-block.located:not(.editing) { border-color: var(--ui-border-strong); box-shadow: none; }
+  .resume-editable-block[role="button"]:hover { border-color: #adc6ba; background: #f7faf8; box-shadow: none; }
+  .inline-editor-shell { color: var(--ui-text); }
+  .inline-editor-toolbar { padding: 10px 14px; color: var(--ui-muted); border-color: var(--ui-border); background: var(--ui-subtle); font-size: 11px; }
+  .inline-editor-toolbar .primary-button { min-height: 30px; padding: 6px 10px; font-size: 11px; }
+  .inline-module-editor { padding: 20px 16px 24px; background: white; }
+  .inline-module-editor .editor-title { margin-bottom: 20px; padding-bottom: 12px; border-color: var(--ui-border); }
+  .inline-module-editor .editor-title h2, .inline-module-editor .section-title-input { color: var(--ui-text); font-size: 17px; font-weight: 650; }
+  .inline-module-editor .field { gap: 8px; color: #505b65; font-size: 12px; font-weight: 500; }
+  .field-grid { gap: 16px 14px; }
+  .field input, .field textarea, .detail-row input, .flow-field input, .flow-field textarea, .flow-field select { min-height: 38px; border-color: var(--ui-border); border-radius: 6px; padding: 9px 11px; color: var(--ui-text); background: white; font-size: 12px; }
+  .field input::placeholder, .field textarea::placeholder { color: #89929a; }
+  .field input:focus, .field textarea:focus, .detail-row input:focus { border-color: #77a18e; box-shadow: 0 0 0 2px #245f4c12; }
+  .photo-control { border: 1px solid var(--ui-border); border-radius: var(--ui-radius); padding: 16px; background: var(--ui-subtle); }
+  .photo-control p, .photo-background-label { color: var(--ui-muted); font-size: 11px; }
+  .photo-background-control { border-color: var(--ui-border); }
+  .editor-card, .content-entry-editor { border-color: var(--ui-border); border-radius: var(--ui-radius); box-shadow: none; }
+  .content-entry-actions { min-height: 40px; color: var(--ui-muted); border-color: var(--ui-border); background: var(--ui-subtle); }
+  .content-entry-actions strong { font-size: 11px; font-weight: 500; }
+  .content-heading-fields { gap: 14px; padding: 16px; }
+  .content-body-label { color: var(--ui-muted); padding-inline: 16px; }
+  .content-body-label span { font-size: 11px; font-weight: 500; }
+  .content-rich-editor { margin: 0 16px 16px; border-color: var(--ui-border); border-radius: 6px; }
+  .content-rich-toolbar { gap: 6px; padding: 6px; border-color: var(--ui-border); background: var(--ui-subtle); }
+  .toolbar-group { border-color: var(--ui-border); border-radius: 5px; }
+  .toolbar-group button { min-height: 30px; min-width: 30px; color: var(--ui-text); border-color: var(--ui-border); font-size: 11px; }
+  .toolbar-group button:hover, .toolbar-group button.active { color: var(--ui-accent); background: var(--ui-selected); }
+  .more-format { width: auto; margin-left: auto; }
+  .more-format > summary { color: var(--ui-muted); font-size: 11px; }
+  .more-format[open] { flex-basis: 100%; margin-left: 0; }
+  .more-format[open] > .content-rich-toolbar { margin-top: 6px; border-top: 1px solid var(--ui-border); border-bottom: 0; }
+  .add-item-button { color: var(--ui-accent); border-color: var(--ui-border-strong); background: white; }
+  .add-item-button:hover { background: var(--ui-selected); }
+  .workspace .sidebar { padding: 22px 12px; border-right: 1px solid var(--ui-border); background: white; box-shadow: 8px 0 24px #2028300c; }
+  .panel-heading h2 { color: var(--ui-text); font-size: 15px; }
+  .module-count { color: var(--ui-muted); background: var(--ui-subtle); font-weight: 500; }
+  .module-row { border-radius: 7px; }
+  .module-row.selected { border-color: transparent; color: var(--ui-accent); background: var(--ui-selected); box-shadow: inset 2px 0 var(--ui-accent); }
+  .module-row:hover { background: var(--ui-subtle); }
+  .module-row.selected:hover { background: var(--ui-selected); }
+  .module-row small, .module-type { color: var(--ui-muted); }
+  .workspace-dialog { color: var(--ui-text); border: 1px solid var(--ui-border); border-radius: var(--ui-dialog-radius); box-shadow: 0 20px 60px #18212b24; }
+  .workspace-dialog::backdrop { background: #1b253b45; backdrop-filter: none; }
+  .workspace-dialog-header, .settings-header { padding: 24px 28px; border-color: var(--ui-border); }
+  .workspace-dialog-header h2, .settings-header h2, .flow-dialog h2 { color: var(--ui-text); font-size: 19px; font-weight: 650; letter-spacing: -.25px; }
+  .workspace-dialog-header p, .settings-header p { color: var(--ui-muted); font-size: 12px; }
+  .flow-dialog { padding: 28px; }
+  .flow-dialog .workspace-dialog-header { padding-bottom: 22px; }
+  .scene-options { gap: 18px; margin: 24px 0; }
+  .scene-option { border-color: var(--ui-border); border-radius: 10px; }
+  .scene-option:hover { border-color: var(--ui-border-strong); }
+  .scene-option.selected { border-color: var(--ui-accent); outline-color: var(--ui-accent); }
+  .scene-thumbnail { background: var(--ui-subtle); }
+  .scene-label { color: var(--ui-text); padding: 18px 16px; }
+  .scene-label > span { color: var(--ui-muted); }
+  .scene-footer { border-color: var(--ui-border); background: white; }
+  .restore-choice, .flow-muted { color: var(--ui-muted); font-size: 12px; }
+  .restore-choice input { accent-color: var(--ui-accent); }
+  .library-search input { color: var(--ui-text); border-color: var(--ui-border); border-radius: 7px; background: var(--ui-subtle); font-size: 13px; }
+  .library-list, .library-row { border-color: var(--ui-border); }
+  .library-row-main:hover { background: var(--ui-subtle); }
+  .library-row-title strong { color: var(--ui-text); font-size: 14px; font-weight: 600; }
+  .library-row time { color: var(--ui-muted); font-size: 11px; }
+  .library-row-title small { color: var(--ui-accent); background: var(--ui-selected); }
+  .module-picker-layout { grid-template-columns: 210px minmax(0, 1fr); gap: 24px; }
+  .module-picker-options button { gap: 7px; padding: 13px 14px; border-color: var(--ui-border); border-radius: var(--ui-radius); color: var(--ui-text); }
+  .module-picker-options button:hover { background: var(--ui-subtle); }
+  .module-picker-options button.selected { border-color: var(--ui-accent); background: var(--ui-selected); box-shadow: inset 2px 0 var(--ui-accent); }
+  .module-picker-options strong { font-size: 12px; }
+  .module-picker-options small { color: var(--ui-muted); font-size: 11px; }
+  .module-sample { padding: 24px; color: var(--ui-text); border-color: var(--ui-border); border-radius: var(--ui-radius); background: var(--ui-subtle); font-size: 13px; }
+  .module-sample .eyebrow { color: var(--ui-muted); font-size: 11px; font-weight: 500; letter-spacing: 0; }
+  .module-sample h3 { font-size: 17px; }
+  .pdf-preview-content { background: #e5e8ec; }
+  .workspace-dialog-footer { padding: 16px 24px; border-color: var(--ui-border); }
+  .workspace-dialog-footer > span { color: var(--ui-muted); font-size: 12px; }
+  .export-content-checks { margin-top: 12px; color: #775b26; font-size: 12px; }
+  .export-content-checks summary { cursor: pointer; }
+  .pdf-export-dialog .workspace-dialog-header > div > details:not(.export-content-checks) { margin-top: 8px; color: var(--ui-muted); font-size: 12px; }
+  .pdf-reader-toolbar { color: var(--ui-text); background: var(--ui-subtle); }
+  .setting-row select { color: var(--ui-text); border-color: var(--ui-border); background: white; font-size: 12px; }
+  .toggle.checked { background: var(--ui-accent); }
+}
+@media (forced-colors: active) {
+  :where(.app-shell, .workspace-dialog, .standalone-preview) :is(button, summary, select, input, textarea, [tabindex]):focus-visible { outline-color: Highlight; }
+  .scene-option.selected, .template-gallery-card.selected, .module-picker-options button.selected { outline: 2px solid Highlight; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .template-gallery-card, .resume-editable-block, .template-gallery-resizer { transition: none; }
+}

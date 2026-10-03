@@ -79,7 +79,10 @@ export function ResumeEditorCanvas({
 
   return (
     <main className="resume-editor-scroller panel" aria-label="整页简历编辑区" onClick={handleBoundaryClick}>
-      <div className="resume-editor-hint">点击内容即可编辑</div>
+      <div className="resume-editor-heading">
+        <h2 className="workspace-pane-title">编辑内容</h2>
+        <span>{editingId ? `正在编辑 · ${editingId === "profile" ? "个人信息" : resume.sections.find((section) => section.id === editingId)?.title || "简历模块"}` : "点击想修改的内容"}</span>
+      </div>
       <div className="resume-editor-canvas resume-page resume-template-classic" style={canvasStyle}>
         <section
           id="resume-block-profile"
