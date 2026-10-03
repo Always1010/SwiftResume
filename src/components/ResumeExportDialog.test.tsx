@@ -7,7 +7,7 @@ import { savePrintJob } from "../export/htmlPrintJobs";
 import { ResumeExportDialog } from "./ResumeExportDialog";
 
 vi.mock("./Modal", () => ({ Modal: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
-vi.mock("./PdfExportDialog", () => ({ PdfExportDialog: ({ onDownloaded }: { onDownloaded: (filename: string) => void }) => <button data-testid="typst-export" onClick={() => onDownloaded("resume.pdf")}>下载 PDF</button> }));
+vi.mock("./PdfExportDialog", () => ({ PdfExportDialog: () => <button data-testid="typst-export">下载 PDF</button> }));
 const previewState = vi.hoisted(() => ({ ready: true }));
 vi.mock("./ResumePreview", () => ({ ResumePreview: ({ onPageCountChange, onReadyChange }: { onPageCountChange: (count: number) => void; onReadyChange: (ready: boolean) => void }) => {
   useEffect(() => { onPageCountChange(2); onReadyChange(previewState.ready); }, [onPageCountChange, onReadyChange]);
@@ -23,7 +23,7 @@ async function render(engine: "html" | "typst") {
   const requested = vi.fn();
   document.body.innerHTML = '<div id="test"></div>';
   root = createRoot(document.getElementById("test")!);
-  await act(async () => root.render(<ResumeExportDialog engine={engine} resume={resume} onClose={() => {}} onExportRequested={requested} />));
+  await act(async () => root.render(<ResumeExportDialog engine={engine} resume={resume} onClose={() => {}} />));
   return { resume, requested };
 }
 it("prepares HTML through an isolated snapshot link without recording a request yet", async () => {
@@ -43,7 +43,7 @@ it("preserves the Typst exporter when selected", async () => {
   const button = document.querySelector<HTMLButtonElement>("[data-testid=typst-export]")!;
   expect(button).not.toBeNull();
   act(() => button.click());
-  expect(requested).toHaveBeenCalledWith({ kind: "download", filename: "resume.pdf" });
+  expect(requested).not.toHaveBeenCalled();
   expect(savePrintJob).not.toHaveBeenCalled();
 });
 it("waits for final pagination even when previous pages remain visible", async () => {
@@ -60,23 +60,10 @@ it("does not offer a print link when saving the snapshot fails", async () => {
   expect(document.querySelector("a")).toBeNull();
 });
 
-it("records only a print request when the prepared HTML link is activated, including retries after cancel", async () => {
-  vi.mocked(savePrintJob).mockResolvedValue("https://example.test/?view=html-print&job=one");
-  const { requested } = await render("html");
-  const link = document.querySelector("a")!;
-  // Prevent jsdom navigation without interfering with React's click handler.
-  link.addEventListener("click", (event) => event.preventDefault());
-  act(() => link.click());
-  expect(requested).toHaveBeenLastCalledWith({ kind: "print" });
-  window.dispatchEvent(new Event("afterprint"));
-  expect(requested).toHaveBeenCalledTimes(1);
-  act(() => link.click());
-  expect(requested).toHaveBeenCalledTimes(2);
-  expect(requested.mock.calls.every(([value]) => value.kind === "print" && !("filename" in value))).toBe(true);
-});
 it("keeps content warnings and their editing destinations in the same export dialog", async () => {
   vi.mocked(savePrintJob).mockResolvedValue("https://example.test/?view=html-print&job=one");
   const { resume } = await render("html");
+  resume.profile.email = "invalid";
   const locate = vi.fn();
   await act(async () => root.render(<ResumeExportDialog engine="html" resume={resume} onClose={() => {}} onLocate={locate} />));
   expect(document.querySelector(".export-content-checks summary")?.textContent).toContain("项内容待检查");
@@ -99,7 +86,7 @@ it("ignores a stale snapshot preparation after the resume changes", async () => 
   const next = createDefaultResume();
   next.title = "New snapshot";
   vi.mocked(savePrintJob).mockResolvedValueOnce("https://example.test/?view=html-print&job=new");
-  await act(async () => root.render(<ResumeExportDialog engine="html" resume={next} onClose={() => {}} onExportRequested={requested} />));
+  await act(async () => root.render(<ResumeExportDialog engine="html" resume={next} onClose={() => {}} />));
   await act(async () => resolveOld("https://example.test/?view=html-print&job=old"));
   expect(document.querySelector("a")?.href).toContain("job=new");
   expect(requested).not.toHaveBeenCalled();

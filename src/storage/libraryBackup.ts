@@ -8,7 +8,7 @@ function validNode(node: unknown, depth = 0): node is RichTextNode {
   if (!object(node) || depth > 30 || typeof node.type !== "string") return false;
   return (node.text === undefined || typeof node.text === "string") && (node.attrs === undefined || object(node.attrs)) && (node.marks === undefined || Array.isArray(node.marks) && node.marks.every((m) => object(m) && typeof m.type === "string" && (m.attrs === undefined || object(m.attrs)))) && (node.content === undefined || Array.isArray(node.content) && node.content.every((n) => validNode(n, depth + 1)));
 }
-export function readCurrentDocument(value: unknown, snapshot = false): ResumeDocument | null {
+export function readCurrentDocument(value: unknown): ResumeDocument | null {
   if (!object(value) || value.schemaVersion !== 4 || !strings(value, ["title", "updatedAt"]) || !object(value.profile) || !object(value.theme) || !Array.isArray(value.sections)) return null;
   const profile = value.profile;
   if (!strings(profile, ["name", "headline", "age", "gender", "location", "phone", "email", "photo"]) || !Array.isArray(profile.details) || !profile.details.every((d) => object(d) && strings(d, ["id", "label", "value"]) && (d.fullWidth === undefined || typeof d.fullWidth === "boolean"))) return null;
@@ -26,13 +26,6 @@ export function readCurrentDocument(value: unknown, snapshot = false): ResumeDoc
       rowIds.add(row.id);
       if (section.type === "education" ? !strings(row, ["school", "date", "major", "degree", "detail"]) : !strings(row, ["title", "subtitle", "date"]) || !validNode(row.body) || row.body.type !== "doc") return null;
     }
-  }
-  if (value.target !== undefined && (!object(value.target) || !strings(value.target, ["company", "role", "notes"]))) return null;
-  if (value.lastExport !== undefined) {
-    const record = value.lastExport;
-    if (snapshot || !object(record) || typeof record.at !== "string" || !readCurrentDocument(record.snapshot, true)) return null;
-    // Older records have no kind and represent a requested PDF download.
-    if (record.kind === "print" ? record.filename !== undefined : ![undefined, "download"].includes(record.kind as undefined | string) || typeof record.filename !== "string") return null;
   }
   return normalizeResumeDocument(value);
 }
