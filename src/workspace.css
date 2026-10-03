@@ -180,27 +180,31 @@
   .workspace-more summary { list-style: none; cursor: pointer; }
   .workspace-more-panel { position: absolute; left: 0; top: calc(100% + 8px); z-index: 40; display: grid; gap: 10px; padding: 14px; width: 225px; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 30px #17302320; }
 }
-.resume-library-dialog { width: min(940px, calc(100vw - 32px)); }
-.library-tabs { display: flex; gap: 8px; padding: 18px 0; border-bottom: 1px solid var(--border); }
-.library-tabs button { border: none; background: transparent; padding: 9px 16px; border-radius: 8px; color: #65776b; cursor: pointer; }
-.library-tabs button[aria-pressed="true"] { color: #1d603d; background: #eaf3ec; font-weight: 650; }
-.library-search { display: flex; gap: 12px; margin: 20px 0; }
-.library-search input { flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: white; }
-.library-content { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; }
-.library-list { display: grid; align-content: start; gap: 10px; max-height: 390px; overflow-y: auto; }
-.library-row { display: grid; gap: 9px; min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: white; text-align: left; cursor: pointer; color: var(--text); }
-.library-row.selected { background: #f1f7f2; border-color: #3b8154; }
-.library-row-title { display: flex; align-items: baseline; gap: 8px; }
-.library-row-title strong { flex: 1; overflow-wrap: anywhere; }
-.library-row-title small { flex: none; color: #247352; font-size: 11px; }
-.library-row > span:not(:first-child), .library-row time { color: #65776b; font-size: 12px; overflow-wrap: anywhere; }
-.library-detail { padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: #f8faf8; }
-.library-detail h3 { margin: 10px 0 20px; overflow-wrap: anywhere; }
-.library-detail-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); }
-.library-more { margin-top: 22px; color: #64726a; font-size: 13px; }
-.library-more button, .library-more small { display: block; margin-top: 12px; line-height: 1.6; }
-.library-feedback { min-height: 20px; margin-top: 16px; font-size: 13px; color: #247352; }
-.library-empty { padding: 24px 12px; color: #65776b; line-height: 1.8; }
+.resume-library-dialog { width: min(900px, calc(100vw - 48px)); }
+.library-header h2 { margin: 0; }
+.library-header-actions { display: flex; align-items: center; gap: 10px; }
+.library-header-actions > button { white-space: nowrap; }
+.library-header-actions .icon-button { margin-left: 4px; font-size: 22px; }
+.library-search { display: flex; align-items: center; gap: 12px; margin: 4px 0 18px; }
+.library-search input { flex: 1; min-width: 0; padding: 11px 13px; border: 1px solid var(--border); border-radius: 8px; background: white; }
+.library-list { display: grid; align-content: start; gap: 0; max-height: 470px; overflow-y: auto; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--border); }
+.library-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 18px; min-width: 0; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.library-row-main { display: grid; min-width: 0; gap: 8px; padding: 14px 12px; text-align: left; color: inherit; border: 0; border-radius: 8px; background: transparent; }
+.library-row-main:hover { background: #f0f5f1; }
+.library-row-main:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+.library-row-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.library-row-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+.library-row-title small { flex: none; color: #247352; font-size: 11px; background: #eaf3ec; border-radius: 4px; padding: 2px 6px; }
+.library-row time { color: #718078; font-size: 12px; }
+.library-row-actions { display: flex; align-items: center; gap: 8px; padding-right: 6px; }
+.library-row-actions .icon-button { font-size: 22px; }
+.library-row-menu { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 22px; padding: 4px 14px 10px; }
+.library-rename { grid-column: 1 / -1; display: flex; gap: 8px; padding: 12px; }
+.library-rename input { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid var(--green); border-radius: 6px; }
+.library-feedback { margin: 14px 0 0; font-size: 13px; color: #247352; }
+.library-empty { padding: 52px 18px; color: #65776b; text-align: center; }
+.library-empty strong { color: #34453b; font-size: 16px; }
+.library-empty p { margin-bottom: 0; font-size: 13px; }
 .library-backup { padding: 12px 0; }
 .library-backup > p { color: #65776b; line-height: 1.7; }
 .library-backup-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 24px; }
@@ -224,12 +228,10 @@
   .workspace-controls { padding: 8px 12px; gap: 5px; }
   .workspace-controls .secondary-button { padding: 7px 8px; font-size: 11px; white-space: nowrap; }
   .workspace-view-options { gap: 3px; }
-  .library-content { grid-template-columns: 1fr; gap: 14px; }
   .library-list { max-height: 210px; }
   .library-search { flex-wrap: wrap; }
   .library-search input { flex-basis: 100%; }
   .library-backup-tools { grid-template-columns: 1fr; }
-  .library-detail { padding: 16px; }
 }
 .flow-dialog .workspace-dialog-header { padding: 0 0 18px; gap: 16px; }
 .flow-dialog .workspace-dialog-header > div { min-width: 0; }
@@ -282,3 +284,12 @@
 .export-content-checks .text-button { margin-left: 8px; font-size: 12px; }
 
 .app-shell[hidden], .workspace-preview-screen[hidden] { display: none !important; }
+
+.close-button { display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 7px; color: #68746c; background: transparent; font-size: 24px; line-height: 1; }
+.close-button:hover { color: #24392d; background: #eef2ef; }
+.close-button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.close-button:disabled { opacity: .4; cursor: not-allowed; }
+.settings-file-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 16px 20px; }
+.settings-file-tools button { text-align: left; }
+.settings-advanced summary { padding: 16px 20px; cursor: pointer; font-size: 13px; font-weight: 650; }
+.workspace-dialog.settings-page { width: min(820px, calc(100vw - 48px)); height: min(780px, calc(100dvh - 48px)); padding: 0; }
