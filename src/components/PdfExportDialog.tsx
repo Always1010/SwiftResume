@@ -55,13 +55,15 @@ export function PdfExportDialog({ resume, onClose, checks, returnLabel = "返回
     </div>
     <footer className="workspace-dialog-footer">
       <span>{pdf ? `PDF 已生成 · ${Math.max(1, Math.round(pdf.blob.size / 1024))} KB` : "生成和预览均在本机完成"}</span>
-      {pdf && <button type="button" className="secondary-button" disabled={!printReady} onClick={() => {
+      {pdf && <button type="button" className="secondary-button" disabled={!printReady} onClick={(event) => {
+        const trigger = event.currentTarget;
         setPrintError("");
         try {
           if (!printFrame.current?.contentWindow) throw new Error("打印组件尚未就绪");
           printFrame.current.contentWindow.focus();
           printFrame.current.contentWindow.print();
         } catch { setPrintError("当前浏览器无法直接打印这份 PDF，请先下载后打印。"); }
+        finally { trigger.focus({ preventScroll: true }); }
       }}>打印 PDF</button>}
       {pdf && <a className="primary-button" href={pdf.url} download={pdf.filename}>下载 PDF</a>}
     </footer>
