@@ -15,7 +15,7 @@ vi.mock("./components/ResumePreview", () => ({
 vi.mock("./components/customEditors/ContentBodyEditor", () => ({
   ContentBodyEditor: () => <div className="content-rich-surface"><div contentEditable tabIndex={0} aria-label="正文" /></div>,
 }));
-vi.mock("./components/Modal", () => ({ Modal: ({ children }: { children: ReactNode }) => <div role="dialog">{children}</div> }));
+vi.mock("./components/Modal", () => ({ Modal: ({ children, titleId }: { children: ReactNode; titleId?: string }) => <div role="dialog" id={`${titleId}-dialog`}>{children}</div> }));
 vi.mock("./components/NewResumeDialog", () => ({
   NewResumeDialog: ({ onSelect, onClose }: { onSelect: (template: ResumeCreationTemplate) => void; onClose: () => void }) => <div role="dialog" data-testid="new-resume"><button onClick={() => onSelect("blank")}>创建第一份简历</button><button onClick={onClose}>取消新建</button></div>,
 }));
@@ -273,9 +273,13 @@ it("opens My resumes through the visible title button and preserves the active e
   const entry = document.querySelector<HTMLButtonElement>(".document-switcher")!;
   expect(entry.tagName).toBe("BUTTON"); expect(entry.disabled).toBe(false);
   expect(entry.getAttribute("aria-haspopup")).toBe("dialog");
+  expect(entry.getAttribute("aria-label")).toBe("我的简历");
+  expect(entry.getAttribute("data-testid")).toBe("resume-library-trigger");
+  expect(document.getElementById(entry.getAttribute("aria-describedby")!)?.textContent).toBe(resume.title);
   expect(entry.getAttribute("aria-expanded")).toBe("false");
   await act(async () => entry.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
   expect(entry.getAttribute("aria-expanded")).toBe("true");
+  expect(document.getElementById(entry.getAttribute("aria-controls")!)?.getAttribute("role")).toBe("dialog");
   expect(document.getElementById("resume-library-title")?.textContent).toBe("我的简历");
   expect(document.querySelectorAll(".library-row")).toHaveLength(1);
   await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="关闭我的简历"]')!.click());

@@ -19,6 +19,7 @@ it("uses native modal behavior, exposes a named cross and restores prior focus w
   act(() => root.render(<Modal titleId="title" onClose={close}><h2 id="title">测试</h2><CloseButton label="关闭测试" onClick={close} /></Modal>));
   const dialog = document.querySelector("dialog")!;
   expect(dialog.open).toBe(true);
+  expect(dialog.id).toBe("title-dialog");
   const cross = document.querySelector<HTMLButtonElement>('[aria-label="关闭测试"]')!;
   expect(cross.title).toBe("关闭测试"); expect(cross.textContent).toBe("×");
   act(() => cross.click()); expect(close).toHaveBeenCalledOnce();
