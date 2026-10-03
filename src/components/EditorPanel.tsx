@@ -166,7 +166,7 @@ function ProfileEditor({ profile, onChange }: { profile: ResumeProfile; onChange
   };
   return (
     <>
-      <div className="editor-title"><div><span className="eyebrow">固定模块</span><h2>个人信息</h2></div></div>
+      <div className="editor-title"><div><h2>个人信息</h2></div></div>
       <div className="field-grid">
         <Field label="姓名" value={profile.name} onChange={(value) => update("name", value)} />
         <Field label="求职方向" value={profile.headline} onChange={(value) => update("headline", value)} />
@@ -181,7 +181,7 @@ function ProfileEditor({ profile, onChange }: { profile: ResumeProfile; onChange
           {profile.photo ? <img src={profile.photo} alt="证件照预览" /> : <span>照片</span>}
         </div>
         <div className="photo-control-body">
-          <strong>证件照</strong><p>支持选择任意图片格式，上传后可按 3:4 比例裁切，最大 4MB。</p>
+          <strong>证件照</strong><p>上传图片后按 3:4 裁切，最大 4MB。</p>
           <div className="photo-actions">
             <label className="secondary-button file-button">选择照片<input type="file" accept="image/*" onChange={uploadPhoto} /></label>
             {profile.photo && <button type="button" className="secondary-button" onClick={openCrop}>重新裁切</button>}
@@ -189,7 +189,7 @@ function ProfileEditor({ profile, onChange }: { profile: ResumeProfile; onChange
           </div>
           <div className="photo-background-control">
             <PhotoBackgroundPicker value={profile.photoBackground} label="照片底色" onChange={(value) => update("photoBackground", value)} />
-            <p className="photo-background-hint">如需更换人像底色，请上传带透明背景的图片；底色只会显示在图片的透明区域。</p>
+            <details className="field-help"><summary>底色使用说明</summary><p>底色只显示在图片的透明区域；更换人像底色需使用透明背景图片。</p></details>
           </div>
         </div>
       </div>
@@ -286,10 +286,10 @@ function ContentSectionEditor({ section, onChange }: { section: ContentSection; 
 
   return (
     <>
-      <div className="content-editor-notice">
-        <strong>写作提示</strong>
-        <span>{labels.prompt}</span>
-      </div>
+      <details className="writing-guidance">
+        <summary>写作建议</summary>
+        <p>{labels.prompt}</p>
+      </details>
       <div className="content-entry-list">
         {section.entries.map((entry, index) => (
           <article className="content-entry-editor" key={entry.id}>
@@ -329,7 +329,7 @@ export function EditorPanel({ resume, selectedId, onProfileChange, onSectionChan
   return (
     <section className={className}>
       <div className="editor-title">
-        <div><span className="eyebrow">{section.type === "education" ? "教育经历" : "内容模块"}</span><input className="section-title-input" value={section.title} aria-label="板块标题" onChange={(event) => onSectionChange({ ...section, title: event.target.value })} /></div>
+        <div><input className="section-title-input" value={section.title} aria-label="板块标题" onChange={(event) => onSectionChange({ ...section, title: event.target.value })} /></div>
         <button type="button" className="secondary-button danger-text" onClick={() => onDeleteSection(section.id)}>删除模块</button>
       </div>
       {section.type === "education" && <EducationEditor section={section} onChange={onSectionChange} />}
