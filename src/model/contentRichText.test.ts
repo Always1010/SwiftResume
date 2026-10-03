@@ -36,3 +36,11 @@ describe("content rich text renderer", () => {
     expect(html).toContain("background-color:");
   });
 });
+
+it("preserves consecutive spaces through rich-text rendering and output styling", () => {
+  const host = document.createElement("div");
+  host.innerHTML = renderContentRichText({ type: "doc", content: [{ type: "paragraph", content: [
+    { type: "text", text: "a  b 中文 " }, { type: "text", text: " c", marks: [{ type: "bold" }] },
+  ] }] });
+  expect(host.textContent).toBe("a  b 中文  c");
+});
