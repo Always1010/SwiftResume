@@ -449,7 +449,7 @@ export function App() {
     await saveDocuments(merged.documents, merged.library);
     libraryRef.current = merged.library; setLibrary(merged.library);
     dispatch({ type: "replace", value: merged.documents[0].resume });
-    setSelectedId("profile"); setEditingId(null); setImportBatch(null); setSaveState("saved");
+    setSelectedId("profile"); setEditingId(null); setImportBatch(null); setSettingsOpen(false); setSaveState("saved");
   };
   const exportLibrary = async () => {
     try {
@@ -518,7 +518,6 @@ export function App() {
       }
       const restored = await readDiskBackup(backupDirectory);
       setImportBatch(parseBackupValue({ format: "swift-resume-library", version: 1, documents: restored.documents }));
-      setSettingsOpen(false);
       setBackupStatus("ready");
       setSaveState("saved");
     } catch (error) {
@@ -708,7 +707,11 @@ export function App() {
         onAuthorizeBackupDirectory={() => void authorizeBackupDirectory()}
         onBackupNow={() => void backupNow()}
         onRestoreBackup={() => void restoreBackup()}
-        onOpenHistory={() => { setSettingsOpen(false); setHistoryOpen(true); }}
+        onOpenHistory={() => setHistoryOpen(true)}
+        onExportResume={() => downloadResume(resume)}
+        onExportLibrary={() => void exportLibrary()}
+        onImportBackup={() => importRef.current?.click()}
+        onImportText={() => setTextImportOpen(true)}
       />}
       {historyOpen && backupDirectory && library && <HistoryPanel
         directory={backupDirectory}
@@ -719,21 +722,9 @@ export function App() {
         onRestoreAsNew={restoreHistoryAsNew}
         onReplaceResume={replaceResumeFromHistory}
       />}
-      {libraryOpen && library && <ResumeLibraryDialog library={updateResumeSummary(library, activeResumeId, resume)} onClose={() => setLibraryOpen(false)} onNew={() => { setLibraryOpen(false); setNewResumeOpen(true); }} onOpen={switchResume} onRename={renameResume} onCopy={copyResume} onDelete={removeLibraryResume} onClear={clearContent} backupTools={<div className="library-backup-tools">
-          <span className={`disk-status ${backupStatus}`} title={backupDirectory ? `备份目录：${backupDirectory.name}` : "尚未选择本地备份目录"}>
-            {backupStatus === "ready" ? "● 磁盘已备份" : backupStatus === "saving" ? "● 磁盘备份中" : backupStatus === "permission-required" ? "● 磁盘待授权" : backupStatus === "error" ? "● 磁盘备份失败" : backupStatus === "unsupported" ? "磁盘备份不支持" : "磁盘未配置"}
-          </span>
-          <span className={`sync-status ${settings.liveSync && syncSupported ? "active" : ""}`} title={syncSupported ? "多个 SwiftResume 页面实时同步" : "当前浏览器不支持多页面同步"}>
-            <span />{settings.liveSync && syncSupported ? "多页同步" : "同步关闭"}
-          </span>
-          <button type="button" className="secondary-button" onClick={() => downloadResume(resume)}>备份当前简历</button>
-          <button type="button" className="secondary-button" disabled={!library} onClick={() => void exportLibrary()}>备份全部简历</button>
-          <button type="button" className="secondary-button" onClick={() => importRef.current?.click()}>导入 JSON 备份</button>
-          <button type="button" className="secondary-button" disabled={!library} onClick={() => { setLibraryOpen(false); setTextImportOpen(true); }}>粘贴旧简历文本</button>
-<button type="button" className="secondary-button" onClick={() => { setLibraryOpen(false); setSettingsOpen(true); }}>磁盘备份设置与历史恢复</button>
-      </div>} />}
+      {libraryOpen && library && <ResumeLibraryDialog library={updateResumeSummary(library, activeResumeId, resume)} onClose={() => setLibraryOpen(false)} onNew={() => { setLibraryOpen(false); setNewResumeOpen(true); }} onOpen={switchResume} onRename={renameResume} onCopy={copyResume} onDelete={removeLibraryResume} onClear={clearContent} />}
       {newResumeOpen && <NewResumeDialog onSelect={createResume} onClose={() => { firstRunRef.current = false; setNewResumeOpen(false); }} />}
-      {textImportOpen && <TextImportDialog onClose={() => setTextImportOpen(false)} onImport={async (document) => { await addResume(document); setTextImportOpen(false); }} />}
+      {textImportOpen && <TextImportDialog onClose={() => setTextImportOpen(false)} onImport={async (document) => { await addResume(document); setTextImportOpen(false); setSettingsOpen(false); }} />}
       {importBatch && <RestoreDialog batch={importBatch} onClose={() => setImportBatch(null)} onRestore={restoreSelected} />}
 
 

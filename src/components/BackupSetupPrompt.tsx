@@ -28,7 +28,7 @@ export function BackupSetupPrompt({
             : "当前仅保存在浏览器，清理浏览器数据可能丢失简历。"}</span>
         <details className="backup-notice-details">
           <summary>了解备份</summary>
-          <p>选择本地目录后，编辑会自动生成磁盘副本。也可在“我的简历”的备份页导出 JSON。关闭此提醒后，可随时从“设置与备份”管理目录和恢复数据。</p>
+          <p>选择本地目录后，编辑会自动生成磁盘副本。也可在设置中导出 JSON 备份。关闭此提醒后，可随时从“设置与备份”管理目录和恢复数据。</p>
         </details>
       </div>
       <div className="backup-notice-actions">

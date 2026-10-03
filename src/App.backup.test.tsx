@@ -15,7 +15,7 @@ vi.mock("./components/ResumePreview", () => ({
 vi.mock("./components/customEditors/ContentBodyEditor", () => ({
   ContentBodyEditor: () => <div className="content-rich-surface"><div contentEditable tabIndex={0} aria-label="正文" /></div>,
 }));
-vi.mock("./components/Modal", () => ({ Modal: ({ children }: { children: ReactNode }) => <div role="dialog">{children}</div> }));
+vi.mock("./components/Modal", () => ({ Modal: ({ children, className }: { children: ReactNode; className?: string }) => <div role="dialog" className={className}>{children}</div> }));
 vi.mock("./components/NewResumeDialog", () => ({
   NewResumeDialog: ({ onSelect }: { onSelect: (template: ResumeCreationTemplate) => void }) => <div role="dialog"><button onClick={() => onSelect("blank")}>创建第一份简历</button></div>,
 }));
