@@ -40,6 +40,7 @@ export function Sidebar({ resume, selectedId, onSelect, onAdd, onSectionsChange,
       <button
         type="button"
         className={`module-row profile-row ${selectedId === "profile" ? "selected" : ""}`}
+        aria-pressed={selectedId === "profile"}
         onClick={() => onSelect("profile")}
       >
         <span className="drag-handle muted">◆</span>
