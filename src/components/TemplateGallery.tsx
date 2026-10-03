@@ -8,6 +8,8 @@ import {
 import type { TemplateRecommendation } from "../templates/recommender";
 import { ResumePreview } from "./ResumePreview";
 import { TemplateFinder } from "./TemplateFinder";
+import { Modal } from "./Modal";
+import { CloseButton } from "./CloseButton";
 import { templatePreviewUrl } from "../templates/staticPreviews";
 import type { OutputEngine } from "../settings/appSettings";
 import { isMeasuredPageCount, templatePageCountContentKey, type TemplatePageMeasurement } from "../templates/pageMeasurements";
@@ -60,7 +62,7 @@ export function TemplateGallery({ selectedId, resume, onSelect, engine = "typst"
 }) {
   const railRef = useRef<HTMLElement>(null);
   const measurementLabelId = useId();
-  const [mode, setMode] = useState<"finder" | "browse">("finder");
+  const [mode, setMode] = useState<"finder" | "browse">("browse");
   const [recommendations, setRecommendations] = useState<TemplateRecommendation[]>([]);
   const [compareIds, setCompareIds] = useState<ResumeTemplateId[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
@@ -179,9 +181,8 @@ export function TemplateGallery({ selectedId, resume, onSelect, engine = "typst"
       )}
       {compareIds.length > 0 && <div className="template-compare-tray"><span><strong>{compareIds.length}</strong>/4 套已选</span><button type="button" disabled={compareIds.length < 2} onClick={() => setCompareOpen(true)}>并排对比</button><button type="button" onClick={() => setCompareIds([])} aria-label="清空对比模板">×</button></div>}
       {compareOpen && (
-        <div className="template-compare-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setCompareOpen(false)}>
-          <section className="template-compare-dialog" role="dialog" aria-modal="true" aria-labelledby="template-compare-title">
-            <header><div><span>使用你的真实内容</span><h2 id="template-compare-title">并排比较 {compareIds.length} 套模板</h2></div><button type="button" onClick={() => setCompareOpen(false)} aria-label="关闭模板对比">×</button></header>
+        <Modal titleId="template-compare-title" className="template-compare-dialog" onClose={() => setCompareOpen(false)}>
+            <header><div><span>使用你的真实内容</span><h2 id="template-compare-title">并排比较 {compareIds.length} 套模板</h2></div><CloseButton onClick={() => setCompareOpen(false)} label="关闭模板对比" /></header>
             <div className={`template-compare-grid count-${compareIds.length}`}>
               {compareIds.map((templateId) => {
                 const definition = RESUME_TEMPLATES.find((item) => item.id === templateId)!;
@@ -191,8 +192,7 @@ export function TemplateGallery({ selectedId, resume, onSelect, engine = "typst"
                 </article>;
               })}
             </div>
-          </section>
-        </div>
+        </Modal>
       )}
     </aside>
   );

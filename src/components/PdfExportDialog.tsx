@@ -3,6 +3,7 @@ import type { GeneratedPdf } from "../export/typstPdf";
 import { getPdfArtifact } from "../export/pdfArtifact";
 import type { ResumeDocument } from "../model/resume";
 import { Modal } from "./Modal";
+import { CloseButton } from "./CloseButton";
 
 const PdfCanvasPreview = lazy(() => import("./PdfCanvasPreview"));
 
@@ -45,7 +46,7 @@ export function PdfExportDialog({ resume, onClose, checks, returnLabel = "返回
   return <Modal titleId="pdf-export-title" className="pdf-export-dialog" onClose={onClose}>
     <header className="workspace-dialog-header">
       <div><h2 id="pdf-export-title">确认 PDF 后下载</h2><p>{resume.title || "未命名简历"} · 预览、下载与打印使用同一份 PDF；打印在当前标签页打开浏览器打印窗口</p>{checks}</div>
-      <button type="button" className="secondary-button" onClick={onClose}>{returnLabel}</button>
+      <CloseButton onClick={onClose} label={returnLabel} />
     </header>
     <div className="pdf-preview-content" aria-busy={!pdf && !error}>
       {pdf ? <Suspense fallback={<div className="pdf-export-message" role="status">正在打开 PDF…</div>}><PdfCanvasPreview blob={pdf.blob} /></Suspense> : error ?

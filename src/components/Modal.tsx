@@ -13,7 +13,7 @@ export function Modal({ titleId, className = "", onClose, children }: {
     dialog?.showModal();
     return () => {
       dialog?.close();
-      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
     };
   }, []);
   return <dialog ref={ref} className={`workspace-dialog ${className}`} aria-labelledby={titleId}
