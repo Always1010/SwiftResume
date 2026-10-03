@@ -13,11 +13,9 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { WorkspaceStandalonePreviewEntry } from "./components/WorkspaceStandalonePreviewEntry";
 import { ResumeExportDialog } from "./components/ResumeExportDialog";
-import { VersionsDialog } from "./components/VersionsDialog";
 import { TextImportDialog } from "./components/TextImportDialog";
 import { RestoreDialog } from "./components/RestoreDialog";
 import { createLibraryBackup, downloadJson, mergeImportedDocuments, parseBackupValue, type ImportBatch, type ImportDocument } from "./storage/libraryBackup";
-import { exportRecord } from "./model/resumeVersions";
 import { clearResumeContent, createBlankResume, createResumeFromTemplate, duplicateResume, normalizeResumeDocument, type ResumeAction, type ResumeCreationTemplate, type ResumeDocument, type ResumeSection } from "./model/resume";
 import { createResumeHistory, resumeHistoryReducer } from "./model/resumeHistory";
 import { loadSettings, saveSettings, subscribeToSettings, type AppSettings } from "./settings/appSettings";
@@ -65,7 +63,6 @@ export function App() {
   const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
   const [pageCount, setPageCount] = useState(1);
   const [pdfResume, setPdfResume] = useState<ResumeDocument | null>(null);
-  const [versionsOpen, setVersionsOpen] = useState(false);
   const [textImportOpen, setTextImportOpen] = useState(false);
   const [importBatch, setImportBatch] = useState<ImportBatch | null>(null);
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
@@ -541,9 +538,6 @@ export function App() {
       <nav className="workspace-controls" aria-label="工作区布局">
         <button type="button" className="secondary-button" aria-expanded={modulesOpen} onClick={() => setModulesOpen(!modulesOpen)}>{modulesOpen ? "收起模块" : "简历模块"}</button>
         <HistoryActions undoLabel={undoLabel} redoLabel={redoLabel} onUndo={() => changeHistory("undo")} onRedo={() => changeHistory("redo")} />
-        <details className="workspace-more"><summary className="secondary-button">更多</summary><div className="workspace-more-panel">
-          <button type="button" className="secondary-button" disabled={!library} onClick={(event) => { event.currentTarget.closest("details")?.removeAttribute("open"); setVersionsOpen(true); }}>岗位版本</button>
-        </div></details>
         <div className="workspace-view-options">
           <button type="button" className={`secondary-button ${previewVisible ? "active" : ""}`} aria-pressed={previewVisible} onClick={() => { setMobilePreview(!previewVisible); setSettings((current) => ({ ...current, previewOpen: !previewVisible })); }}>{previewVisible ? "收起预览" : "显示预览"}</button>
         </div>
@@ -618,7 +612,7 @@ export function App() {
           </section>
         ) : null}
       </div>
-      {pdfResume && <ResumeExportDialog engine={settings.outputEngine} resume={pdfResume} onExportRequested={(request) => dispatch({ type: "record-export", value: exportRecord(pdfResume, request) })} onLocate={(id) => { setPdfResume(null); locateResumeBlock(id); }} onClose={() => setPdfResume(null)} />}
+      {pdfResume && <ResumeExportDialog engine={settings.outputEngine} resume={pdfResume} onLocate={(id) => { setPdfResume(null); locateResumeBlock(id); }} onClose={() => setPdfResume(null)} />}
       {undoLabel === "删除模块" && <div className="undo-notice" role="status">模块已删除<button type="button" onClick={() => changeHistory("undo")}>撤销删除</button></div>}
       {settingsOpen && <SettingsPanel
         settings={settings}
@@ -659,17 +653,7 @@ export function App() {
       {newResumeOpen && <NewResumeDialog onSelect={createResume} onClose={() => { firstRunRef.current = false; setNewResumeOpen(false); }} />}
       {textImportOpen && <TextImportDialog onClose={() => setTextImportOpen(false)} onImport={async (document) => { await addResume(document); setTextImportOpen(false); }} />}
       {importBatch && <RestoreDialog batch={importBatch} onClose={() => setImportBatch(null)} onRestore={restoreSelected} />}
-      {versionsOpen && library && <VersionsDialog resume={resume} library={library} onClose={() => setVersionsOpen(false)} onUpdate={(value) => dispatch({ type: "update-target", value })} onCreate={async (document) => { await addResume(document); setVersionsOpen(false); }} onSyncContacts={async (ids) => {
-        const currentLibrary = await persistCurrentResume();
-        if (!currentLibrary) throw new Error("简历库尚未就绪");
-        const documents = await Promise.all(ids.map(async (id) => {
-          const document = await loadResumeById(id);
-          if (!document) throw new Error("无法读取部分所选版本，尚未写入任何变更");
-          return { id, resume: { ...document, profile: { ...document.profile, age: resume.profile.age, gender: resume.profile.gender, phone: resume.profile.phone, email: resume.profile.email, location: resume.profile.location }, updatedAt: new Date().toISOString() } };
-        }));
-        const next = documents.reduce((lib, item) => updateResumeSummary(lib, item.id, item.resume), currentLibrary);
-        await saveDocuments(documents, next); libraryRef.current = next; setLibrary(next);
-      }} />}
+
     </div>
   );
 }

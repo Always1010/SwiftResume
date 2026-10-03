@@ -2,7 +2,6 @@ import { usePdfPrintShortcut } from "../export/usePdfPrintShortcut";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ResumeExportDialog } from "./ResumeExportDialog";
 import { useOutputEngine } from "../settings/useOutputEngine";
-import { exportRecord } from "../model/resumeVersions";
 import type { ResumeDocument } from "../model/resume";
 import { loadResumeById, saveResumeById } from "../storage/resumeStorage";
 import { usePreviewSubscriber } from "../sync/previewSync";
@@ -281,13 +280,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
           </div>
         </section>
       </div>
-      {pdfResume && <ResumeExportDialog engine={engine} resume={pdfResume} onExportRequested={(request) => {
-        const current = resumeRef.current;
-        if (!current) return;
-        const next = { ...current, lastExport: exportRecord(pdfResume, request), updatedAt: new Date(Math.max(Date.now(), Date.parse(current.updatedAt) + 1)).toISOString() };
-        acceptResume(next);
-        void saveResumeById(resumeId, next).then(() => publishCommittedResume(next)).catch(() => setStyleError("已发起导出，但记录保存失败，请重试"));
-      }} onClose={() => setPdfResume(null)} />}
+      {pdfResume && <ResumeExportDialog engine={engine} resume={pdfResume} onClose={() => setPdfResume(null)} />}
     </main>
   );
 }

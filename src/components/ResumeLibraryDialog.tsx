@@ -4,7 +4,7 @@ import { Modal } from "./Modal";
 
 export function filterResumeSummaries(rows: ResumeSummary[], query: string) {
   const term = query.trim().toLocaleLowerCase();
-  return rows.filter((row) => [row.title, row.company, row.role].filter(Boolean).join(" ").toLocaleLowerCase().includes(term))
+  return rows.filter((row) => row.title.toLocaleLowerCase().includes(term))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
@@ -36,13 +36,13 @@ export function ResumeLibraryDialog({ library, onClose, onNew, onOpen, onRename,
     finally { setBusy(false); }
   };
   return <Modal titleId="resume-library-title" className="flow-dialog resume-library-dialog" onClose={() => { if (!busy) onClose(); }}>
-    <header className="workspace-dialog-header"><div><span className="eyebrow">简历工作台</span><h2 id="resume-library-title">我的简历</h2><p>{library.resumes.length} 份简历 · 为不同机会保留独立版本</p></div><button type="button" className="secondary-button" disabled={busy} onClick={onClose}>关闭</button></header>
+    <header className="workspace-dialog-header"><div><span className="eyebrow">简历工作台</span><h2 id="resume-library-title">我的简历</h2><p>{library.resumes.length} 份简历 · 集中管理与编辑</p></div><button type="button" className="secondary-button" disabled={busy} onClick={onClose}>关闭</button></header>
     <div className="library-tabs" role="group" aria-label="简历管理分类"><button type="button" aria-pressed={tab === "documents"} onClick={() => setTab("documents")}>我的简历</button><button type="button" aria-pressed={tab === "backup"} onClick={() => setTab("backup")}>导入与备份</button></div>
     {tab === "documents" ? <>
-      <div className="library-search"><input aria-label="搜索简历" placeholder="搜索简历名称、公司或岗位" value={query} onChange={(event) => setQuery(event.target.value)} /><button type="button" className="primary-button" disabled={busy} onClick={onNew}>＋ 新建简历</button></div>
+      <div className="library-search"><input aria-label="搜索简历" placeholder="搜索简历名称" value={query} onChange={(event) => setQuery(event.target.value)} /><button type="button" className="primary-button" disabled={busy} onClick={onNew}>＋ 新建简历</button></div>
       <div className="library-content"><div className="library-list" aria-label="简历列表">{rows.map((row) => <button type="button" key={row.id} disabled={busy} className={`library-row ${selected.id === row.id ? "selected" : ""}`} aria-pressed={selected.id === row.id} onClick={() => setSelectedId(row.id)}>
         <span className="library-row-title"><strong>{row.title || "未命名简历"}</strong>{row.id === library.activeResumeId && <small>当前编辑</small>}</span>
-        <span>{[row.company, row.role].filter(Boolean).join(" · ") || "尚未设置目标岗位"}</span><time>修改于 {new Date(row.updatedAt).toLocaleString()}</time>
+        <time>修改于 {new Date(row.updatedAt).toLocaleString()}</time>
       </button>)}{!rows.length && <p className="library-empty">没有找到匹配的简历，试试其他关键词。</p>}</div>
       <section className="library-detail" aria-label="所选简历操作"><span className="eyebrow">所选简历</span><h3>{selected.title || "未命名简历"}</h3>
         <label className="flow-field">简历名称<input value={title} disabled={busy} onChange={(event) => setTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && title.trim() && title.trim() !== selected.title) void run(() => onRename(selected.id, title.trim()), "名称已保存"); }} /></label>
