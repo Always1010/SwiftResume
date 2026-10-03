@@ -133,6 +133,6 @@ function TypstPreview({ resume, zoom, templateId, onPageCountChange, thumbnail =
     </div>}
     {blob && (thumbnail && thumbnailImage?.blob === blob
       ? <img className="typst-thumbnail-image" src={thumbnailImage.source} alt="Typst PDF 首页" />
-      : <Suspense fallback={<p role="status">正在打开 PDF…</p>}><PdfCanvasPreview blob={blob} zoom={zoom} onPageCountChange={onPageCountChange} thumbnail={thumbnail} onThumbnailReady={thumbnail ? (source) => setThumbnailImage({ blob, source }) : undefined} /></Suspense>)}
+      : <Suspense fallback={<p role="status">正在打开 PDF…</p>}><PdfCanvasPreview blob={blob} zoom={zoom} onPageCountChange={updating || error ? undefined : onPageCountChange} thumbnail={thumbnail} onThumbnailReady={thumbnail ? (source) => setThumbnailImage({ blob, source }) : undefined} /></Suspense>)}
   </div>;
 }
