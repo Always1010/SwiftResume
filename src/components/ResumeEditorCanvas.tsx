@@ -1,5 +1,6 @@
 import { useEffect, type CSSProperties, type KeyboardEvent, type MouseEvent } from "react";
 import { getDensityLayout, type ResumeDocument, type ResumeProfile, type ResumeSection } from "../model/resume";
+import { checkResume } from "../model/resumeChecks";
 import { EditorPanel } from "./EditorPanel";
 import { ResumeProfileView, ResumeSectionView } from "./ResumePreview";
 
@@ -13,6 +14,7 @@ interface ResumeEditorCanvasProps {
   onSectionChange: (section: ResumeSection) => void;
   onDeleteSection: (sectionId: string) => void;
   onClearContent?: () => void;
+  onLocateSample?: (id: string) => void;
 }
 
 export function ResumeEditorCanvas({
@@ -25,6 +27,7 @@ export function ResumeEditorCanvas({
   onSectionChange,
   onDeleteSection,
   onClearContent,
+  onLocateSample,
 }: ResumeEditorCanvasProps) {
   useEffect(() => {
     if (!editingId || editingId === "profile") return;
@@ -48,6 +51,7 @@ export function ResumeEditorCanvas({
     editBlock(id);
   };
 
+  const sampleChecks = checkResume(resume).filter((check) => check.id.endsWith(":sample"));
   const density = getDensityLayout(resume.theme.density);
   const canvasStyle = {
     "--resume-accent": resume.theme.accent,
@@ -61,7 +65,7 @@ export function ResumeEditorCanvas({
   const renderEditor = (id: string) => (
     <div className="inline-editor-shell" onClick={(event) => event.stopPropagation()}>
       <div className="inline-editor-toolbar">
-        <span>正在编辑 · 修改会自动保存</span>
+        <span>编辑中</span>
         <button type="button" className="primary-button" onClick={onCloseEditor}>完成编辑</button>
       </div>
       <EditorPanel
@@ -81,8 +85,12 @@ export function ResumeEditorCanvas({
 
   return (
     <main className="resume-editor-scroller panel" aria-label="整页简历编辑区" onClick={handleBoundaryClick}>
-      <div className="resume-editor-hint">点击文字或模块编辑内容；最终排版请查看右侧或独立预览。</div>
-      {resume.profile.name.includes("【示例】") && <div className="sample-notice"><span>当前是虚构示例，请逐项替换为自己的真实经历。</span>{onClearContent && <button type="button" className="text-button" onClick={onClearContent}>清空示例，保留结构</button>}</div>}
+      <div className="resume-editor-hint">点击内容即可编辑</div>
+      {sampleChecks.length > 0 && <details className="sample-notice">
+        <summary>有 {sampleChecks.length} 处疑似示例内容</summary>
+        <ul>{sampleChecks.map((check) => <li key={check.id}><button type="button" className="text-button" onClick={() => (onLocateSample ?? onEdit)(check.sectionId)}>{check.message} · 定位修改</button></li>)}</ul>
+        {onClearContent && <button type="button" className="text-button" onClick={onClearContent}>清空示例，保留结构</button>}
+      </details>}
       <div className="resume-editor-canvas resume-page resume-template-classic" style={canvasStyle}>
         <section
           id="resume-block-profile"
