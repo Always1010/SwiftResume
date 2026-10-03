@@ -55,6 +55,7 @@ describe("final PDF preview", () => {
     vi.spyOn(frame.contentWindow!, "focus").mockImplementation(() => {});
     act(() => print.click());
     expect(request).toHaveBeenCalledOnce();
+    expect(document.activeElement).toBe(print);
     expect(container.querySelector('[target="_blank"]')).toBeNull();
     act(() => root!.unmount());
     root = undefined;
