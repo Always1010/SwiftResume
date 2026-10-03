@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { parseResumeText } from "./textImport";
-import { plainText } from "./writingGuide";
+import { plainText } from "./contentLabels";
 it("recognizes headings while retaining unknown text and literal markup", () => {
   const resume = parseResumeText("姓名：陈同学\r\n电话：138 1234 5678\r\n邮箱：chen@example.com\n其他未识别信息\n项目经历\n<script>示例</script>\n完成迁移\n教育背景\n某大学 2020-2024");
   expect(resume.profile.name).toBe("陈同学");

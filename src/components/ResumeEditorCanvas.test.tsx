@@ -165,19 +165,15 @@ it("ignores composition, modifier shortcuts, unrelated keys and nested view targ
   expect(onEdit).not.toHaveBeenCalled();
 });
 
-it("keeps whole-document sample warnings after renaming and locates their remaining module", () => {
+it("does not flag the author's content as suspected samples", () => {
   const resume = createDefaultResume();
-  resume.profile.name = "Lin Xiao";
-  resume.profile.email = "lin@example.com";
-  const locate = vi.fn();
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
   roots.push(root);
   act(() => root.render(<ResumeEditorCanvas resume={resume} selectedId="profile" editingId={null}
-    onEdit={() => {}} onLocateSample={locate} onCloseEditor={() => {}} onProfileChange={() => {}} onSectionChange={() => {}} onDeleteSection={() => {}} />));
-  expect(container.querySelector(".sample-notice summary")?.textContent).toContain("疑似示例内容");
-  const button = [...container.querySelectorAll<HTMLButtonElement>(".sample-notice button")].find((item) => item.textContent?.includes(resume.sections[0].title))!;
-  act(() => button.click());
-  expect(locate).toHaveBeenCalledWith(resume.sections[0].id);
+    onEdit={() => {}} onCloseEditor={() => {}} onProfileChange={() => {}} onSectionChange={() => {}} onDeleteSection={() => {}} />));
+  expect(container.querySelector(".sample-notice")).toBeNull();
+  expect(container.textContent).not.toContain("疑似示例内容");
+  expect(container.querySelectorAll(".section-block")).toHaveLength(resume.sections.filter((section) => section.enabled).length);
 });

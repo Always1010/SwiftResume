@@ -1,6 +1,5 @@
 import { useEffect, type CSSProperties, type KeyboardEvent, type MouseEvent } from "react";
 import { getDensityLayout, type ResumeDocument, type ResumeProfile, type ResumeSection } from "../model/resume";
-import { checkResume } from "../model/resumeChecks";
 import { EditorPanel } from "./EditorPanel";
 import { ResumeProfileView, ResumeSectionView } from "./ResumePreview";
 
@@ -13,8 +12,6 @@ interface ResumeEditorCanvasProps {
   onProfileChange: (profile: ResumeProfile) => void;
   onSectionChange: (section: ResumeSection) => void;
   onDeleteSection: (sectionId: string) => void;
-  onClearContent?: () => void;
-  onLocateSample?: (id: string) => void;
 }
 
 export function ResumeEditorCanvas({
@@ -26,8 +23,6 @@ export function ResumeEditorCanvas({
   onProfileChange,
   onSectionChange,
   onDeleteSection,
-  onClearContent,
-  onLocateSample,
 }: ResumeEditorCanvasProps) {
   useEffect(() => {
     if (!editingId || editingId === "profile") return;
@@ -51,7 +46,6 @@ export function ResumeEditorCanvas({
     editBlock(id);
   };
 
-  const sampleChecks = checkResume(resume).filter((check) => check.id.endsWith(":sample"));
   const density = getDensityLayout(resume.theme.density);
   const canvasStyle = {
     "--resume-accent": resume.theme.accent,
@@ -86,11 +80,6 @@ export function ResumeEditorCanvas({
   return (
     <main className="resume-editor-scroller panel" aria-label="整页简历编辑区" onClick={handleBoundaryClick}>
       <div className="resume-editor-hint">点击内容即可编辑</div>
-      {sampleChecks.length > 0 && <details className="sample-notice">
-        <summary>有 {sampleChecks.length} 处疑似示例内容</summary>
-        <ul>{sampleChecks.map((check) => <li key={check.id}><button type="button" className="text-button" onClick={() => (onLocateSample ?? onEdit)(check.sectionId)}>{check.message} · 定位修改</button></li>)}</ul>
-        {onClearContent && <button type="button" className="text-button" onClick={onClearContent}>清空示例，保留结构</button>}
-      </details>}
       <div className="resume-editor-canvas resume-page resume-template-classic" style={canvasStyle}>
         <section
           id="resume-block-profile"

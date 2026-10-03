@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ImportBatch, ImportDocument } from "../storage/libraryBackup";
-import { plainText } from "../model/writingGuide";
+import { plainText } from "../model/contentLabels";
 import { Modal } from "./Modal";
 export function RestoreDialog({ batch, onClose, onRestore }: { batch: ImportBatch; onClose: () => void; onRestore: (documents: ImportDocument[]) => Promise<void> }) {
   const [selected, setSelected] = useState(batch.documents.map((d) => d.id));

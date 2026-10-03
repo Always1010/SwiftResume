@@ -570,8 +570,6 @@ export function App() {
           editingId={editingId}
           onEdit={editResumeBlock}
           onCloseEditor={closeInlineEditor}
-          onClearContent={clearContent}
-          onLocateSample={locateResumeBlock}
           onProfileChange={(value) => dispatch({ type: "update-profile", value })}
           onSectionChange={updateSection}
           onDeleteSection={removeSection}
