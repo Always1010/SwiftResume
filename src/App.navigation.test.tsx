@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, useState, type ReactNode } from "react";
+import { act, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
@@ -15,7 +15,6 @@ vi.mock("./components/ResumePreview", () => ({
 vi.mock("./components/customEditors/ContentBodyEditor", () => ({
   ContentBodyEditor: () => <div className="content-rich-surface"><div contentEditable tabIndex={0} aria-label="正文" /></div>,
 }));
-vi.mock("./components/Modal", () => ({ Modal: ({ children, titleId }: { children: ReactNode; titleId?: string }) => <div role="dialog" id={`${titleId}-dialog`}>{children}</div> }));
 vi.mock("./components/NewResumeDialog", () => ({
   NewResumeDialog: ({ onSelect, onClose }: { onSelect: (template: ResumeCreationTemplate) => void; onClose: () => void }) => <div role="dialog" data-testid="new-resume"><button onClick={() => onSelect("blank")}>创建第一份简历</button><button onClick={onClose}>取消新建</button></div>,
 }));
@@ -79,6 +78,10 @@ beforeEach(() => {
   vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
   vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => window.setTimeout(() => callback(performance.now()), 16));
   vi.stubGlobal("cancelAnimationFrame", (id: number) => window.clearTimeout(id));
+  // JSDOM has no native top layer; use the real Modal component and stub only
+  // the browser primitive so the app-to-dialog event path is exercised.
+  HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) { this.open = true; });
+  HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) { this.open = false; });
   Object.defineProperty(HTMLElement.prototype, "scrollTo", { configurable: true, value: scrollTo });
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
     const top = this.classList.contains("resume-editor-scroller") ? 100 : 600;
@@ -277,15 +280,28 @@ it("opens My resumes through the visible title button and preserves the active e
   expect(entry.getAttribute("data-testid")).toBe("resume-library-trigger");
   expect(document.getElementById(entry.getAttribute("aria-describedby")!)?.textContent).toBe(resume.title);
   expect(entry.getAttribute("aria-expanded")).toBe("false");
+  entry.focus();
   await act(async () => entry.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
   expect(entry.getAttribute("aria-expanded")).toBe("true");
-  expect(document.getElementById(entry.getAttribute("aria-controls")!)?.getAttribute("role")).toBe("dialog");
+  const dialog = document.getElementById(entry.getAttribute("aria-controls")!) as HTMLDialogElement;
+  expect(dialog).toBeInstanceOf(HTMLDialogElement);
+  expect(dialog.open).toBe(true);
+  expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledOnce();
   expect(document.getElementById("resume-library-title")?.textContent).toBe("我的简历");
   expect(document.querySelectorAll(".library-row")).toHaveLength(1);
   await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="关闭我的简历"]')!.click());
   expect(document.getElementById("resume-library-title")).toBeNull();
   expect(entry.getAttribute("aria-expanded")).toBe("false");
+  expect(document.activeElement).toBe(entry);
   expect(document.querySelector("#resume-block-profile .field input")).toBe(field);
   expect(field.value).toBe("QA entry check");
   expect(openWindow).not.toHaveBeenCalled();
+  // A second opening must mount another native modal and Escape must dismiss it.
+  await act(async () => entry.click());
+  expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledTimes(2);
+  const cancel = new Event("cancel", { cancelable: true });
+  await act(async () => document.querySelector("dialog")!.dispatchEvent(cancel));
+  expect(cancel.defaultPrevented).toBe(true);
+  expect(entry.getAttribute("aria-expanded")).toBe("false");
+  expect(document.activeElement).toBe(entry);
 });
