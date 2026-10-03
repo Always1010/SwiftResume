@@ -1,24 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { createBlankResume, createSection, type ResumeAction } from "./resume";
 import { createResumeHistory, resumeHistoryReducer, type ResumeHistory } from "./resumeHistory";
-import { exportRecord } from "./resumeVersions";
 
 const edit = (state: ResumeHistory, action: ResumeAction, time = 10000) => resumeHistoryReducer(state, { type: "edit", action, time });
 const undo = (state: ResumeHistory) => resumeHistoryReducer(state, { type: "undo", time: 20000 });
 const redo = (state: ResumeHistory) => resumeHistoryReducer(state, { type: "redo", time: 30000 });
 
 describe("document undo history", () => {
-  it.each(["download", "print"] as const)("keeps %s snapshots across undo without adding an undo step", (kind) => {
-    let history = createResumeHistory(createBlankResume());
-    history = edit(history, { type: "update-title", value: "投递版" });
-    const record = exportRecord(history.present, kind === "print" ? { kind } : { kind, filename: "投递版.pdf" });
-    history = edit(history, { type: "record-export", value: record });
-    expect(history.past).toHaveLength(1);
-    const restored = undo(history);
-    expect(restored.present.title).not.toBe("投递版");
-    expect(restored.present.lastExport).toEqual(record);
-    expect(redo(restored).present.lastExport).toEqual(record);
-  });
   it("restores deleted modules, their rich text and theme changes in order", () => {
     const document = createBlankResume();
     const section = createSection("content");

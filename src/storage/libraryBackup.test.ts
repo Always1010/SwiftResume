@@ -1,25 +1,20 @@
 import { expect, it } from "vitest";
 import { createDefaultResume } from "../model/resume";
-import { exportRecord } from "../model/resumeVersions";
 import { mergeImportedDocuments, parseBackupValue, readCurrentDocument } from "./libraryBackup";
 import { createResumeSummary, type ResumeLibrary } from "./resumeStorage";
-it("round trips current documents including photos, targets and export snapshots", () => {
-  const resume = createDefaultResume();
-  resume.target = { company: "公司", role: "岗位", notes: "备注" };
-  resume.lastExport = exportRecord(resume, "投递.pdf");
+it("keeps existing job copies accessible as ordinary resumes with all content intact", () => {
+  const resume = { ...createDefaultResume(), title: "已有岗位副本", target: { company: "公司", role: "岗位", notes: "备注" } };
   const batch = parseBackupValue(JSON.parse(JSON.stringify({ format: "swift-resume-library", version: 1, documents: [{ id: "old", resume }] })));
   expect(batch.documents[0].resume).toEqual(resume);
   expect(batch.skipped).toEqual([]);
 });
-it("reports malformed records and refuses unsupported versions and nested snapshots", () => {
+it("reports malformed records and refuses unsupported versions", () => {
   const resume = createDefaultResume();
   const bad = { ...resume, profile: { ...resume.profile, details: "bad" } };
   expect(parseBackupValue({ format: "swift-resume-library", version: 1, documents: [{ resume }, { resume: bad }] }).skipped).toHaveLength(1);
   expect(() => parseBackupValue({ ...resume, schemaVersion: 3 })).toThrow();
   expect(readCurrentDocument({ ...resume, sections: [{ ...resume.sections[1], entries: [{ id: "x", title: "", subtitle: "", date: "", body: { type: "doc", content: "bad" } }] }] })).toBeNull();
-  resume.lastExport = exportRecord(resume, "1.pdf");
-  const snapshot = structuredClone(resume);
-  expect(readCurrentDocument({ ...resume, lastExport: { ...resume.lastExport, snapshot } })).toBeNull();
+
 });
 it("restores selected documents atomically as independent new IDs without replacing existing items", () => {
   const resume = createDefaultResume();
@@ -30,14 +25,4 @@ it("restores selected documents atomically as independent new IDs without replac
   expect(merged.library.resumes[0]).toEqual(library.resumes[0]);
   merged.documents[0].resume.profile.name = "changed";
   expect(resume.profile.name).not.toBe("changed");
-});
-
-it("round trips print requests and legacy filename-only download records", () => {
-  const resume = createDefaultResume();
-  resume.lastExport = exportRecord(resume, { kind: "print" });
-  expect(readCurrentDocument(JSON.parse(JSON.stringify(resume)))?.lastExport).toEqual(resume.lastExport);
-  resume.lastExport = { at: "2026-10-03T00:00:00.000Z", filename: "legacy.pdf", snapshot: resume.lastExport.snapshot };
-  expect(readCurrentDocument(JSON.parse(JSON.stringify(resume)))?.lastExport).toEqual(resume.lastExport);
-  expect(readCurrentDocument({ ...resume, lastExport: { ...resume.lastExport, kind: "saved" } })).toBeNull();
-  expect(readCurrentDocument({ ...resume, lastExport: { ...resume.lastExport, kind: "print" } })).toBeNull();
 });

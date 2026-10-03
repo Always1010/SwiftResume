@@ -22,8 +22,6 @@ export function createResumeHistory(document: ResumeDocument): ResumeHistory {
 
 function describeEdit(previous: ResumeDocument, action: ResumeAction): { label: string; group: string | null } {
   switch (action.type) {
-    case "update-target": return { label: "修改目标岗位", group: "target" };
-    case "record-export": return { label: "记录导出版本", group: null };
     case "replace": return { label: "恢复简历内容", group: null };
     case "update-title": return { label: "修改简历名称", group: "title" };
     case "update-profile": return {
@@ -64,14 +62,13 @@ export function resumeHistoryReducer(state: ResumeHistory, action: HistoryAction
     const inverse = { document: state.present, label: snapshot.label };
     return {
       ...state,
-      present: withFreshTimestamp({ ...snapshot.document, lastExport: state.present.lastExport }, state.present, action.time),
+      present: withFreshTimestamp(snapshot.document, state.present, action.time),
       past: action.type === "undo" ? state.past.slice(0, -1) : [...state.past, inverse].slice(-HISTORY_LIMIT),
       future: action.type === "undo" ? [...state.future, inverse] : state.future.slice(0, -1),
       group: null,
     };
   }
   const next = resumeReducer(state.present, action.action);
-  if (action.action.type === "record-export") return { ...state, present: withFreshTimestamp(next, state.present, action.time), group: null };
   if (sameContent(next, state.present)) return state;
   const { label, group } = describeEdit(state.present, action.action);
   const merge = group !== null && group === state.group && state.future.length === 0

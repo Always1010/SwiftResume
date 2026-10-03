@@ -12,7 +12,7 @@ it("shares exact PDF bytes between preview and export despite metadata changes",
   const resume = createBlankResume();
   const [preview, download] = await Promise.all([
     getPdfArtifact(resume),
-    getPdfArtifact({ ...resume, title: "投递版", updatedAt: "later", target: { company: "公司", role: "岗位", notes: "" } }),
+    getPdfArtifact({ ...resume, title: "投递版", updatedAt: "later" }),
   ]);
   expect(generate).toHaveBeenCalledOnce();
   expect(preview.blob).toBe(download.blob);

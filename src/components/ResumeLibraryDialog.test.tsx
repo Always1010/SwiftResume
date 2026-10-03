@@ -10,12 +10,12 @@ let root: ReturnType<typeof createRoot>;
 afterEach(() => { act(() => root?.unmount()); document.body.innerHTML = ""; });
 const library: ResumeLibrary = { version: 1, activeResumeId: "a", resumes: [
   { id: "a", title: "原简历", createdAt: "2026-01-01", updatedAt: "2026-02-01" },
-  { id: "b", title: "岗位版", company: "远山", role: "前端", createdAt: "2026-01-01", updatedAt: "2026-03-01" },
+  { id: "b", title: "岗位版", createdAt: "2026-01-01", updatedAt: "2026-03-01" },
 ] };
-it("searches names and job metadata and orders by last modification", () => {
+it("searches document names and orders by last modification", () => {
   expect(filterResumeSummaries(library.resumes, "").map((r) => r.id)).toEqual(["b", "a"]);
-  expect(filterResumeSummaries(library.resumes, " 前端 ").map((r) => r.id)).toEqual(["b"]);
-  expect(filterResumeSummaries(library.resumes, "远山").map((r) => r.id)).toEqual(["b"]);
+  expect(filterResumeSummaries(library.resumes, " 岗位版 ").map((r) => r.id)).toEqual(["b"]);
+  expect(filterResumeSummaries(library.resumes, "原简历").map((r) => r.id)).toEqual(["a"]);
   expect(library.resumes[0].id).toBe("a");
 });
 it("operates on the selected document and keeps the dialog open on failures", async () => {
