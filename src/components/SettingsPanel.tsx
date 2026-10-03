@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Modal } from "./Modal";
 import { CloseButton } from "./CloseButton";
 import type {
@@ -65,6 +66,7 @@ export function SettingsPanel({
   onRestoreBackup,
   onOpenHistory, onExportResume, onExportLibrary, onImportBackup, onImportText,
 }: SettingsPanelProps) {
+  const [section, setSection] = useState<"files" | "writing" | "advanced">("files");
   const update = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
     onChange({ ...settings, [key]: value });
 
@@ -72,13 +74,19 @@ export function SettingsPanel({
     <Modal titleId="settings-title" className="settings-page" onClose={onClose}>
         <header className="settings-header">
           <div>
-            <h2 id="settings-title">设置</h2>
+            <h2 id="settings-title">设置与备份</h2>
             <p>所有设置自动保存</p>
           </div>
           <CloseButton onClick={onClose} label="关闭设置" />
         </header>
 
+        <nav className="settings-navigation" aria-label="设置分类">
+          {([{ id: "files", label: "导入与备份" }, { id: "writing", label: "编辑与导出" }, { id: "advanced", label: "高级设置" }] as const).map((item) => (
+            <button key={item.id} type="button" aria-pressed={section === item.id} aria-controls={`settings-${item.id}`} onClick={() => setSection(item.id)}>{item.label}</button>
+          ))}
+        </nav>
         <div className="settings-content">
+          <section id="settings-files" aria-label="导入与备份" hidden={section !== "files"}>
           <section className="settings-group">
             <div className="settings-group-title"><h3>导入与备份</h3></div>
             <div className="settings-file-tools">
@@ -88,6 +96,30 @@ export function SettingsPanel({
               <button type="button" className="secondary-button" onClick={onExportLibrary}>备份全部简历</button>
             </div>
           </section>
+          <div className="settings-group">
+            <div className="settings-group-title"><div><h3>本地磁盘备份</h3><p>浏览器内自动保存与磁盘备份是两份数据。清理浏览器数据或卸载扩展可能丢失未备份的简历。</p></div></div>
+            <div className={`setting-row ${!backupSupported ? "setting-disabled" : ""}`}>
+              <div><strong>自动磁盘备份</strong><p>{settings.diskBackupEnabled ? backupStatusLabels[backupStatus] : "已关闭；浏览器内仍会自动保存。"}</p></div>
+              <Toggle label="自动磁盘备份" checked={settings.diskBackupEnabled && backupSupported} onChange={(value) => update("diskBackupEnabled", value)} />
+            </div>
+            <div className="setting-row backup-directory-row">
+              <div><strong>备份目录</strong><p>{backupDirectoryName || "选择本机或移动磁盘中的目录。"}</p></div>
+              <div className="setting-actions">
+                {(backupStatus === "permission-required" || backupStatus === "error") && Boolean(backupDirectoryName) && <button type="button" className="secondary-button" onClick={onAuthorizeBackupDirectory}>重新授权</button>}
+                <button type="button" className="secondary-button" disabled={!backupSupported} onClick={onChooseBackupDirectory}>{backupDirectoryName ? "更换目录" : "选择目录"}</button>
+              </div>
+            </div>
+            <div className="setting-row">
+              <div><strong>备份与恢复</strong><p>从磁盘备份找回内容。</p></div>
+              <div className="setting-actions">
+                <button type="button" className="secondary-button" disabled={!backupDirectoryName || backupStatus !== "ready"} onClick={onOpenHistory}>历史版本</button>
+                <button type="button" className="secondary-button" disabled={!backupDirectoryName} onClick={onRestoreBackup}>从目录恢复</button>
+                <button type="button" className="primary-button" disabled={!backupDirectoryName || backupStatus === "permission-required"} onClick={onBackupNow}>立即备份</button>
+              </div>
+            </div>
+          </div>
+          </section>
+          <section id="settings-writing" aria-label="编辑与导出" hidden={section !== "writing"}>
           <div className="settings-group">
             <div className="settings-group-title"><div><h3>保存与导出</h3><p>内容仅保存在本机，不会上传到服务器。</p></div></div>
             <label className="setting-row">
@@ -112,7 +144,7 @@ export function SettingsPanel({
               <Toggle label="预览页数" checked={settings.showOverflowWarning} onChange={(value) => update("showOverflowWarning", value)} />
             </div>
             <label className="setting-row">
-              <div><strong>预览缩放</strong><p>在较小屏幕上缩小页面，减少横向滚动。</p></div>
+              <div><strong>预览缩放</strong><p>调整编辑时右侧预览的显示大小。</p></div>
               <select value={settings.previewZoom} onChange={(event) => update("previewZoom", event.target.value === "fit" ? "fit" : Number(event.target.value) as PreviewZoom)}>
                 <option value="fit">适应宽度</option>
                 <option value={70}>70%</option>
@@ -123,28 +155,8 @@ export function SettingsPanel({
             </label>
           </details>
 
-          <div className="settings-group">
-            <div className="settings-group-title"><div><h3>本地磁盘备份</h3><p>浏览器内自动保存与磁盘备份是两份数据。清理浏览器数据或卸载扩展可能丢失未备份的简历。</p></div></div>
-            <div className={`setting-row ${!backupSupported ? "setting-disabled" : ""}`}>
-              <div><strong>自动磁盘备份</strong><p>{settings.diskBackupEnabled ? backupStatusLabels[backupStatus] : "已关闭；浏览器内仍会自动保存。"}</p></div>
-              <Toggle label="自动磁盘备份" checked={settings.diskBackupEnabled && backupSupported} onChange={(value) => update("diskBackupEnabled", value)} />
-            </div>
-            <div className="setting-row backup-directory-row">
-              <div><strong>备份目录</strong><p>{backupDirectoryName || "选择本机或移动磁盘中的目录。"}</p></div>
-              <div className="setting-actions">
-                {(backupStatus === "permission-required" || backupStatus === "error") && Boolean(backupDirectoryName) && <button type="button" className="secondary-button" onClick={onAuthorizeBackupDirectory}>重新授权</button>}
-                <button type="button" className="secondary-button" disabled={!backupSupported} onClick={onChooseBackupDirectory}>{backupDirectoryName ? "更换目录" : "选择目录"}</button>
-              </div>
-            </div>
-            <div className="setting-row">
-              <div><strong>备份与恢复</strong><p>从磁盘备份找回内容。</p></div>
-              <div className="setting-actions">
-                <button type="button" className="secondary-button" disabled={!backupDirectoryName || backupStatus !== "ready"} onClick={onOpenHistory}>历史版本</button>
-                <button type="button" className="secondary-button" disabled={!backupDirectoryName} onClick={onRestoreBackup}>从目录恢复</button>
-                <button type="button" className="primary-button" disabled={!backupDirectoryName || backupStatus === "permission-required"} onClick={onBackupNow}>立即备份</button>
-              </div>
-            </div>
-          </div>
+          </section>
+          <section id="settings-advanced" aria-label="高级设置" hidden={section !== "advanced"}>
           <details className="settings-group settings-advanced">
             <summary>多页面同步</summary>
             <div className="setting-row">
@@ -161,6 +173,7 @@ export function SettingsPanel({
             </label>
           </details>
 
+          </section>
         </div>
 
     </Modal>

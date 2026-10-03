@@ -52,3 +52,37 @@ body { background: #f4f6f4; }
 .template-gallery-header { box-shadow: none; }
 .workspace-dialog.template-compare-dialog { width: min(1500px, calc(100vw - 48px)); height: min(880px, calc(100dvh - 48px)); padding: 0; }
 .workspace-dialog.history-page { width: min(1300px, calc(100vw - 48px)); height: min(880px, calc(100dvh - 48px)); padding: 0; }
+
+/* Calm application surfaces: these tokens never replace resume theme values. */
+:root {
+  --ui-canvas: #f3f4f6;
+  --ui-surface: #ffffff;
+  --ui-subtle: #f7f8f9;
+  --ui-border: #e2e5e9;
+  --ui-border-strong: #bec5cc;
+  --ui-text: #262d34;
+  --ui-muted: #65707a;
+  --ui-accent: #245f4c;
+  --ui-accent-hover: #194a3a;
+  --ui-selected: #edf4f0;
+  --ui-radius: 8px;
+  --ui-dialog-radius: 14px;
+}
+@media screen {
+  .workspace-dialog.settings-page[open] { grid-template-rows: auto auto minmax(0, 1fr); height: min(700px, calc(100dvh - 48px)); }
+  .settings-navigation { display: flex; gap: 24px; padding: 0 28px; border-bottom: 1px solid var(--ui-border); }
+  .settings-navigation button { position: relative; border: 0; padding: 14px 2px; color: var(--ui-muted); background: transparent; font-size: 13px; font-weight: 600; }
+  .settings-navigation button:hover { color: var(--ui-text); }
+  .settings-navigation button[aria-pressed="true"] { color: var(--ui-accent); }
+  .settings-navigation button[aria-pressed="true"]::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: var(--ui-accent); content: ""; }
+  .settings-content > section[hidden] { display: none; }
+  .settings-content { padding: 24px 28px 28px; }
+  .settings-group { border-color: var(--ui-border); border-radius: var(--ui-radius); }
+  .settings-group-title { padding: 16px 18px; color: var(--ui-text); background: var(--ui-subtle); }
+  .settings-group-title h3 { font-size: 13px; }
+  .settings-group-title p, .setting-row p { color: var(--ui-muted); font-size: 12px; line-height: 1.65; }
+  .setting-row { padding: 16px 18px; border-color: var(--ui-border); }
+  .setting-row strong { color: var(--ui-text); font-size: 13px; }
+  .settings-file-tools { gap: 12px; padding: 18px; }
+  .settings-file-tools button { min-height: 40px; }
+}
