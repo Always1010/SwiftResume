@@ -453,7 +453,7 @@ body.template-thumbnail-body { width: 360px; min-width: 0; height: 510px; overfl
 .resume-entry b { font-weight: 750; }
 .resume-page ul { margin: 3px 0 0; padding-left: 18px; }
 .resume-page li { margin: 1px 0; padding-left: 1px; }
-.resume-rich-text { overflow-wrap: anywhere; }
+.resume-rich-text { overflow-wrap: anywhere; white-space: pre-wrap; }
 .resume-rich-text > :first-child { margin-top: 0; }
 
 /* Output templates share the same semantic components and vary only presentation. */
