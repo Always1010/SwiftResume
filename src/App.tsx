@@ -375,18 +375,17 @@ export function App() {
     setEditingId(null);
     setSaveState("saved");
   };
-  const createResume = (template: ResumeCreationTemplate, withExamples = true) => {
-    setNewResumeOpen(false);
+  const createResume = async (template: ResumeCreationTemplate, withExamples = true) => {
+    const document = createResumeFromTemplate(template, withExamples);
     if (firstRunRef.current) {
       firstRunRef.current = false;
-      dispatch({ type: "replace", value: createResumeFromTemplate(template, withExamples) });
-      setSelectedId("profile"); setEditingId(null);
-      return;
+      dispatch({ type: "replace", value: document });
+    } else {
+      await addResume(document);
     }
-    void addResume(createResumeFromTemplate(template, withExamples)).catch((error) => {
-      setSaveState("error");
-      window.alert(error instanceof Error ? error.message : "新建简历失败");
-    });
+    setNewResumeOpen(false);
+    setLibraryOpen(false);
+    locateResumeBlock("profile");
   };
   const clearContent = () => {
     if (!window.confirm("清空这份简历的个人信息与正文，保留模块结构和排版？操作后可以撤销。")) return;
@@ -722,7 +721,7 @@ export function App() {
         onRestoreAsNew={restoreHistoryAsNew}
         onReplaceResume={replaceResumeFromHistory}
       />}
-      {libraryOpen && library && <ResumeLibraryDialog library={updateResumeSummary(library, activeResumeId, resume)} onClose={() => setLibraryOpen(false)} onNew={() => { setLibraryOpen(false); setNewResumeOpen(true); }} onOpen={switchResume} onRename={renameResume} onCopy={copyResume} onDelete={removeLibraryResume} onClear={clearContent} />}
+      {libraryOpen && library && <ResumeLibraryDialog library={updateResumeSummary(library, activeResumeId, resume)} onClose={() => setLibraryOpen(false)} onNew={() => setNewResumeOpen(true)} onOpen={switchResume} onRename={renameResume} onCopy={copyResume} onDelete={removeLibraryResume} onClear={clearContent} />}
       {newResumeOpen && <NewResumeDialog onSelect={createResume} onClose={() => { firstRunRef.current = false; setNewResumeOpen(false); }} />}
       {textImportOpen && <TextImportDialog onClose={() => setTextImportOpen(false)} onImport={async (document) => { await addResume(document); setTextImportOpen(false); setSettingsOpen(false); }} />}
       {importBatch && <RestoreDialog batch={importBatch} onClose={() => setImportBatch(null)} onRestore={restoreSelected} />}

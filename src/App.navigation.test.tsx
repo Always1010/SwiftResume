@@ -17,7 +17,7 @@ vi.mock("./components/customEditors/ContentBodyEditor", () => ({
 }));
 vi.mock("./components/Modal", () => ({ Modal: ({ children }: { children: ReactNode }) => <div role="dialog">{children}</div> }));
 vi.mock("./components/NewResumeDialog", () => ({
-  NewResumeDialog: ({ onSelect }: { onSelect: (template: ResumeCreationTemplate) => void }) => <div role="dialog"><button onClick={() => onSelect("blank")}>创建第一份简历</button></div>,
+  NewResumeDialog: ({ onSelect, onClose }: { onSelect: (template: ResumeCreationTemplate) => void; onClose: () => void }) => <div role="dialog" data-testid="new-resume"><button onClick={() => onSelect("blank")}>创建第一份简历</button><button onClick={onClose}>取消新建</button></div>,
 }));
 vi.mock("./components/ResumeExportDialog", () => ({ ResumeExportDialog: ({ resume, onClose }: { resume: ResumeDocument; onClose: () => void }) => <div role="dialog" data-testid="export"><span>{resume.profile.name}</span><button onClick={onClose}>取消导出</button></div> }));
 vi.mock("./components/StandalonePreview", () => ({ StandalonePreview: ({ resume, onBack, onAppearanceChange, onExport }: { resume: ResumeDocument; onBack: () => void; onAppearanceChange: (change: { theme: { templateId: "minimal" } }) => void; onExport: () => void }) => {
@@ -247,4 +247,17 @@ describe("single-tab stateful screens", () => {
     await mount();
     expect(document.body.textContent).not.toContain("岗位版本");
   });
+});
+
+it("returns from cancelled creation to the same library search, then creates directly into editing", async () => {
+  await mount();
+  await act(async () => document.querySelector<HTMLButtonElement>(".document-switcher")!.click());
+  type(document.querySelector<HTMLInputElement>('[aria-label="搜索简历"]')!, "未命名");
+  await click("＋ 新建简历");
+  await click("取消新建");
+  expect(document.querySelector<HTMLInputElement>('[aria-label="搜索简历"]')!.value).toBe("未命名");
+  await click("＋ 新建简历"); await click("创建第一份简历"); await flushNavigation();
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  expect(document.querySelector("#resume-block-profile.editing")).not.toBeNull();
+  expect(document.activeElement).toBe(document.querySelector("#resume-block-profile .field input"));
 });
