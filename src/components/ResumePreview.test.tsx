@@ -1,8 +1,57 @@
 // @vitest-environment jsdom
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { act } from "react";
+import { createRoot } from "react-dom/client";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createDefaultResume, createSection } from "../model/resume";
-import { ResumeProfileView, ResumeSectionView } from "./ResumePreview";
+import { useTypstPreview } from "../export/useTypstPreview";
+import PdfCanvasPreview from "./PdfCanvasPreview";
+import { ResumePreview, ResumeProfileView, ResumeSectionView } from "./ResumePreview";
+
+vi.mock("../export/useTypstPreview", () => ({ useTypstPreview: vi.fn() }));
+vi.mock("./PdfCanvasPreview", () => ({ default: vi.fn(() => <span data-testid="pdf-preview">PDF</span>) }));
+Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+let root: ReturnType<typeof createRoot> | undefined;
+afterEach(() => { if (root) act(() => root!.unmount()); root = undefined; document.body.innerHTML = ""; vi.clearAllMocks(); });
+
+describe("ResumePreview page measurements", () => {
+  it("keeps the old PDF visible but prevents its page count from being attributed to an updating or failed document", async () => {
+    const resume = createDefaultResume();
+    const previousBlob = new Blob(["previous"]);
+    const preview = { blob: previousBlob, updating: false, error: "", retry: vi.fn() };
+    vi.mocked(useTypstPreview).mockReturnValue(preview);
+    const container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    const oldCount = vi.fn();
+    await act(async () => root!.render(<ResumePreview resume={resume} zoom="fit" onPageCountChange={oldCount} />));
+    expect(vi.mocked(PdfCanvasPreview).mock.lastCall![0].onPageCountChange).toBe(oldCount);
+    const renderedPdf = container.querySelector('[data-testid="pdf-preview"]');
+
+    const updatedResume = { ...resume, profile: { ...resume.profile, name: "新内容" } };
+    const currentCount = vi.fn();
+    vi.mocked(useTypstPreview).mockReturnValue({ ...preview, updating: true });
+    await act(async () => root!.render(<ResumePreview resume={updatedResume} zoom="fit" onPageCountChange={currentCount} />));
+    expect(vi.mocked(PdfCanvasPreview).mock.lastCall![0].blob).toBe(previousBlob);
+    expect(vi.mocked(PdfCanvasPreview).mock.lastCall![0].onPageCountChange).toBeUndefined();
+    expect(container.querySelector('[data-testid="pdf-preview"]')).toBe(renderedPdf);
+
+    vi.mocked(useTypstPreview).mockReturnValue({ ...preview, error: "生成失败" });
+    await act(async () => root!.render(<ResumePreview resume={updatedResume} zoom="fit" onPageCountChange={currentCount} />));
+    expect(vi.mocked(PdfCanvasPreview).mock.lastCall![0].onPageCountChange).toBeUndefined();
+    expect(container.querySelector('[data-testid="pdf-preview"]')).toBe(renderedPdf);
+
+    const currentBlob = new Blob(["current"]);
+    vi.mocked(useTypstPreview).mockReturnValue({ ...preview, blob: currentBlob });
+    await act(async () => root!.render(<ResumePreview resume={updatedResume} zoom="fit" onPageCountChange={currentCount} />));
+    const currentProps = vi.mocked(PdfCanvasPreview).mock.lastCall![0];
+    expect(currentProps.blob).toBe(currentBlob);
+    expect(currentProps.onPageCountChange).toBe(currentCount);
+    act(() => currentProps.onPageCountChange!(3));
+    expect(currentCount).toHaveBeenCalledExactlyOnceWith(3);
+    expect(oldCount).not.toHaveBeenCalled();
+  });
+});
 
 describe("ResumeSectionView", () => {
   it("keeps degree beside the major and GPA in the separate right-hand cell", () => {
