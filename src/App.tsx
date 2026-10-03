@@ -46,6 +46,12 @@ import {
 import { useResumeSync } from "./sync/resumeSync";
 import { usePreviewPublisher } from "./sync/previewSync";
 
+const BACKUP_NOTICE_DISMISSAL_KEY = "swift-resume:backup-notice-dismissed";
+
+function loadBackupNoticeDismissal() {
+  try { return localStorage.getItem(BACKUP_NOTICE_DISMISSAL_KEY); } catch { return null; }
+}
+
 export function App() {
   const [editHistory, dispatchHistory] = useReducer(resumeHistoryReducer, undefined, () => createResumeHistory(createBlankResume()));
   const resume = editHistory.present;
@@ -75,6 +81,14 @@ export function App() {
   const [backupStatus, setBackupStatus] = useState<DiskBackupStatus>(() => isDiskBackupSupported() ? "not-configured" : "unsupported");
   const [backupPromptOpen, setBackupPromptOpen] = useState(false);
   const [blockNavigation, setBlockNavigation] = useState<{ id: string } | null>(null);
+  const [dismissedBackupNotice, setDismissedBackupNotice] = useState(loadBackupNoticeDismissal);
+  const backupNoticeKey = `${backupStatus}:${backupDirectory?.name ?? ""}`;
+  const backupNeedsAttention = backupStatus === "not-configured" || backupStatus === "permission-required" || backupStatus === "error";
+  const dismissBackupNotice = () => {
+    setDismissedBackupNotice(backupNoticeKey);
+    setBackupPromptOpen(false);
+    try { localStorage.setItem(BACKUP_NOTICE_DISMISSAL_KEY, backupNoticeKey); } catch { /* Keep dismissal for this page when storage is unavailable. */ }
+  };
   const importRef = useRef<HTMLInputElement>(null);
   const firstRunRef = useRef(false);
   const libraryRef = useRef<ResumeLibrary | null>(null);
@@ -519,7 +533,7 @@ export function App() {
           <span role="status" className={`save-status ${saveState}`}>{saveState === "saved" ? "● 已自动保存" : saveState === "saving" ? "● 保存中" : "● 保存失败"}</span>
         </div>
         <div className="topbar-actions">
-          <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置</button>
+          <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置与备份</button>
           <button type="button" className="primary-button export-button" disabled={!ready} onClick={() => setPdfResume(resume)}>{settings.outputEngine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
         </div>
       </header>
@@ -539,6 +553,15 @@ export function App() {
         </div>
         <WorkspaceStandalonePreviewEntry disabled={!activeResumeId} onOpen={() => openStandalonePreview()} />
       </nav>
+      <div className="workspace-notices">
+        {backupPromptOpen && settings.diskBackupEnabled && !newResumeOpen && backupNeedsAttention && dismissedBackupNotice !== backupNoticeKey && <BackupSetupPrompt
+          status={backupStatus}
+          directoryName={backupDirectory?.name ?? ""}
+          onChooseDirectory={() => void selectBackupDirectory()}
+          onAuthorizeDirectory={() => void authorizeBackupDirectory()}
+          onLater={dismissBackupNotice}
+        />}
+      </div>
       <div className={`workspace ${previewVisible ? "" : "preview-hidden"} ${modulesOpen ? "modules-open" : "modules-hidden"} ${compactWorkspace && previewVisible ? "mobile-preview" : ""}`}>
         {modulesOpen && <Sidebar resume={resume} selectedId={selectedId} onSelect={locateResumeBlock} onAdd={(section) => {
           setSections([...resume.sections, section]);
@@ -648,13 +671,6 @@ export function App() {
         const next = documents.reduce((lib, item) => updateResumeSummary(lib, item.id, item.resume), currentLibrary);
         await saveDocuments(documents, next); libraryRef.current = next; setLibrary(next);
       }} />}
-      {backupPromptOpen && !newResumeOpen && backupStatus !== "unsupported" && <BackupSetupPrompt
-        status={backupStatus}
-        directoryName={backupDirectory?.name ?? ""}
-        onChooseDirectory={() => void selectBackupDirectory()}
-        onAuthorizeDirectory={() => void authorizeBackupDirectory()}
-        onLater={() => setBackupPromptOpen(false)}
-      />}
     </div>
   );
 }

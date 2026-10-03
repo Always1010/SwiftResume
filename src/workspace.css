@@ -1,7 +1,7 @@
 /* Workspace layout is independent of the A4 output and print styles. */
 @media screen {
   body { min-width: 320px; }
-  .app-shell { display: grid; grid-template-rows: auto auto minmax(0, 1fr); height: 100dvh; min-height: 0; overflow: hidden; }
+  .app-shell { display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); height: 100dvh; min-height: 0; overflow: hidden; }
   .topbar { position: relative; display: flex; flex-wrap: wrap; gap: 12px 18px; padding: 12px 20px; }
   .brand { flex: none; }
   .document-manager { width: clamp(180px, 22vw, 320px); margin-right: auto; }
@@ -257,3 +257,15 @@
   .workspace .module-select .module-copy { min-width: 0; }
   .workspace .add-module > button { width: 100%; }
 }
+
+@media screen {
+  .backup-notice { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 20px; border-bottom: 1px solid #d6e2d9; background: #f3f7f3; color: #52675a; font-size: 12px; }
+  .backup-notice-copy { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 12px; min-width: 0; }
+  .backup-notice-copy > strong { color: #35573f; font-size: 12px; }
+  .backup-notice-actions { display: flex; align-items: center; flex: none; gap: 12px; }
+  .backup-notice-actions button { white-space: nowrap; font-size: 11px; }
+  .backup-notice-details summary { cursor: pointer; color: var(--green); }
+  .backup-notice-details[open] { flex-basis: 100%; }
+  .backup-notice-details p { max-width: 760px; margin: 6px 0 0; line-height: 1.6; }
+}
+@media print { .workspace-notices { display: none !important; } }

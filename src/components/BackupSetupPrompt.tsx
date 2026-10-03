@@ -15,27 +15,28 @@ export function BackupSetupPrompt({
   onAuthorizeDirectory,
   onLater,
 }: BackupSetupPromptProps) {
-  const needsAuthorization = status === "permission-required" || status === "error";
+  const canAuthorize = Boolean(directoryName) && (status === "permission-required" || status === "error");
+  const title = status === "error" ? "磁盘备份未完成" : status === "permission-required" ? "磁盘备份待授权" : "建议设置磁盘备份";
   return (
-    <div className="backup-prompt-backdrop" role="presentation">
-      <section className="backup-prompt" role="alertdialog" aria-modal="true" aria-labelledby="backup-prompt-title" aria-describedby="backup-prompt-description">
-        <span className="backup-prompt-icon">↧</span>
-        <span className="eyebrow">数据安全提醒</span>
-        <h2 id="backup-prompt-title">{needsAuthorization ? "磁盘备份需要重新授权" : "尚未设置磁盘备份目录"}</h2>
-        <p id="backup-prompt-description">
-          {needsAuthorization
-            ? `已记住备份目录${directoryName ? `“${directoryName}”` : ""}，但浏览器当前没有读写权限。重新授权后会继续自动备份，无需再次选择目录。`
-            : "当前简历只保存在浏览器数据库中。建议选择一个本地目录，在每次编辑后自动保存磁盘副本。"}
-        </p>
-        <div className="backup-prompt-actions">
-          <button type="button" className="secondary-button" onClick={onLater}>本次稍后处理</button>
-          {needsAuthorization && directoryName && <button type="button" className="primary-button" onClick={onAuthorizeDirectory}>重新授权原目录</button>}
-          <button type="button" className={needsAuthorization && directoryName ? "secondary-button" : "primary-button"} onClick={onChooseDirectory}>
-            {directoryName ? "选择其他目录" : "选择备份目录"}
-          </button>
-        </div>
-        <small>选择“稍后”只关闭本次提醒，下次打开页面仍会检查备份状态。</small>
-      </section>
-    </div>
+    <aside className="backup-notice" aria-label="磁盘备份提醒">
+      <div className="backup-notice-copy">
+        <strong>{title}</strong>
+        <span>{status === "error"
+          ? "最近的修改尚未确认备份到磁盘，可在设置中重试。"
+          : status === "permission-required"
+            ? `重新授权“${directoryName || "原目录"}”后继续自动备份。`
+            : "当前仅保存在浏览器，清理浏览器数据可能丢失简历。"}</span>
+        <details className="backup-notice-details">
+          <summary>了解备份</summary>
+          <p>选择本地目录后，编辑会自动生成磁盘副本。也可在“我的简历”的备份页导出 JSON。关闭此提醒后，可随时从“设置与备份”管理目录和恢复数据。</p>
+        </details>
+      </div>
+      <div className="backup-notice-actions">
+        <button type="button" className="text-button" onClick={onLater}>稍后设置</button>
+        <button type="button" className="secondary-button" onClick={canAuthorize ? onAuthorizeDirectory : onChooseDirectory}>
+          {canAuthorize ? "重新授权" : "选择备份目录"}
+        </button>
+      </div>
+    </aside>
   );
 }
