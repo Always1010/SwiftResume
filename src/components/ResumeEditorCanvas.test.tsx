@@ -2,7 +2,7 @@
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createBlankResume, createSection } from "../model/resume";
+import { createBlankResume, createDefaultResume, createSection } from "../model/resume";
 import { ResumeEditorCanvas } from "./ResumeEditorCanvas";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -163,4 +163,21 @@ it("ignores composition, modifier shortcuts, unrelated keys and nested view targ
   expect(keyDown(block, "ArrowDown").defaultPrevented).toBe(false);
   expect(keyDown(block.firstElementChild!, "Enter").defaultPrevented).toBe(false);
   expect(onEdit).not.toHaveBeenCalled();
+});
+
+it("keeps whole-document sample warnings after renaming and locates their remaining module", () => {
+  const resume = createDefaultResume();
+  resume.profile.name = "Lin Xiao";
+  resume.profile.email = "lin@example.com";
+  const locate = vi.fn();
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  roots.push(root);
+  act(() => root.render(<ResumeEditorCanvas resume={resume} selectedId="profile" editingId={null}
+    onEdit={() => {}} onLocateSample={locate} onCloseEditor={() => {}} onProfileChange={() => {}} onSectionChange={() => {}} onDeleteSection={() => {}} />));
+  expect(container.querySelector(".sample-notice summary")?.textContent).toContain("疑似示例内容");
+  const button = [...container.querySelectorAll<HTMLButtonElement>(".sample-notice button")].find((item) => item.textContent?.includes(resume.sections[0].title))!;
+  act(() => button.click());
+  expect(locate).toHaveBeenCalledWith(resume.sections[0].id);
 });
