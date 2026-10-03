@@ -10,6 +10,7 @@ import { getResumeTemplate } from "../templates/registry";
 import { PhotoBackgroundPicker } from "./PhotoBackgroundPicker";
 import { ResumePreview } from "./ResumePreview";
 import { TemplateGallery } from "./TemplateGallery";
+import { templatePageCountContentKey, type TemplatePageMeasurement } from "../templates/pageMeasurements";
 
 const PAPER_WIDTH_PX = 794;
 const MIN_ZOOM = 50;
@@ -55,7 +56,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
   const engine = useOutputEngine();
   const [resume, setResume] = useState<ResumeDocument | null>(null);
   const [error, setError] = useState("");
-  const [pageCount, setPageCount] = useState(1);
+  const [pageMeasurement, setPageMeasurement] = useState<TemplatePageMeasurement | null>(null);
   const [fitWidth, setFitWidth] = useState(true);
   const [manualZoom, setManualZoom] = useState(100);
   const [fitZoom, setFitZoom] = useState(100);
@@ -169,7 +170,14 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
     setFitWidth(false);
     setManualZoom((current) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, current + delta)));
   };
-  const updatePageCount = useCallback((value: number) => setPageCount(value), []);
+  const contentKey = previewResume ? templatePageCountContentKey(previewResume) : "";
+  const templateId = previewResume?.theme.templateId;
+  const currentPageCount = pageMeasurement?.contentKey === contentKey && pageMeasurement.templateId === templateId && pageMeasurement.engine === engine ? pageMeasurement.pageCount : null;
+  const updatePageCount = useCallback((value: number) => {
+    if (!templateId || !Number.isSafeInteger(value) || value < 1) return;
+    setPageMeasurement((current) => current?.contentKey === contentKey && current.templateId === templateId && current.engine === engine && current.pageCount === value
+      ? current : { contentKey, templateId, engine, pageCount: value });
+  }, [contentKey, templateId, engine]);
   const updateAppearance = (change: AppearanceChange) => {
     const current = resumeRef.current;
     if (!current) return;
@@ -197,7 +205,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
         <div className="standalone-preview-brand">
           <img src="./icons/icon32.png" alt="" />
           <div><strong>SwiftResume</strong><span>{title}</span></div>
-          {previewResume && <span className="page-count-badge">共 {pageCount} 页</span>}
+          {previewResume && <span className="page-count-badge">{currentPageCount ? `共 ${currentPageCount} 页` : "排版中…"}</span>}
         </div>
         <div className="standalone-preview-actions">
           <button type="button" className={`secondary-button ${fitWidth ? "active" : ""}`} onClick={() => setFitWidth(true)}>适应宽度</button>
@@ -216,7 +224,7 @@ export function StandalonePreview({ resumeId }: { resumeId: string }) {
         className="standalone-preview-workspace"
         style={{ "--template-gallery-width": `${galleryWidth}px` } as CSSProperties}
       >
-        {previewResume && <TemplateGallery engine={engine} selectedId={previewResume.theme.templateId} resume={previewResume} onSelect={(templateId) => updateAppearance({ theme: { templateId } })} />}
+        {previewResume && <TemplateGallery pageMeasurement={pageMeasurement} engine={engine} selectedId={previewResume.theme.templateId} resume={previewResume} onSelect={(templateId) => updateAppearance({ theme: { templateId } })} />}
         <div
           className={`template-gallery-resizer ${resizingGallery ? "active" : ""}`}
           role="separator"
