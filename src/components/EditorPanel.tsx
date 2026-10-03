@@ -4,7 +4,7 @@ import { createPurposeEntry, DEFAULT_PROFILE_PHOTO_CROP, reorderProfileDetail } 
 import { createCroppedPhoto, drawCroppedPhoto, loadPhotoImage } from "../model/profilePhoto";
 import { ContentBodyEditor } from "./customEditors/ContentBodyEditor";
 import { PhotoBackgroundPicker } from "./PhotoBackgroundPicker";
-import { plainText, sectionPurpose, writingGuide } from "../model/writingGuide";
+import { sectionPurpose, contentLabels } from "../model/contentLabels";
 
 const makeId = () => crypto.randomUUID();
 
@@ -264,7 +264,7 @@ function EducationEditor({ section, onChange }: { section: EducationSection; onC
 }
 
 function ContentSectionEditor({ section, onChange }: { section: ContentSection; onChange: (value: ContentSection) => void }) {
-  const labels = writingGuide(section);
+  const labels = contentLabels(section);
   const purpose = sectionPurpose(section);
   const isSummary = purpose === "summary";
   const isSkills = purpose === "skills";
@@ -286,10 +286,6 @@ function ContentSectionEditor({ section, onChange }: { section: ContentSection; 
 
   return (
     <>
-      <details className="writing-guidance">
-        <summary>写作建议</summary>
-        <p>{labels.prompt}</p>
-      </details>
       <div className="content-entry-list">
         {section.entries.map((entry, index) => (
           <article className="content-entry-editor" key={entry.id}>
@@ -308,9 +304,8 @@ function ContentSectionEditor({ section, onChange }: { section: ContentSection; 
               {!isSkills && <Field label="时间（选填）" value={entry.date} placeholder="例如：2024.07 – 2024.09" onChange={(date) => replaceEntry({ ...entry, date })} />}
             </div>}
             {(isSummary && (entry.title || entry.subtitle || entry.date) || isSkills && entry.date) && <details><summary>补充标题与时间</summary><Field label="标题" value={entry.title} onChange={(title) => replaceEntry({ ...entry, title })} /><Field label="补充信息" value={entry.subtitle} onChange={(subtitle) => replaceEntry({ ...entry, subtitle })} /><Field label="时间" value={entry.date} onChange={(date) => replaceEntry({ ...entry, date })} /></details>}
-            <div className="content-body-label"><span>{isSummary ? "用两三句话介绍自己" : isSkills ? "具体技能与应用场景" : purpose === "work" ? "职责与成果" : purpose === "project" ? "背景、行动与结果" : "正文"}</span></div>
+            <div className="content-body-label"><span>{isSummary ? "个人简介" : isSkills ? "具体技能与应用场景" : purpose === "work" ? "职责与成果" : purpose === "project" ? "项目描述" : "正文"}</span></div>
             <ContentBodyEditor entryId={entry.id} content={entry.body} onChange={(body) => replaceEntry({ ...entry, body })} />
-            <details className="writing-example"><summary>查看写作示例</summary><p>{labels.example}</p><button type="button" className="secondary-button" disabled={Boolean(plainText(entry.body).trim())} onClick={() => replaceEntry({ ...entry, body: { type: "doc", content: labels.example.split("\n").map((text) => ({ type: "paragraph", content: [{ type: "text", text }] })) } })}>填入空白正文</button><small>示例中的【占位内容】需要替换为你的真实经历。</small></details>
           </article>
         ))}
         {!section.entries.length && <div className="custom-empty-state">还没有内容，点击下方按钮添加。</div>}

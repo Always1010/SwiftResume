@@ -1,12 +1,12 @@
 import { expect, it } from "vitest";
 import { createDefaultResume, createResumeFromTemplate } from "./resume";
 import { checkPdfPage, checkResume } from "./resumeChecks";
-it("locates missing contact and placeholder content while excluding hidden modules", () => {
+it("locates missing contact while excluding hidden modules", () => {
   const resume = createResumeFromTemplate("experienced", false);
   expect(checkResume(resume).some((c) => c.id === "profile:contact")).toBe(true);
   resume.sections[0].enabled = false;
   expect(checkResume(resume).some((c) => c.sectionId === resume.sections[0].id)).toBe(false);
-  expect(checkResume(createDefaultResume()).some((c) => c.id === "profile:sample")).toBe(true);
+  expect(checkResume(createDefaultResume()).some((c) => c.id === "profile:sample")).toBe(false);
 });
 it("distinguishes empty pages and sparse last pages from regular pages", () => {
   expect(checkPdfPage(0, 0, false, 2)).toContain("未检测到文字");
@@ -15,17 +15,11 @@ it("distinguishes empty pages and sparse last pages from regular pages", () => {
   expect(checkPdfPage(500, 0.8, true, 2)).toBeNull();
 });
 
-it("keeps sample warnings after renaming and covers profile details, dates and section titles", () => {
+it("does not judge samples, paragraph length or the author's date style", () => {
   const resume = createDefaultResume();
-  resume.profile.name = "Lin Xiao";
-  expect(checkResume(resume).filter((check) => check.id.endsWith(":sample")).some((check) => check.sectionId !== "profile")).toBe(true);
-  const blank = createResumeFromTemplate("experienced", false);
-  blank.profile.name = "Lin Xiao";
-  blank.profile.details = [{ id: "sample", label: "学校", value: "【示例】大学" }];
-  expect(checkResume(blank).some((check) => check.id === "profile:sample")).toBe(true);
-  blank.profile.details = [];
-  blank.sections[0].title = "【示例】经历";
-  expect(checkResume(blank).some((check) => check.id === `${blank.sections[0].id}:sample`)).toBe(true);
-  blank.sections[0].enabled = false;
-  expect(checkResume(blank).filter((check) => check.id.endsWith(":sample"))).toHaveLength(0);
+  resume.profile.details = [{ id: "sample", label: "学校", value: "【示例】大学" }];
+  resume.sections[0].title = "【示例】经历";
+  expect(checkResume(resume).some((check) => /sample|long|date/.test(check.id))).toBe(false);
+  resume.profile.email = "invalid";
+  expect(checkResume(resume).some((check) => check.id === "profile:email")).toBe(true);
 });
