@@ -180,3 +180,21 @@ describe("TemplateGallery", () => {
     expect(pageCountLabel(container, firstId)).toBe("当前内容实测 3 页");
   });
 });
+
+it("exposes every category in one labelled selector and marks the currently applied template", () => {
+  const onSelect = vi.fn();
+  const resume = createDefaultResume();
+  const selectedId = RESUME_TEMPLATES[0].id;
+  const container = mountGallery({ resume, selectedId, onSelect });
+  const select = container.querySelector<HTMLSelectElement>('[aria-label="模板分类"]')!;
+  expect(select.tagName).toBe("SELECT");
+  expect(select.options.length).toBeGreaterThan(5);
+  expect(container.querySelectorAll(".template-current-label")).toHaveLength(1);
+  expect(container.querySelector(".template-current-label")?.textContent).toBe("当前使用");
+  act(() => { select.value = "favorites"; select.dispatchEvent(new Event("change", { bubbles: true })); });
+  expect(container.textContent).toContain("还没有收藏模板");
+  act(() => [...container.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent === "查看全部模板")!.click());
+  expect(select.value).toBe("all");
+  expect(container.querySelectorAll(".template-gallery-card")).toHaveLength(100);
+  expect(onSelect).not.toHaveBeenCalled();
+});
