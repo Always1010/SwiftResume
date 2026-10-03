@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ResumeDocument } from "../model/resume";
 import { parseResumeText } from "../model/textImport";
-import { plainText } from "../model/writingGuide";
+import { plainText } from "../model/contentLabels";
 import { Modal } from "./Modal";
 export function TextImportDialog({ onClose, onImport }: { onClose: () => void; onImport: (resume: ResumeDocument) => Promise<void> }) {
   const [text, setText] = useState("");

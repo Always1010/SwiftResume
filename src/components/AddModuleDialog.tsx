@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createQuickSection, type ResumeSection, type SectionPurpose } from "../model/resume";
 import { MODULE_PRESETS } from "../model/contentPresets";
-import { plainText } from "../model/writingGuide";
+import { plainText } from "../model/contentLabels";
 import { Modal } from "./Modal";
 
 export const MODULE_CHOICES = [
