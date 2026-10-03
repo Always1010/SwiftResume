@@ -101,7 +101,7 @@ export function SettingsPanel({
                 <option value={1000}>1 秒</option>
               </select>
             </label>
-            <label className="setting-row"><div><strong>预览与 PDF 输出方式</strong><p>同时应用于右侧预览、独立预览、模板切换、导出和打印。HTML/CSS 通过浏览器另存为 PDF；Typst 直接下载 PDF。</p></div>
+            <label className="setting-row"><div><strong>预览与 PDF 输出方式</strong><p>同时应用于右侧预览、模板预览、模板切换、导出和打印。HTML/CSS 通过浏览器另存为 PDF；Typst 直接下载 PDF。</p></div>
               <select aria-label="预览与 PDF 输出方式" value={settings.outputEngine} onChange={(event) => update("outputEngine", event.target.value === "typst" ? "typst" : "html")}>
                 <option value="html">HTML/CSS（默认）</option><option value="typst">Typst</option>
               </select>

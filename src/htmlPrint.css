@@ -24,3 +24,14 @@
 }
 @font-face { font-family: "SwiftResume Browser Sans"; src: url("/fonts/SwiftResumeBrowserSans-Regular.woff") format("woff"); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: "SwiftResume Browser Sans"; src: url("/fonts/SwiftResumeBrowserSans-Bold.woff") format("woff"); font-weight: 700; font-style: normal; font-display: swap; }
+
+.resume-print-root { display: none; }
+.pdf-print-frame { position: fixed; width: 1px; height: 1px; inset: 0 auto auto 0; opacity: 0; pointer-events: none; border: 0; }
+@media print {
+  body.swift-resume-printing { margin: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; min-width: 0 !important; overflow: visible !important; background: white !important; }
+  body.swift-resume-printing > :not(.resume-print-root) { display: none !important; }
+  body.swift-resume-printing > .resume-print-root { display: block !important; }
+  .resume-print-root .html-resume-pages { display: block; margin: 0; padding: 0; gap: 0; }
+  .resume-print-root .resume-page.html-resume { zoom: 1 !important; margin: 0; break-after: page; box-shadow: none; }
+  .resume-print-root .resume-page.html-resume:last-child { break-after: auto; }
+}
