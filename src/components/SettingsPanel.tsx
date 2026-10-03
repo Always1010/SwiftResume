@@ -127,15 +127,15 @@ export function SettingsPanel({
           </div>
 
           <div className="settings-group">
-            <div className="settings-group-title"><span>04</span><div><h3>本地磁盘备份</h3><p>将浏览器内的简历自动镜像到你授权的本地目录。</p></div></div>
+            <div className="settings-group-title"><span>04</span><div><h3>本地磁盘备份</h3><p>浏览器内自动保存与磁盘备份是两份数据。清理浏览器数据或卸载扩展可能丢失未备份的简历。</p></div></div>
             <div className={`setting-row ${!backupSupported ? "setting-disabled" : ""}`}>
-              <div><strong>自动磁盘备份</strong><p>{backupStatusLabels[backupStatus]}</p></div>
+              <div><strong>自动磁盘备份</strong><p>{settings.diskBackupEnabled ? backupStatusLabels[backupStatus] : "已关闭；浏览器内仍会自动保存。"}</p></div>
               <Toggle label="自动磁盘备份" checked={settings.diskBackupEnabled && backupSupported} onChange={(value) => update("diskBackupEnabled", value)} />
             </div>
             <div className="setting-row backup-directory-row">
               <div><strong>备份目录</strong><p>{backupDirectoryName || "选择 D 盘、移动磁盘或其他可访问目录。"}</p></div>
               <div className="setting-actions">
-                {backupStatus === "permission-required" && <button type="button" className="secondary-button" onClick={onAuthorizeBackupDirectory}>重新授权</button>}
+                {(backupStatus === "permission-required" || backupStatus === "error") && Boolean(backupDirectoryName) && <button type="button" className="secondary-button" onClick={onAuthorizeBackupDirectory}>重新授权</button>}
                 <button type="button" className="secondary-button" disabled={!backupSupported} onClick={onChooseBackupDirectory}>{backupDirectoryName ? "更换目录" : "选择目录"}</button>
               </div>
             </div>
