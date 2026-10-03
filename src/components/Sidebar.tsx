@@ -18,7 +18,7 @@ const sectionLabels: Record<SectionType, string> = {
 interface SidebarProps {
   resume: ResumeDocument;
   selectedId: string;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, enabled?: boolean) => void;
   onAdd: (section: ResumeSection) => void;
   onSectionsChange: (sections: ResumeSection[]) => void;
   onDeleteSection: (sectionId: string) => void;
@@ -32,7 +32,6 @@ export function Sidebar({ resume, selectedId, onSelect, onAdd, onSectionsChange,
     <aside className="sidebar panel">
       <div className="panel-heading">
         <div>
-          <span className="eyebrow">内容结构</span>
           <h2>简历模块</h2>
         </div>
         <span className="module-count">{resume.sections.length}</span>
@@ -65,13 +64,14 @@ export function Sidebar({ resume, selectedId, onSelect, onAdd, onSectionsChange,
             onDrop={() => {
               if (draggedId) onSectionsChange(reorderSection(resume.sections, draggedId, section.id));
             }}
-            onClick={() => onSelect(section.id)}
           >
-            <span className="drag-handle" title="拖动排序">⋮⋮</span>
-            <span className="module-copy">
-              <strong>{section.title || sectionLabels[section.type]}</strong>
-              <small>{section.type === "content" ? ({ work: "职责与成果", project: "背景、行动与结果", skills: "技能分组", summary: "一段简介", custom: "自由内容" }[section.purpose ?? "custom"]) : sectionLabels[section.type]}{!section.enabled && " · 已隐藏"}</small>
-            </span>
+            <button type="button" className="module-select" aria-pressed={selectedId === section.id} onClick={() => onSelect(section.id, section.enabled)}>
+              <span className="drag-handle" title="拖动排序" aria-hidden="true">⋮⋮</span>
+              <span className="module-copy">
+                <strong>{section.title || sectionLabels[section.type]}</strong>
+                {!section.enabled && <small>已隐藏</small>}
+              </span>
+            </button>
             <div className="module-actions">
               <button
                 type="button"
@@ -98,7 +98,7 @@ export function Sidebar({ resume, selectedId, onSelect, onAdd, onSectionsChange,
                   const next = [...resume.sections];
                   next.splice(index + 1, 0, copy);
                   onSectionsChange(next);
-                  onSelect(copy.id);
+                  onSelect(copy.id, copy.enabled);
                 }}
               >
                 ⧉
@@ -119,9 +119,7 @@ export function Sidebar({ resume, selectedId, onSelect, onAdd, onSectionsChange,
           </div>
         ))}
         <div className="add-module">
-          <span className="add-module-label">添加模块</span>
-          <div className="quick-modules">{([ ["education", "教育"], ["work", "工作"], ["project", "项目"], ["skills", "技能"], ["summary", "个人简介"], ["custom", "自定义"] ] as const).map(([purpose, label]) => <button key={purpose} type="button" className="secondary-button" onClick={() => setAddPurpose(purpose)}>＋ {label}</button>)}</div>
-          <p className="add-module-hint">先查看填写示例，再添加对应结构。</p>
+          <button type="button" className="secondary-button" onClick={() => setAddPurpose("work")}>＋ 添加模块</button>
         </div>
         {addPurpose && <AddModuleDialog initialPurpose={addPurpose} onClose={() => setAddPurpose(null)} onAdd={(section) => { onAdd(section); setAddPurpose(null); }} />}
       </div>
