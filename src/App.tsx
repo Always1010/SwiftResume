@@ -80,8 +80,8 @@ export function App() {
   const [backupDirectory, setBackupDirectory] = useState<FileSystemDirectoryHandle | null>(null);
   const [backupStatus, setBackupStatus] = useState<DiskBackupStatus>(() => isDiskBackupSupported() ? "not-configured" : "unsupported");
   const [backupPromptOpen, setBackupPromptOpen] = useState(false);
-  const [blockNavigation, setBlockNavigation] = useState<{ id: string } | null>(null);
   const [dismissedBackupNotice, setDismissedBackupNotice] = useState(loadBackupNoticeDismissal);
+  const [blockNavigation, setBlockNavigation] = useState<{ id: string } | null>(null);
   const backupNoticeKey = `${backupStatus}:${backupDirectory?.name ?? ""}`;
   const backupNeedsAttention = backupStatus === "not-configured" || backupStatus === "permission-required" || backupStatus === "error";
   const dismissBackupNotice = () => {
@@ -540,16 +540,12 @@ export function App() {
       <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => { void importFile(event.target.files?.[0]); event.target.value = ""; }} />
       <nav className="workspace-controls" aria-label="工作区布局">
         <button type="button" className="secondary-button" aria-expanded={modulesOpen} onClick={() => setModulesOpen(!modulesOpen)}>{modulesOpen ? "收起模块" : "简历模块"}</button>
-        {compactWorkspace ? <details className="workspace-more"><summary className="secondary-button">更多</summary><div className="workspace-more-panel">
-        <button type="button" className="secondary-button" disabled={!library} onClick={() => setVersionsOpen(true)}>岗位版本</button>
         <HistoryActions undoLabel={undoLabel} redoLabel={redoLabel} onUndo={() => changeHistory("undo")} onRedo={() => changeHistory("redo")} />
-        </div></details> : <div className="workspace-secondary-tools">
-        <button type="button" className="secondary-button" disabled={!library} onClick={() => setVersionsOpen(true)}>岗位版本</button>
-        <HistoryActions undoLabel={undoLabel} redoLabel={redoLabel} onUndo={() => changeHistory("undo")} onRedo={() => changeHistory("redo")} />
-        </div>}
+        <details className="workspace-more"><summary className="secondary-button">更多</summary><div className="workspace-more-panel">
+          <button type="button" className="secondary-button" disabled={!library} onClick={(event) => { event.currentTarget.closest("details")?.removeAttribute("open"); setVersionsOpen(true); }}>岗位版本</button>
+        </div></details>
         <div className="workspace-view-options">
-          <button type="button" className={`secondary-button ${!previewVisible ? "active" : ""}`} aria-pressed={!previewVisible} onClick={() => { setMobilePreview(false); setSettings((current) => ({ ...current, previewOpen: false })); }}>专注编辑</button>
-          <button type="button" className={`secondary-button ${previewVisible ? "active" : ""}`} aria-pressed={previewVisible} onClick={() => { setMobilePreview(true); setSettings((current) => ({ ...current, previewOpen: true })); }}>{compactWorkspace ? "查看预览" : "编辑＋预览"}</button>
+          <button type="button" className={`secondary-button ${previewVisible ? "active" : ""}`} aria-pressed={previewVisible} onClick={() => { setMobilePreview(!previewVisible); setSettings((current) => ({ ...current, previewOpen: !previewVisible })); }}>{previewVisible ? "收起预览" : "显示预览"}</button>
         </div>
         <WorkspaceStandalonePreviewEntry disabled={!activeResumeId} onOpen={() => openStandalonePreview()} />
       </nav>
@@ -593,6 +589,9 @@ export function App() {
                   {[70, 80, 90, 100].map((value) => <option key={value} value={value}>{value}%</option>)}
                 </select>
               </div>
+              <details className="preview-appearance-controls">
+                <summary className="secondary-button">排版与配色</summary>
+                <div className="preview-appearance-panel">
               <label className="density-control">
                 <span>紧凑</span>
                 <input
@@ -614,6 +613,8 @@ export function App() {
                 disabled={!resume.profile.photo}
                 onChange={(photoBackground) => dispatch({ type: "update-profile", value: { ...resume.profile, photoBackground } })}
               />
+                </div>
+              </details>
             </div>
             <ResumePreview engine={settings.outputEngine} resume={resume} zoom={settings.previewZoom} onPageCountChange={handlePageCount} />
           </section>
