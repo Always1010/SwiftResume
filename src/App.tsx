@@ -384,7 +384,13 @@ export function App() {
     }
     setNewResumeOpen(false);
     setLibraryOpen(false);
-    locateResumeBlock("profile");
+    // Creation resets the previous editor in this same batch. Do not infer the
+    // new editor from the old document's captured editingId.
+    setSelectedId("profile");
+    setEditingId("profile");
+    setModulesOpen(false);
+    if (compactWorkspace) setMobilePreview(false);
+    setBlockNavigation({ id: "profile" });
   };
   const clearContent = () => {
     if (!window.confirm("清空这份简历的个人信息与正文，保留模块结构和排版？操作后可以撤销。")) return;

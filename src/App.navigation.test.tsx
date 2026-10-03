@@ -251,6 +251,8 @@ describe("single-tab stateful screens", () => {
 
 it("returns from cancelled creation to the same library search, then creates directly into editing", async () => {
   await mount();
+  await act(async () => document.getElementById("resume-block-profile")!.click());
+  expect(document.querySelector("#resume-block-profile.editing")).not.toBeNull();
   await act(async () => document.querySelector<HTMLButtonElement>(".document-switcher")!.click());
   type(document.querySelector<HTMLInputElement>('[aria-label="搜索简历"]')!, "未命名");
   await click("＋ 新建简历");
