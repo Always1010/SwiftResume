@@ -620,7 +620,7 @@ export function App() {
         </div>
       </header>
       <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => { void importFile(event.target.files?.[0]); event.target.value = ""; }} />
-      <nav className="workspace-controls" aria-label="工作区布局">
+      <nav className="workspace-controls" aria-label="简历编辑工具">
         <button type="button" className="secondary-button" aria-expanded={modulesOpen} onClick={() => setModulesOpen(!modulesOpen)}>{modulesOpen ? "收起模块" : "简历模块"}</button>
         <HistoryActions undoLabel={undoLabel} redoLabel={redoLabel} onUndo={() => changeHistory("undo")} onRedo={() => changeHistory("redo")} />
         <div className="workspace-view-options">
@@ -657,6 +657,7 @@ export function App() {
           <section className="preview-panel">
             <div className="preview-toolbar">
               <div className="preview-toolbar-leading">
+                <h2 className="workspace-pane-title">成品预览</h2>
                 {settings.showOverflowWarning && <span className="page-count-badge">共 {pageCount} 页</span>}
                 <select aria-label="预览缩放" value={settings.previewZoom} onChange={(event) => {
                   const previewZoom = event.target.value === "fit" ? "fit" : Number(event.target.value) as 70 | 80 | 90 | 100;
