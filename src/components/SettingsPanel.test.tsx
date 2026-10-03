@@ -22,3 +22,29 @@ it("keeps every import and backup function in Settings with a named close contro
   act(() => close.click()); expect(props.onClose).toHaveBeenCalledOnce();
   expect(document.querySelector<HTMLDetailsElement>(".settings-advanced")!.open).toBe(false);
 });
+
+it("shows purpose-based sections without losing changes or invoking file actions when navigating", () => {
+  const change = vi.fn();
+  const fileAction = vi.fn();
+  const settings = loadSettings();
+  document.body.innerHTML = '<div id="test"></div>'; root = createRoot(document.getElementById("test")!);
+  const render = (next = settings) => root.render(<SettingsPanel settings={next} syncSupported backupSupported backupStatus="ready" backupDirectoryName="QA backups" onChange={change} onClose={vi.fn()} onChooseBackupDirectory={fileAction} onAuthorizeBackupDirectory={fileAction} onBackupNow={fileAction} onRestoreBackup={fileAction} onOpenHistory={fileAction} onExportResume={fileAction} onExportLibrary={fileAction} onImportBackup={fileAction} onImportText={fileAction} />);
+  act(() => render());
+  const files = document.getElementById("settings-files")!;
+  const writing = document.getElementById("settings-writing")!;
+  const advanced = document.getElementById("settings-advanced")!;
+  expect(files.hidden).toBe(false); expect(writing.hidden).toBe(true); expect(advanced.hidden).toBe(true);
+  const choose = (name: string) => act(() => [...document.querySelectorAll<HTMLButtonElement>(".settings-navigation button")].find((item) => item.textContent === name)!.click());
+  choose("编辑与导出");
+  expect(files.hidden).toBe(true); expect(writing.hidden).toBe(false);
+  const engine = writing.querySelector<HTMLSelectElement>('[aria-label="预览与 PDF 输出方式"]')!;
+  act(() => { engine.value = "typst"; engine.dispatchEvent(new Event("change", { bubbles: true })); });
+  expect(change).toHaveBeenCalledWith({ ...settings, outputEngine: "typst" });
+  act(() => render({ ...settings, outputEngine: "typst" }));
+  choose("高级设置");
+  expect(advanced.hidden).toBe(false);
+  choose("导入与备份"); choose("编辑与导出");
+  expect(engine.value).toBe("typst");
+  expect(fileAction).not.toHaveBeenCalled();
+  expect(document.querySelector('.settings-navigation [aria-pressed="true"]')?.textContent).toBe("编辑与导出");
+});
