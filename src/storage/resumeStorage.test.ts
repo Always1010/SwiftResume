@@ -17,13 +17,11 @@ describe("resume library", () => {
     });
   });
 });
-it("keeps searchable target metadata current without changing creation time", () => {
-  const resume = createDefaultResume();
-  const summary = createResumeSummary("a", resume);
-  const library: ResumeLibrary = { version: 1, activeResumeId: "a", resumes: [summary] };
-  resume.target = { company: "远山", role: "前端工程师", notes: "" };
-  const next = updateResumeSummary(library, "a", resume);
-  expect(next.resumes[0].company).toBe("远山");
-  expect(next.resumes[0].role).toBe("前端工程师");
-  expect(next.resumes[0].createdAt).toBe(summary.createdAt);
+it("treats an existing job copy as an ordinary document without altering content", () => {
+  const resume = { ...createDefaultResume(), title: "远山 · 前端工程师", target: { company: "远山", role: "前端工程师", notes: "" } };
+  const summary = createResumeSummary("existing-copy", resume);
+  expect(summary.title).toBe(resume.title);
+  expect(summary.id).toBe("existing-copy");
+  expect(summary).not.toHaveProperty("company");
+  expect(resume.target.company).toBe("远山");
 });
