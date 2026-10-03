@@ -18,7 +18,7 @@ it("shows dates for experiences but removes irrelevant fields from skills and su
   expect(renderPurpose("skills")).toContain("技能类别");
   expect(renderPurpose("skills")).not.toContain("时间（选填）");
   const summary = renderPurpose("summary");
-  expect(summary).toContain("用两三句话介绍自己");
+  expect(summary).toContain("个人简介");
   expect(summary).not.toContain("content-heading-fields");
   expect(summary).not.toContain("添加简介");
 });
@@ -32,15 +32,10 @@ it("offers drag handles and a full-width choice for every profile detail", () =>
   expect(html).toContain("checked=\"\"");
 });
 
-it("keeps writing advice and examples available behind initially closed disclosures", () => {
-  const container = document.createElement("div");
-  container.innerHTML = renderPurpose("work");
-  const advice = container.querySelector<HTMLDetailsElement>(".writing-guidance")!;
-  const example = container.querySelector<HTMLDetailsElement>(".writing-example")!;
-  expect(advice.open).toBe(false);
-  expect(advice.querySelector("summary")?.textContent).toBe("写作建议");
-  expect(advice.textContent).toContain("可核实的成果");
-  expect(example.open).toBe(false);
-  expect(example.textContent).toContain("填入空白正文");
-  expect(container.querySelector(".field input")).not.toBeNull();
+it("keeps authoring fields without writing advice or fill-in examples", () => {
+  for (const purpose of ["work", "project", "skills", "summary"] as const) {
+    const html = renderPurpose(purpose);
+    expect(html).not.toMatch(/写作建议|查看写作示例|填入空白正文|writing-guidance|writing-example/);
+    expect(html).toContain("正文编辑器");
+  }
 });

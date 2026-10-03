@@ -1,5 +1,5 @@
 import type { ResumeDocument, ResumeExportRequest } from "./resume";
-import { plainText } from "./writingGuide";
+import { plainText } from "./contentLabels";
 import { getResumeTemplate } from "../templates/registry";
 export function jobVersion(source: ResumeDocument, company: string, role: string, notes = ""): ResumeDocument {
   const copy = structuredClone(source);
