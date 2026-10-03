@@ -305,3 +305,19 @@ it("opens My resumes through the visible title button and preserves the active e
   expect(entry.getAttribute("aria-expanded")).toBe("false");
   expect(document.activeElement).toBe(entry);
 });
+
+it("separates editing context from the finished preview without replacing the editor", async () => {
+  await mount();
+  expect(document.querySelector(".resume-editor-heading h2")?.textContent).toBe("编辑内容");
+  expect(document.querySelector(".preview-toolbar h2")?.textContent).toBe("成品预览");
+  expect(document.querySelector(".resume-editor-heading")?.textContent).toContain("点击想修改的内容");
+  await act(async () => document.getElementById("resume-block-profile")!.click());
+  expect(document.querySelector(".resume-editor-heading")?.textContent).toContain("正在编辑 · 个人信息");
+  const editor = document.querySelector(".resume-editor-scroller");
+  await click("收起预览");
+  expect(document.querySelector(".preview-panel")).toBeNull();
+  expect(document.querySelector(".resume-editor-scroller")).toBe(editor);
+  await click("显示预览");
+  expect(document.querySelector(".preview-toolbar h2")?.textContent).toBe("成品预览");
+  expect(document.querySelector(".resume-editor-scroller")).toBe(editor);
+});
