@@ -18,7 +18,7 @@ it("keeps every import and backup function in Settings with a named close contro
   }
   const close = document.querySelector<HTMLButtonElement>('[aria-label="关闭设置"]')!;
   expect(close.title).toBe("关闭设置");
-  expect(close.textContent).toBe("×");
+  expect(close.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
   act(() => close.click()); expect(props.onClose).toHaveBeenCalledOnce();
   expect(document.querySelector<HTMLDetailsElement>(".settings-advanced")!.open).toBe(false);
 });
