@@ -99,6 +99,44 @@ afterEach(() => {
 });
 
 describe("workspace module navigation", () => {
+  it.each([true, false])("keeps the editor, selection, position and undo through directory toggles with preview=%s", async (previewOpen) => {
+    localStorage.setItem("swift-resume:settings", JSON.stringify({ previewOpen }));
+    await mount();
+    await act(async () => document.getElementById("resume-block-profile")!.click());
+    const field = document.querySelector<HTMLInputElement>("#resume-block-profile .field input")!;
+    const original = field.value;
+    type(field, "Keep this edit");
+    field.setSelectionRange(5, 9);
+    const editor = document.querySelector<HTMLElement>(".resume-editor-scroller")!;
+    act(() => { editor.scrollTop = 321; editor.dispatchEvent(new Event("scroll", { bubbles: true })); });
+    const toggle = button("简历模块");
+    act(() => toggle.focus());
+    for (let repeat = 0; repeat < 3; repeat++) {
+      await click("简历模块");
+      const workspace = document.querySelector(".workspace")!;
+      expect(workspace.classList.contains("modules-open")).toBe(true);
+      expect(document.querySelector(".sidebar")?.parentElement).toBe(workspace);
+      expect(editor.parentElement).toBe(workspace);
+      expect(toggle.getAttribute("aria-expanded")).toBe("true");
+      expect(toggle.getAttribute("aria-controls")).toBe("resume-modules");
+      expect(document.querySelector("#resume-block-profile .field input")).toBe(field);
+      expect(field.value).toBe("Keep this edit");
+      await click("收起模块");
+      expect(workspace.classList.contains("modules-hidden")).toBe(true);
+      expect(document.querySelector(".sidebar")).toBeNull();
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+      expect(document.activeElement).toBe(toggle);
+      expect(field.selectionStart).toBe(5);
+      expect(field.selectionEnd).toBe(9);
+      expect(editor.scrollTop).toBe(321);
+    }
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(button("撤销修改").disabled).toBe(false);
+    await click("撤销修改");
+    await act(async () => document.getElementById("resume-block-profile")!.click());
+    expect(document.querySelector<HTMLInputElement>("#resume-block-profile .field input")!.value).toBe(original);
+  });
+
   it("closes the desktop directory, positions the module heading and focuses its first content field", async () => {
     await mount();
     await click("简历模块");

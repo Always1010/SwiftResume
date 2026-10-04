@@ -104,7 +104,7 @@
   .resume-editor-heading > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
   .workspace .resume-editor-canvas { max-width: 850px; border: 1px solid var(--ui-border); border-radius: 8px; padding: 28px; box-shadow: 0 2px 5px #18202e04; }
   .preview-toolbar { position: relative; z-index: 4; min-height: 56px; padding: 12px 24px; border: 0; background: var(--ui-canvas); }
-  .preview-toolbar-leading { width: 100%; gap: 10px; }
+  .preview-toolbar-leading { width: 100%; flex-wrap: wrap; gap: 10px; }
   .preview-toolbar-leading select { margin-left: auto; color: var(--ui-text); border-color: var(--ui-border-strong); border-radius: 5px; padding: 6px 9px; font-size: 11px; }
   .page-count-badge { border-radius: 4px; padding: 3px 6px; color: var(--ui-muted); background: #e8ebf0; font-size: 10px; font-weight: 500; }
   .workspace .preview-scroller { padding: 0 24px 40px; }
@@ -144,7 +144,7 @@
   .more-format[open] > .content-rich-toolbar { margin-top: 6px; border-top: 1px solid var(--ui-border); border-bottom: 0; }
   .add-item-button { color: var(--ui-text); border-color: var(--ui-border-strong); background: white; }
   .add-item-button:hover:not(:disabled) { border-color: var(--ui-focus); background: var(--ui-subtle); }
-  .workspace .sidebar { padding: 22px 12px; border-right: 1px solid var(--ui-border); background: white; box-shadow: 8px 0 24px #2028300a; }
+  .workspace .sidebar { padding: 22px 12px; border-right: 1px solid var(--ui-border); background: white; box-shadow: none; }
   .panel-heading h2 { color: var(--ui-text); font-size: 14px; }
   .module-count { height: 23px; min-width: 23px; border-radius: 5px; color: var(--ui-muted); background: var(--ui-subtle); font-weight: 500; }
   .module-row { border-radius: 6px; color: var(--ui-text); }

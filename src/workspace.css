@@ -26,7 +26,7 @@
   .file-menu summary { cursor: pointer; list-style: none; }
   .file-menu-content { position: absolute; top: calc(100% + 10px); right: 0; z-index: 30; display: grid; width: 220px; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: white; box-shadow: 0 12px 35px #20283026; }
   .file-menu-content button { text-align: left; }
-  .workspace .sidebar { padding: 18px 10px; }
+  .workspace .sidebar { position: static; min-height: 0; padding: 18px 10px; }
   .workspace .module-row { grid-template-columns: 12px minmax(0, 1fr) auto; gap: 4px; padding-inline: 5px; }
   @container (max-width: 640px) {
     .content-heading-fields { grid-template-columns: 1fr; }
@@ -35,19 +35,17 @@
     .inline-module-editor { padding: 14px 8px; }
     .section-title-input { width: 100%; }
   }
-  @media (max-width: 1499px) {
-    .workspace.modules-open { grid-template-columns: minmax(440px, 1.1fr) minmax(0, 1fr); }
-    .workspace.preview-hidden.modules-open { grid-template-columns: minmax(0, 1fr); }
-    .workspace .sidebar { position: absolute; z-index: 15; inset: 0 auto 0 0; width: 245px; box-shadow: 10px 0 30px #20283026; }
-  }
+  /* The directory always owns a grid track; it must never cover the editor. */
   @media (max-width: 1099px) {
-    .workspace, .workspace.modules-hidden, .workspace.modules-open { grid-template-columns: minmax(0, 1fr); }
+    .workspace, .workspace.modules-open { grid-template-columns: 220px minmax(0, 1fr); }
+    .workspace.modules-hidden { grid-template-columns: minmax(0, 1fr); }
     .workspace.mobile-preview > .resume-editor-scroller { display: none; }
     .workspace .resume-editor-canvas { max-width: 790px; }
     .topbar { gap: 10px; }
     .topbar-actions { margin-left: auto; }
   }
   @media (max-width: 640px) {
+    .workspace.modules-open { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(120px, min(35dvh, 260px)) minmax(0, 1fr); }
     .topbar { padding: 10px 12px; }
     .brand small, .brand strong, .standalone-preview-button { display: none; }
     .brand-mark { width: 32px; height: 32px; }
