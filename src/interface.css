@@ -68,8 +68,7 @@
   .workspace-topbar { min-height: 72px; gap: 24px; padding: 14px 28px; border-color: var(--ui-border); background: white; box-shadow: none; }
   .workspace-topbar .brand { gap: 10px; padding-right: 24px; border-right: 1px solid var(--ui-border); }
   .workspace-topbar .brand strong { color: var(--ui-text); font-size: 15px; letter-spacing: -.5px; font-weight: 700; }
-  .brand-mark { display: inline-grid; place-items: center; flex: none; width: 32px; height: 36px; border: 0; border-radius: 0; color: var(--ui-ink); background: transparent; }
-  .brand-mark .app-icon { width: 30px; height: 30px; stroke-width: 1.5; }
+  .brand-mark { display: block; flex: none; width: 36px; height: 36px; object-fit: contain; border: 0; border-radius: 0; background: transparent; }
   .current-document { gap: 15px; }
   .document-switcher { gap: 12px; max-width: 390px; padding: 8px 10px; margin-left: -10px; border: 1px solid transparent; border-radius: var(--ui-radius); color: var(--ui-text); font-size: 14px; font-weight: 600; }
   .document-switcher:hover, .document-switcher[aria-expanded="true"] { border-color: var(--ui-border); background: var(--ui-subtle); }
