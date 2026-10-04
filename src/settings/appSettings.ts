@@ -1,4 +1,6 @@
-export type PreviewZoom = "fit" | 70 | 80 | 90 | 100;
+export type PreviewZoom = "fit" | number;
+export const MIN_PREVIEW_ZOOM = 50;
+export const MAX_PREVIEW_ZOOM = 140;
 export type OutputEngine = "html" | "typst";
 export type SyncDelay = 0 | 100 | 300;
 export type SaveDelay = 300 | 500 | 1000;
@@ -31,7 +33,7 @@ const STORAGE_KEY = "swift-resume:settings";
 
 const allowedSyncDelays = new Set<SyncDelay>([0, 100, 300]);
 const allowedSaveDelays = new Set<SaveDelay>([300, 500, 1000]);
-const allowedZooms = new Set<PreviewZoom>(["fit", 70, 80, 90, 100]);
+const validZoom = (value: unknown): value is PreviewZoom => value === "fit" || typeof value === "number" && Number.isInteger(value) && value >= MIN_PREVIEW_ZOOM && value <= MAX_PREVIEW_ZOOM;
 
 export function normalizeSettings(value: unknown): AppSettings {
   if (!value || typeof value !== "object") return DEFAULT_SETTINGS;
@@ -52,7 +54,7 @@ export function normalizeSettings(value: unknown): AppSettings {
     showOverflowWarning: typeof candidate.showOverflowWarning === "boolean"
       ? candidate.showOverflowWarning
       : DEFAULT_SETTINGS.showOverflowWarning,
-    previewZoom: allowedZooms.has(candidate.previewZoom as PreviewZoom)
+    previewZoom: validZoom(candidate.previewZoom)
       ? candidate.previewZoom as PreviewZoom
       : DEFAULT_SETTINGS.previewZoom,
     previewOpen: typeof candidate.previewOpen === "boolean"

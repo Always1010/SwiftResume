@@ -38,3 +38,8 @@ describe("app settings", () => {
     expect(normalizeSettings({ previewZoom: 80 }).previewOpen).toBe(true);
   });
 });
+
+it("persists shared numeric zooms and keeps invalid persisted scales out", () => {
+  for (const previewZoom of [50, 85, 115, 140, "fit"]) expect(normalizeSettings({ previewZoom }).previewZoom).toBe(previewZoom);
+  for (const previewZoom of [49, 141, 85.5, Infinity, NaN, "115", null]) expect(normalizeSettings({ previewZoom }).previewZoom).toBe("fit");
+});
