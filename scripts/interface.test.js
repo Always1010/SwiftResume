@@ -46,9 +46,12 @@ it("defines screen-only interface colors without overriding resume theme variabl
 });
 
 
-it("uses a document mark and one consistent application icon system", () => {
+it("reuses the extension brand icon and one consistent application control icon system", () => {
   const icons = readFileSync(new URL("../src/components/AppIcon.tsx", import.meta.url), "utf8");
-  expect(icons).toContain('name="document"');
+  expect(icons).toContain('src="./icons/icon128.png"');
+  const manifest = JSON.parse(readFileSync(new URL("../public/manifest.json", import.meta.url), "utf8"));
+  expect(manifest.icons["128"]).toBe("icons/icon128.png");
+  expect(readFileSync(new URL(`../public/${manifest.icons["128"]}`, import.meta.url)).length).toBeGreaterThan(0);
   expect(icons).toContain('aria-hidden="true"');
   for (const name of ["App.tsx", "components/StandalonePreview.tsx"]) {
     const source = readFileSync(new URL(`../src/${name}`, import.meta.url), "utf8");
