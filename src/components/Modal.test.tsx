@@ -28,3 +28,14 @@ it("uses native modal behavior, exposes a named cross and restores prior focus w
   act(() => root.unmount());
   expect(focus).toHaveBeenCalledWith({ preventScroll: true });
 });
+
+it("waits for another native modal to close before showing a deferred reminder", async () => {
+  document.body.innerHTML = '<dialog id="other" open></dialog><div id="test"></div>';
+  root = createRoot(document.getElementById("test")!);
+  await act(async () => { root.render(<Modal titleId="deferred-title" waitForOtherModals onClose={vi.fn()}><h2 id="deferred-title">提醒</h2></Modal>); });
+  const deferred = document.querySelector<HTMLDialogElement>("#deferred-title-dialog")!;
+  expect(deferred.open).toBe(false);
+  await act(async () => { document.querySelector<HTMLDialogElement>("#other")!.close(); });
+  expect(deferred.open).toBe(true);
+  expect(document.querySelectorAll("dialog[open]")).toHaveLength(1);
+});

@@ -317,10 +317,11 @@ export function App() {
           ?? block.querySelector<HTMLElement>('.content-rich-surface [contenteditable="true"]')
           ?? block.querySelector<HTMLElement>(".section-title-input");
         field?.focus({ preventScroll: true });
+        setBlockNavigation(null);
       });
     });
     return () => { window.cancelAnimationFrame(layoutFrame); window.cancelAnimationFrame(focusFrame); };
-  }, [blockNavigation]);
+  }, [blockNavigation, backupPromptOpen]);
   const switchResume = async (resumeId: string) => {
     if (resumeId === activeResumeId) return;
     setSaveState("saving");
@@ -620,15 +621,6 @@ export function App() {
           <WorkspaceStandalonePreviewEntry disabled={!activeResumeId} onOpen={() => openStandalonePreview()} />
         </div>
       </nav>
-      <div className="workspace-notices">
-        {backupPromptOpen && settings.diskBackupEnabled && !newResumeOpen && backupNeedsAttention && dismissedBackupNotice !== backupNoticeKey && <BackupSetupPrompt
-          status={backupStatus}
-          directoryName={backupDirectory?.name ?? ""}
-          onChooseDirectory={() => void selectBackupDirectory()}
-          onAuthorizeDirectory={() => void authorizeBackupDirectory()}
-          onLater={dismissBackupNotice}
-        />}
-      </div>
       <div className={`workspace ${previewVisible ? "" : "preview-hidden"} ${modulesOpen ? "modules-open" : "modules-hidden"} ${compactWorkspace && previewVisible ? "mobile-preview" : ""}`}>
         {modulesOpen && <Sidebar resume={resume} selectedId={selectedId} onSelect={locateResumeBlock} onAdd={(section) => {
           setSections([...resume.sections, section]);
@@ -698,6 +690,13 @@ export function App() {
     {previewVisited && <div className="workspace-preview-screen" hidden={view !== "preview"}>
       <StandalonePreview zoom={settings.previewZoom} onZoomChange={updatePreviewZoom} active={view === "preview"} resume={resume} engine={settings.outputEngine} saveState={saveState} onBack={returnToEditor} onExport={() => setPdfResume(resume)} onAppearanceChange={updateResumeAppearance} />
     </div>}
+      {backupPromptOpen && settings.diskBackupEnabled && !newResumeOpen && !settingsOpen && !historyOpen && !libraryOpen && !textImportOpen && !importBatch && !pdfResume && backupNeedsAttention && dismissedBackupNotice !== backupNoticeKey && <BackupSetupPrompt
+        status={backupStatus}
+        directoryName={backupDirectory?.name ?? ""}
+        onChooseDirectory={selectBackupDirectory}
+        onAuthorizeDirectory={authorizeBackupDirectory}
+        onLater={dismissBackupNotice}
+      />}
       {pdfResume && <ResumeExportDialog engine={settings.outputEngine} resume={pdfResume} returnLabel={view === "preview" ? "返回模板预览" : "返回编辑"} onClose={() => setPdfResume(null)} />}
     </>
   );
