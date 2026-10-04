@@ -20,13 +20,15 @@ vi.mock("./storage/diskBackup", () => ({ isDiskBackupSupported: () => false }));
 vi.mock("./sync/resumeSync", () => ({ useResumeSync: () => ({ supported: true }) }));
 vi.mock("./sync/previewSync", () => ({ usePreviewPublisher: () => undefined }));
 vi.mock("./components/customEditors/ContentBodyEditor", () => ({ ContentBodyEditor: () => null }));
-vi.mock("./components/ResumeExportDialog", () => ({ ResumeExportDialog: ({ resume, onClose }: { resume: ResumeDocument; onClose: () => void }) => <div data-testid="export-document">{resume.title}:{resume.profile.name}:{resume.theme.templateId}<button onClick={onClose}>关闭测试导出</button></div> }));
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 let root: ReturnType<typeof createRoot>;
 
 function doc(title: string, name: string) {
   const resume = createBlankResume(); resume.title = title; resume.profile.name = name;
-  resume.sections = [createQuickSection("work")];
+  const project = createQuickSection("project"), hidden = createQuickSection("skills");
+  hidden.enabled = false; hidden.title = `${title} HIDDEN`;
+  resume.sections = [createQuickSection("work"), project, hidden];
+  if (project.type === "content") project.entries[0].title = `${title} 第二项`;
   if (resume.sections[0].type === "content") resume.sections[0].entries[0].title = `${title} 独立经历`;
   return resume;
 }
@@ -105,7 +107,9 @@ it("repaginates current content after editing while the template screen is hidde
   expect(button("撤销修改").disabled).toBe(false);
 });
 
-it("switches A to B before save debounce and uses B for preview, template application and export only", async () => {
+it("switches A to B before save debounce and uses identical B pages across preview, export and printing", async () => {
+  stored.documents.get("B")!.theme.accent = "#2573b9";
+  stored.documents.get("B")!.theme.density = 38;
   await mount(); await click("打开模板与预览"); await frames(); await view("editor");
   await editName("Alice saved independently");
   await click("我的简历"); await click("打开编辑：Synthetic B");
@@ -116,8 +120,32 @@ it("switches A to B before save debounce and uses B for preview, template applic
   expect(templatePaper().textContent).not.toContain("Alice");
   await click("预览极简留白模板"); await frames();
   await act(async () => { document.querySelector<HTMLButtonElement>(".standalone-preview-actions .primary-button")!.click(); });
-  expect(document.querySelector('[data-testid="export-document"]')?.textContent).toContain("Synthetic B:Bob immediate revision:minimal");
-  await frames(); await act(async () => { vi.advanceTimersByTime(1000); });
+  await frames();
+  const exportPages = document.querySelector(".pdf-preview-content .html-resume-pages")!;
+  expect(exportPages.textContent).toContain("Bob immediate revision");
+  const exportPage = exportPages.querySelector<HTMLElement>(".resume-page")!;
+  expect(exportPage.dataset.template).toBe("minimal");
+  expect(exportPage.style.getPropertyValue("--resume-accent")).toBe("#2573b9");
+  expect(exportPages.textContent).not.toContain("HIDDEN");
+  expect([...exportPages.querySelectorAll(".resume-section-heading h2")].map((node) => node.textContent)).toEqual(["工作经历", "项目经历"]);
+  // The finished template view and actual export dialog use identical page DOM,
+  // including template classes, inline colors/density, section order and content.
+  expect(exportPages.isEqualNode(templatePaper())).toBe(true);
+  const print = vi.spyOn(window, "print").mockImplementation(() => {
+    const printed = document.querySelector(".resume-print-root .html-resume-pages")!;
+    expect(printed.isEqualNode(exportPages)).toBe(true);
+    expect(document.title).toBe("Synthetic B");
+    expect(printed.textContent).not.toContain("Alice");
+  });
+  const printButton = document.querySelector<HTMLButtonElement>(".pdf-export-dialog footer .primary-button")!;
+  expect(printButton.disabled).toBe(false);
+  await act(async () => { printButton.click(); });
+  expect(print).toHaveBeenCalledOnce();
+  expect(document.querySelector(".resume-print-root")).toBeNull();
+  await click("返回模板预览");
+  await view("editor", "B");
+  expect(editorPaper().isEqualNode(exportPages)).toBe(true);
+  await act(async () => { vi.advanceTimersByTime(1000); });
   expect(stored.documents.get("A")?.profile.name).toBe("Alice saved independently");
   expect(stored.documents.get("A")?.theme.templateId).not.toBe("minimal");
   expect(stored.documents.get("B")?.theme.templateId).toBe("minimal");
@@ -171,5 +199,20 @@ it("cancels a pending layout on hide and measures only the latest content after 
   expect(templatePaper().textContent).not.toContain("Latest after interrupted preview");
   await click("打开模板与预览"); await frames();
   expect(templatePaper().textContent).toContain("Latest after interrupted preview");
+  expect(document.querySelector(".standalone-preview-viewport [role=alert]")).toBeNull();
+});
+
+it("ignores delayed photo completion for a hidden old preview and renders the newest revision on reveal", async () => {
+  let finishPhoto!: () => void;
+  const decoding = new Promise<void>((resolve) => { finishPhoto = resolve; });
+  Object.defineProperty(HTMLImageElement.prototype, "decode", { configurable: true, value: vi.fn(() => decoding) });
+  stored.documents.get("A")!.profile.photo = "data:image/png;base64,iVBORw0KGgo=";
+  await mount(); await click("打开模板与预览"); await view("editor");
+  await editName("After slow photo");
+  await act(async () => { finishPhoto(); }); await frames();
+  expect(templatePaper().textContent).toBe("");
+  await click("打开模板与预览"); await frames();
+  expect(templatePaper().textContent).toContain("After slow photo");
+  expect(templatePaper().querySelector("img")?.getAttribute("src")).toBe(stored.documents.get("A")!.profile.photo);
   expect(document.querySelector(".standalone-preview-viewport [role=alert]")).toBeNull();
 });
