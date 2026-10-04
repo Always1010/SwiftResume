@@ -162,13 +162,14 @@ describe("continuous PDF preview", () => {
     expect(container.querySelectorAll(".pdf-page-sheet")).toHaveLength(3);
   });
 
-  it("does not report a PDF failure when optional pagination text extraction fails", async () => {
+  it("renders PDFs without running editorial text extraction", async () => {
     const { pages } = makeDocument(1);
     pages[0].getTextContent.mockRejectedValue(new Error("unsupported text"));
     await render({ blob: blob(), zoom: 100 });
     await intersect(1, true);
     expect(container.querySelector('[role="alert"]')).toBeNull();
     expect(container.querySelector('canvas[data-rendered="true"]')).not.toBeNull();
+    expect(pages[0].getTextContent).not.toHaveBeenCalled();
   });
 
   it("keeps thumbnail capture on the first page without extracting text", async () => {
@@ -190,19 +191,31 @@ describe("continuous PDF preview", () => {
     expect(pages.every((page) => page.getTextContent.mock.calls.length === 0)).toBe(true);
   });
 
-  it("scrolls pagination warnings to the matching page and hides dismissed controls", async () => {
+  it("shows blank and sparse pages without content review or dismiss controls", async () => {
     const { pages } = makeDocument(2);
-    pages[1].getTextContent.mockResolvedValue({ items: [] });
+    pages[0].getTextContent.mockResolvedValue({ items: [] });
+    pages[1].getTextContent.mockResolvedValue({ items: [{ str: "少量文字", transform: [1, 0, 0, 1, 0, 800] }] });
     await render({ blob: blob(), zoom: "fit" });
-    const secondPage = container.querySelector<HTMLElement>('[data-page-number="2"]')!;
-    const scrollIntoView = vi.fn();
-    secondPage.scrollIntoView = scrollIntoView;
-    const button = [...container.querySelectorAll("button")].find((element) => element.textContent === "第 2 页")!;
-    await act(async () => button.click());
-    expect(scrollIntoView).toHaveBeenCalledWith({ block: "start" });
-    await act(async () => [...container.querySelectorAll("button")].find((element) => element.textContent === "本次忽略分页提示")!.click());
-    expect(container.querySelector(".pdf-reader-toolbar")).toBeNull();
     expect(container.querySelectorAll(".pdf-page-sheet")).toHaveLength(2);
+    expect(pages.every((page) => page.getTextContent.mock.calls.length === 0)).toBe(true);
+    expect(container.querySelector(".pdf-reader-toolbar, .pdf-page-checks")).toBeNull();
+    expect(container.textContent).not.toMatch(/检查|空白页|内容较少|忽略|提示/);
+  });
+
+  it("keeps actual PDF loading errors visible", async () => {
+    mocks.load.mockReturnValue({ promise: Promise.reject(new Error("invalid PDF")), destroy: mocks.destroy });
+    await render({ blob: blob() });
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("invalid PDF");
+    expect(container.textContent).toContain("暂时无法显示预览");
+  });
+
+  it("keeps actual page rendering errors visible", async () => {
+    const { pages } = makeDocument(1);
+    pages[0].render.mockImplementation(() => ({ promise: Promise.reject(new Error("render failed")), resolve: () => undefined, cancel: vi.fn() }));
+    await render({ blob: blob(), zoom: "fit" });
+    await intersect(1, true);
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("render failed");
+    expect(container.textContent).toContain("第 1 页暂时无法显示");
   });
 
   it("provides total pages and zoom when no external toolbar controls the preview", async () => {
