@@ -34,26 +34,28 @@ interface PageMeasurements {
 
 // Only an opened comparison renders real documents. Keep these inputs stable
 // when a measured count updates the gallery, and discard callbacks after close.
-const TemplateComparisonPreview = memo(function TemplateComparisonPreview({ resume, templateId, engine, contentKey, onMeasure }: {
+const TemplateComparisonPreview = memo(function TemplateComparisonPreview({ active, resume, templateId, engine, contentKey, onMeasure }: {
+  active: boolean;
   resume: ResumeDocument;
   templateId: ResumeTemplateId;
   engine: OutputEngine;
   contentKey: string;
   onMeasure: (measurement: TemplatePageMeasurement) => void;
 }) {
-  const active = useRef(true);
+  const mounted = useRef(true);
   useLayoutEffect(() => {
-    active.current = true;
-    return () => { active.current = false; };
+    mounted.current = true;
+    return () => { mounted.current = false; };
   }, []);
   const previewResume = useMemo(() => ({ ...resume, theme: { ...resume.theme, templateId } }), [resume, templateId]);
   const recordCount = useCallback((pageCount: number) => {
-    if (active.current) onMeasure({ contentKey, templateId, engine, pageCount });
+    if (mounted.current) onMeasure({ contentKey, templateId, engine, pageCount });
   }, [contentKey, templateId, engine, onMeasure]);
-  return <ResumePreview engine={engine} resume={previewResume} zoom="fit" templateId={templateId} onPageCountChange={recordCount} />;
+  return <ResumePreview active={active} engine={engine} resume={previewResume} zoom="fit" templateId={templateId} onPageCountChange={recordCount} />;
 });
 
-export function TemplateGallery({ selectedId, resume, onSelect, engine = "typst", pageMeasurement }: {
+export function TemplateGallery({ active = true, selectedId, resume, onSelect, engine = "typst", pageMeasurement }: {
+  active?: boolean;
   selectedId: ResumeTemplateId;
   resume: ResumeDocument;
   onSelect: (templateId: ResumeTemplateId) => void;
@@ -190,7 +192,7 @@ export function TemplateGallery({ selectedId, resume, onSelect, engine = "typst"
               {compareIds.map((templateId) => {
                 const definition = RESUME_TEMPLATES.find((item) => item.id === templateId)!;
                 return <article className="template-compare-item" key={templateId}>
-                  <div className="template-compare-paper"><TemplateComparisonPreview key={`${engine}:${templateId}:${contentKey}`} engine={engine} resume={resume} templateId={templateId} contentKey={contentKey} onMeasure={recordMeasurement} /></div>
+                  <div className="template-compare-paper"><TemplateComparisonPreview active={active} key={`${engine}:${templateId}:${contentKey}`} engine={engine} resume={resume} templateId={templateId} contentKey={contentKey} onMeasure={recordMeasurement} /></div>
                   <footer><div><strong>{definition.name}</strong><span>{pageCounts[templateId] ? `当前内容实测 ${pageCounts[templateId]} 页` : "页数待测量"}</span><span>{definition.description}</span></div><button type="button" onClick={() => { onSelect(templateId); setCompareOpen(false); }}>使用这套</button></footer>
                 </article>;
               })}
