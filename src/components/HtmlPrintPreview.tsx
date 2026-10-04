@@ -16,7 +16,7 @@ const HtmlResumeContent = memo(function HtmlResumeContent({ resume }: { resume: 
   </div>;
 }, (previous, next) => previous.resume.profile === next.resume.profile && previous.resume.sections === next.resume.sections);
 
-export function HtmlResumePages({ resume, onReady, onUpdating }: { resume: ResumeDocument; onReady?: (pages: number, error: string) => void; onUpdating?: (updating: boolean) => void }) {
+export function HtmlResumePages({ resume, active = true, onReady, onUpdating }: { resume: ResumeDocument; active?: boolean; onReady?: (pages: number, error: string) => void; onUpdating?: (updating: boolean) => void }) {
   const source = useRef<HTMLDivElement>(null);
   const pages = useRef<HTMLDivElement>(null);
   const measure = useRef<HTMLDivElement>(null);
@@ -36,6 +36,10 @@ export function HtmlResumePages({ resume, onReady, onUpdating }: { resume: Resum
     fontSize: `${density.fontSizePx}px`,
   } as CSSProperties;
   useLayoutEffect(() => {
+    // Mounted workspaces keep their editor/preview state when hidden. Measuring
+    // display:none yields zero geometry and must never replace a valid snapshot.
+    // Visibility is an input so reopening repaginates even if the data is unchanged.
+    if (!active) return;
     let cancelled = false;
     let frame = 0;
     updatingCallback.current?.(true);
@@ -80,7 +84,7 @@ export function HtmlResumePages({ resume, onReady, onUpdating }: { resume: Resum
       cancelled = true;
       window.cancelAnimationFrame(frame);
     };
-  }, [resume]);
+  }, [resume, active]);
   return <>
     <div ref={source} className={`resume-page ${templateClasses} html-resume html-resume-source`} data-template={resume.theme.templateId} style={style} aria-hidden="true">
       <HtmlResumeContent resume={resume} />
@@ -90,12 +94,12 @@ export function HtmlResumePages({ resume, onReady, onUpdating }: { resume: Resum
   </>;
 }
 
-export function HtmlCanvasPreview({ resume, zoom = "fit", onPageCountChange, onReadyChange }: { resume: ResumeDocument; zoom?: number | "fit"; onPageCountChange?: (count: number) => void; onReadyChange?: (ready: boolean) => void }) {
+export function HtmlCanvasPreview({ resume, active = true, zoom = "fit", onPageCountChange, onReadyChange }: { resume: ResumeDocument; active?: boolean; zoom?: number | "fit"; onPageCountChange?: (count: number) => void; onReadyChange?: (ready: boolean) => void }) {
   const viewport = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState(1);
   const [updating, setUpdating] = useState(true);
   const [state, setState] = useState<{ count: number; error: string; resume: ResumeDocument | null }>({ count: 0, error: "", resume: null });
-  const ready = !updating && !state.error && state.count > 0 && state.resume === resume;
+  const ready = active && !updating && !state.error && state.count > 0 && state.resume === resume;
   useLayoutEffect(() => { onReadyChange?.(ready); }, [ready, onReadyChange]);
   useEffect(() => {
     const element = viewport.current;
@@ -109,7 +113,7 @@ export function HtmlCanvasPreview({ resume, zoom = "fit", onPageCountChange, onR
   return <div ref={viewport} className="preview-scroller html-canvas-preview" aria-label="HTML 简历预览" aria-busy={!ready}>
     {state.error ? <p role="alert">{state.error}{state.count > 0 && "，下方保留上次预览。"}</p> : !state.count && <p role="status">正在加载字体并分页…</p>}
     <div className="html-canvas-stage" style={{ zoom: zoom === "fit" ? fit : zoom / 100 }}>
-      <HtmlResumePages resume={resume} onUpdating={setUpdating} onReady={(count, error) => {
+      <HtmlResumePages active={active} resume={resume} onUpdating={setUpdating} onReady={(count, error) => {
         setState((current) => ({ count: count || current.count, error, resume: error ? null : resume }));
         if (count > 0) onPageCountChange?.(count);
       }} />
