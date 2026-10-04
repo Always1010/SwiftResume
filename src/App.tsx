@@ -675,7 +675,7 @@ export function App() {
               </div>
 
             </div>
-            <ResumePreview engine={settings.outputEngine} resume={resume} zoom={settings.previewZoom} onPageCountChange={handlePageCount} />
+            <ResumePreview active={view === "editor"} engine={settings.outputEngine} resume={resume} zoom={settings.previewZoom} onPageCountChange={handlePageCount} />
           </section>
         ) : null}
       </div>
@@ -716,7 +716,7 @@ export function App() {
 
     </div>
     {previewVisited && <div className="workspace-preview-screen" hidden={view !== "preview"}>
-      <StandalonePreview resume={resume} engine={settings.outputEngine} saveState={saveState} onBack={returnToEditor} onExport={() => setPdfResume(resume)} onAppearanceChange={(change) => {
+      <StandalonePreview active={view === "preview"} resume={resume} engine={settings.outputEngine} saveState={saveState} onBack={returnToEditor} onExport={() => setPdfResume(resume)} onAppearanceChange={(change) => {
         if (change.theme) dispatch({ type: "update-theme", value: change.theme });
         if (change.photoBackground !== undefined) dispatch({ type: "update-profile", value: { ...resume.profile, photoBackground: change.photoBackground } });
       }} />
