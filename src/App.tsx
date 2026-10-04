@@ -622,16 +622,13 @@ export function App() {
       </header>
       <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => { void importFile(event.target.files?.[0]); event.target.value = ""; }} />
       <nav className="workspace-controls" aria-label="简历编辑工具">
-        <div className="workspace-mode-switch" aria-label="工作区视图">
-          <span className="workspace-mode-current" aria-current="page"><AppIcon name="edit" />内容编辑</span>
-          <WorkspaceStandalonePreviewEntry disabled={!activeResumeId} onOpen={() => openStandalonePreview()} />
-        </div>
-        <div className="workspace-context-tools">
-          <button type="button" className="ghost-button" aria-expanded={modulesOpen} onClick={() => setModulesOpen(!modulesOpen)}><AppIcon name="panels" />{modulesOpen ? "收起模块" : "简历模块"}</button>
+        <div className="workspace-edit-tools">
+          <button type="button" className="ghost-button" aria-controls={modulesOpen ? "resume-modules" : undefined} aria-expanded={modulesOpen} title={modulesOpen ? "收起左侧简历模块" : "展开左侧简历模块"} onClick={() => setModulesOpen(!modulesOpen)}><AppIcon name="panels" />{modulesOpen ? "收起模块" : "简历模块"}</button>
           <HistoryActions undoLabel={undoLabel} redoLabel={redoLabel} onUndo={() => changeHistory("undo")} onRedo={() => changeHistory("redo")} />
-          <div className="workspace-view-options">
-            <button type="button" className={`ghost-button ${previewVisible ? "active" : ""}`} aria-pressed={previewVisible} onClick={() => { setMobilePreview(!previewVisible); setSettings((current) => ({ ...current, previewOpen: !previewVisible })); }}><AppIcon name="eye" />{previewVisible ? "收起预览" : "显示预览"}</button>
-          </div>
+        </div>
+        <div className="workspace-preview-tools">
+          <button type="button" className={`ghost-button ${previewVisible ? "active" : ""}`} aria-pressed={previewVisible} title={previewVisible ? "收起右侧成品预览" : "显示右侧成品预览"} onClick={() => { setMobilePreview(!previewVisible); setSettings((current) => ({ ...current, previewOpen: !previewVisible })); }}><AppIcon name="eye" />{previewVisible ? "收起预览" : "显示预览"}</button>
+          <WorkspaceStandalonePreviewEntry disabled={!activeResumeId} onOpen={() => openStandalonePreview()} />
         </div>
       </nav>
       <div className="workspace-notices">

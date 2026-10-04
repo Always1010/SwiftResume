@@ -131,15 +131,17 @@ export function StandalonePreview({ active = true, resume, engine, saveState, on
   return (
     <main className="standalone-preview">
       <header className="standalone-preview-toolbar">
-        <div className="standalone-preview-brand">
+        <div className="standalone-preview-leading">
+          <button type="button" className="secondary-button standalone-back-button" title="返回内容编辑，保留修改与编辑位置" onClick={onBack}><AppIcon name="arrowLeft" />返回编辑</button>
+          <div className="standalone-preview-brand">
           <BrandMark />
           <div><strong>模板与预览</strong><span>{title}</span></div>
           {previewResume && <span className="page-count-badge">{currentPageCount ? `共 ${currentPageCount} 页` : "排版中…"}</span>}
+          </div>
         </div>
         <div className="standalone-preview-actions">
           <span role="status" className={`standalone-sync-status ${saveState === "error" ? "error" : ""}`}>{saveState === "saving" ? "保存中…" : saveState === "error" ? "保存失败，请返回编辑重试" : "已自动保存"}</span>
           <button type="button" className="primary-button" disabled={!previewResume} onClick={onExport}><AppIcon name="download" />{engine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
-          <button type="button" className="secondary-button" onClick={onBack}><AppIcon name="arrowLeft" />返回编辑</button>
         </div>
       </header>
       <div
