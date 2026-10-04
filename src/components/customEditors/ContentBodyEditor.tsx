@@ -1,8 +1,19 @@
+import { isApplePlatform, shortcut } from "../../keyboardShortcuts";
 import { useEffect, type ReactNode } from "react";
 import type { JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import { contentRichTextExtensions } from "../../model/contentRichText";
 import type { RichTextDocument } from "../../model/resume";
+
+// These commands are registered by contentRichTextExtensions. Actions such as
+// opening the link prompt, table edits and ordinary paragraph indentation have
+// no key binding, so their tooltips intentionally only name the action.
+const formatShortcuts: Record<string, string> = {
+  "撤销": "Mod+Z", "加粗": "Mod+B", "斜体": "Mod+I", "下划线": "Mod+U",
+  "删除线": "Mod+Shift+S", "无序列表": "Mod+Shift+8", "有序列表": "Mod+Shift+7",
+  "左对齐": "Mod+Shift+L", "居中": "Mod+Shift+E", "右对齐": "Mod+Shift+R",
+  "两端对齐": "Mod+Shift+J", "引用": "Mod+Shift+B",
+};
 
 function ToolbarButton({ editor, command, active, children, title }: {
   editor: Editor;
@@ -11,12 +22,15 @@ function ToolbarButton({ editor, command, active, children, title }: {
   children: ReactNode;
   title: string;
 }) {
+  const keys = title === "重做" ? isApplePlatform() ? "Mod+Shift+Z" : "Mod+Y" : formatShortcuts[title];
+  const binding = keys ? shortcut(keys) : undefined;
   return (
     <button
       type="button"
       className={active ? "active" : ""}
-      title={title}
+      title={binding ? `${title}（${binding.label}，正文编辑时）` : title}
       aria-label={title}
+      aria-keyshortcuts={binding?.aria}
       onMouseDown={(event) => event.preventDefault()}
       onClick={command}
     >

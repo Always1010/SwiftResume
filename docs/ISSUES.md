@@ -1,5 +1,15 @@
 # SwiftResume 问题日志
 
+## SR-041：macOS 整份简历撤销快捷键被 Option 字符转换漏掉
+
+- 日期：2026-10-04
+- 状态：已解决（自动回归通过）
+- 现象或修改背景：工具栏提示 Cmd + Alt + Z，但 macOS Option + Z 会将键值转换为 Ω，整份简历快捷键不能按提示稳定触发；禁用按钮的提示又不显示键位。
+- 原因分析：全局历史处理器仅比较 event.key 的 z/y，未兼容 Option 的字符转换；快捷键文案混用 Windows 与 macOS 修饰键，禁用状态仅提供不可用原因。
+- 解决方案：独立历史快捷键处理器，对明确的 Alt/Option 整文档快捷键使用 KeyZ；保留输入框与富文本普通撤销，忽略输入法组合、已处理事件、AltGraph 与模态弹窗。按操作系统显示真实键位，并在按钮及整个禁用包装区域提供原因和快捷键提示；导出、富文本现有快捷操作和模板栏调宽也提供对应提示，不给无绑定按钮虚构按键。
+- 验证方式：覆盖 Windows/macOS 显示、Ctrl/Meta 历史触发、Option 字符、禁用历史、输入框/文本域/选择框/嵌套富文本不干扰、模态弹窗、卸载清理；使用真实 Tiptap 扩展验证格式与撤销/重做绑定，并补充 App 键盘集成回归。
+- 相关文件：`src/keyboardShortcuts.ts`、`src/useHistoryShortcuts.ts`、`src/App.tsx`、`src/components/HistoryActions.tsx`、`src/components/StandalonePreview.tsx`、`src/components/customEditors/ContentBodyEditor.tsx` 及对应测试
+
 ## SR-040：隐藏的模板预览保留上一份简历画面
 
 - 日期：2026-10-04

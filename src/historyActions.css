@@ -50,6 +50,7 @@
   background: transparent;
   box-shadow: none;
   opacity: .5;
+  pointer-events: none;
 }
 
 .history-action-icon {

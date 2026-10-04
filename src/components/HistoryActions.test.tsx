@@ -11,6 +11,7 @@ let root: ReturnType<typeof createRoot>;
 afterEach(() => {
   act(() => root?.unmount());
   document.body.innerHTML = "";
+  vi.restoreAllMocks();
 });
 
 function renderHistoryActions(undoLabel?: string, redoLabel?: string) {
@@ -30,7 +31,7 @@ describe("HistoryActions", () => {
     expect(container.querySelector('[role="group"]')?.getAttribute("aria-label")).toBe("编辑历史");
     expect(buttons.map((button) => button.textContent)).toEqual(["撤销修改", "恢复修改"]);
     expect(buttons.every((button) => button.disabled)).toBe(true);
-    expect(buttons[1].getAttribute("aria-label")).toBe("请先撤销一次修改，之后才能恢复");
+    expect(buttons[1].getAttribute("aria-label")).toContain("请先撤销一次修改，之后才能恢复");
   });
 
   it("names the pending changes and invokes the requested history action", () => {
@@ -43,4 +44,17 @@ describe("HistoryActions", () => {
     expect(onUndo).toHaveBeenCalledOnce();
     expect(onRedo).toHaveBeenCalledOnce();
   });
+});
+
+
+it.each([["Win32", "Ctrl + Alt + Z", "Control+Alt+Z"], ["MacIntel", "⌘ Cmd + ⌥ Option + Z", "Meta+Alt+Z"]])("shows actual %s shortcuts on the entire disabled hover target", (platform, label, aria) => {
+  vi.spyOn(navigator, "platform", "get").mockReturnValue(platform);
+  const { container, buttons } = renderHistoryActions();
+  const wrappers = [...container.querySelectorAll<HTMLElement>(".history-action-wrap")];
+  expect(wrappers[0].title).toContain(label);
+  expect(wrappers[0].tabIndex).toBe(0);
+  expect(wrappers[0].getAttribute("aria-label")).toContain("尚未进行可撤销的修改");
+  expect(buttons[0].title).toBe(wrappers[0].title);
+  expect(buttons[0].getAttribute("aria-keyshortcuts")).toBe(aria);
+  expect(wrappers[1].title).toContain("Shift + Z");
 });
