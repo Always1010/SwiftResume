@@ -97,7 +97,6 @@
 .restore-choice { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
 .restore-choice input { flex: 0 0 auto; }
 .import-text { font-family: inherit; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; max-height: 300px; overflow: auto; }
-.pdf-page-checks { width: 100%; max-height: 150px; overflow: auto; }
 @media (max-width: 600px) { .flow-columns { grid-template-columns: minmax(0, 1fr); } }
 .flow-list { list-style: none; padding: 0; display: grid; gap: 10px; }
 .flow-list > li { padding: 12px; border: 1px solid #d9e3dd; border-radius: 8px; overflow-wrap: anywhere; }
@@ -274,11 +273,6 @@
 }
 @media print { .workspace-notices { display: none !important; } }
 
-.export-content-checks { margin-top: 10px; color: #536b5b; font-size: 12px; }
-.export-content-checks > summary { cursor: pointer; font-weight: 650; }
-.export-content-checks .flow-list { max-height: 20vh; overflow-y: auto; margin: 8px 0 0; gap: 6px; }
-.export-content-checks .flow-list > li { padding: 7px 10px; font-size: 12px; line-height: 1.6; }
-.export-content-checks .text-button { margin-left: 8px; font-size: 12px; }
 
 .app-shell[hidden], .workspace-preview-screen[hidden] { display: none !important; }
 
