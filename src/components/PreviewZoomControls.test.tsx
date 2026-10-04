@@ -39,3 +39,21 @@ it("clamps step buttons and disables them at the shared limits", () => {
   act(() => document.querySelector<HTMLButtonElement>('[aria-label="缩小预览"]')!.click()); expect(change).toHaveBeenLastCalledWith(130);
   type("50"); key("Enter"); expect(document.querySelector<HTMLButtonElement>('[aria-label="缩小预览"]')!.disabled).toBe(true);
 });
+it.each([50, 80, 100, 140] as const)("sizes the centered numeric group to %s without changing the value or step controls", (zoom) => {
+  mount(zoom);
+  expect(field().style.width).toBe(`${String(zoom).length}ch`);
+  expect(field().step).toBe("1");
+  expect(field().parentElement?.querySelector('[aria-hidden="true"]')?.textContent).toBe("%");
+  act(() => field().focus());
+  expect(document.activeElement).toBe(field());
+  expect(change).not.toHaveBeenCalled();
+});
+it("keeps automatic text and short drafts centered while preserving keyboard edits", () => {
+  mount(); expect(field().style.width).toBe("2em");
+  type("8"); expect(field().style.width).toBe("1ch");
+  type("80"); expect(field().style.width).toBe("2ch"); key("Enter");
+  type("140"); expect(field().style.width).toBe("3ch"); key("Enter");
+  key("ArrowUp"); expect(field().value).toBe("140");
+  type("1000"); expect(field().style.width).toBe("3ch"); key("Escape");
+  expect(field().value).toBe("140");
+});

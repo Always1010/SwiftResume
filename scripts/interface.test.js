@@ -19,6 +19,21 @@ it("shares one appearance and numeric zoom implementation across both preview to
   expect(controls).toContain("<PreviewZoomControls");
 });
 
+it("centers a compact percentage group without shrinking the step-button targets", () => {
+  const css = readFileSync(new URL("../src/interface.css", import.meta.url), "utf8");
+  const rule = (selector) => css.slice(css.indexOf(`${selector} {`)).split("}")[0];
+  expect(rule(".preview-zoom-stepper")).toContain("grid-template-columns: 26px 44px 26px");
+  expect(rule(".preview-zoom-stepper > button")).toContain("height: 30px");
+  expect(rule(".preview-zoom-value")).toContain("justify-content: center");
+  expect(rule(".preview-zoom-value")).toContain("font-variant-numeric: tabular-nums");
+  expect(rule(".preview-zoom-value input")).toContain("text-align: center");
+  expect(rule(".preview-zoom-value input")).toContain("box-sizing: content-box");
+  expect(css).toContain(".preview-zoom-value:focus-within");
+  expect(css).toContain("input::-webkit-inner-spin-button");
+  expect(css).toContain(".preview-zoom-stepper > button:hover:not(:disabled)");
+  expect(css).toContain(".preview-zoom-stepper > button:disabled");
+});
+
 it("sizes short native dialogs to their content rather than stretching between modal insets", () => {
   const style = readFileSync(new URL("../src/workspace.css", import.meta.url), "utf8");
   expect(style).toContain(".flow-dialog[open] { display: block; height: fit-content; }");
