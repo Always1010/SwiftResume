@@ -49,12 +49,6 @@ import {
 import { useResumeSync } from "./sync/resumeSync";
 import { usePreviewPublisher } from "./sync/previewSync";
 
-const BACKUP_NOTICE_DISMISSAL_KEY = "swift-resume:backup-notice-dismissed";
-
-function loadBackupNoticeDismissal() {
-  try { return localStorage.getItem(BACKUP_NOTICE_DISMISSAL_KEY); } catch { return null; }
-}
-
 export function App() {
   const [editHistory, dispatchHistory] = useReducer(resumeHistoryReducer, undefined, () => createResumeHistory(createBlankResume()));
   const resume = editHistory.present;
@@ -90,14 +84,14 @@ export function App() {
   const [backupDirectory, setBackupDirectory] = useState<FileSystemDirectoryHandle | null>(null);
   const [backupStatus, setBackupStatus] = useState<DiskBackupStatus>(() => isDiskBackupSupported() ? "not-configured" : "unsupported");
   const [backupPromptOpen, setBackupPromptOpen] = useState(false);
-  const [dismissedBackupNotice, setDismissedBackupNotice] = useState(loadBackupNoticeDismissal);
+  // A reminder can be deferred for this page, but unresolved risks return on reopening.
+  const [dismissedBackupNotice, setDismissedBackupNotice] = useState<string | null>(null);
   const [blockNavigation, setBlockNavigation] = useState<{ id: string } | null>(null);
   const backupNoticeKey = `${backupStatus}:${backupDirectory?.name ?? ""}`;
   const backupNeedsAttention = backupStatus === "not-configured" || backupStatus === "permission-required" || backupStatus === "error";
   const dismissBackupNotice = () => {
     setDismissedBackupNotice(backupNoticeKey);
     setBackupPromptOpen(false);
-    try { localStorage.setItem(BACKUP_NOTICE_DISMISSAL_KEY, backupNoticeKey); } catch { /* Keep dismissal for this page when storage is unavailable. */ }
   };
   const importRef = useRef<HTMLInputElement>(null);
   const firstRunRef = useRef(false);

@@ -26,6 +26,8 @@ it("explains browser-only risk without blocking editing or opening a directory a
   expect(container.querySelector('[aria-modal], [role="dialog"], [role="alertdialog"]')).toBeNull();
   expect(container.textContent).toContain("清理浏览器数据可能丢失简历");
   expect(container.querySelector<HTMLDetailsElement>("details")?.open).toBe(false);
+  expect(container.textContent).toContain("本次稍后");
+  expect(container.textContent).toContain("下次打开时若仍未配置或授权，会再次提醒");
   expect(onChooseDirectory).not.toHaveBeenCalled();
   expect(onAuthorizeDirectory).not.toHaveBeenCalled();
   act(() => container.querySelector<HTMLButtonElement>(".secondary-button")!.click());
