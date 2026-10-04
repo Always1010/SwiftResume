@@ -33,3 +33,24 @@ it("snapshots pending inputs and permits retry after a failed generation", async
   await expect(getPdfArtifact(resume)).resolves.toHaveProperty("blob");
   expect(generate).toHaveBeenCalledTimes(2);
 });
+
+it("isolates A/B and regenerates changed content or styles while sharing each revision's exact bytes", async () => {
+  const { getPdfArtifact, pdfContentKey } = await import("./pdfArtifact");
+  // A generated-byte stand-in checks artifact identity, not PDF visual fidelity.
+  generate.mockImplementation(async (resume) => ({ blob: new Blob([pdfContentKey(resume)]) }));
+  const a = createBlankResume(); a.title = "Synthetic A"; a.profile.name = "Alice";
+  const b = createBlankResume(); b.title = "Synthetic B"; b.profile.name = "Bob";
+  const aPdf = await getPdfArtifact(a);
+  const bPdf = await getPdfArtifact(b);
+  expect(aPdf.blob).not.toBe(bPdf.blob);
+  b.profile.name = "Bob immediate revision";
+  b.theme = { ...b.theme, templateId: "minimal", density: 38, accent: "#2573b9" };
+  const [editor, template, exported] = await Promise.all([getPdfArtifact(b), getPdfArtifact(b), getPdfArtifact(b)]);
+  expect(editor.blob).toBe(template.blob);
+  expect(template.blob).toBe(exported.blob);
+  expect(exported.blob).not.toBe(bPdf.blob);
+  expect(exported.filename).toBe("Synthetic B.pdf");
+  expect(generate).toHaveBeenCalledTimes(3);
+  expect(generate.mock.calls[2][0]).toEqual(b);
+  expect((await getPdfArtifact(a)).blob).toBe(aPdf.blob);
+});
