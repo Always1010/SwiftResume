@@ -34,7 +34,8 @@ function readTemplateGalleryWidth() {
   }
 }
 
-export function StandalonePreview({ resume, engine, saveState, onAppearanceChange, onExport, onBack }: {
+export function StandalonePreview({ active = true, resume, engine, saveState, onAppearanceChange, onExport, onBack }: {
+  active?: boolean;
   resume: ResumeDocument;
   engine: import("../settings/appSettings").OutputEngine;
   saveState: "saving" | "saved" | "error";
@@ -146,7 +147,7 @@ export function StandalonePreview({ resume, engine, saveState, onAppearanceChang
         className="standalone-preview-workspace"
         style={{ "--template-gallery-width": `${galleryWidth}px` } as CSSProperties}
       >
-        {previewResume && <TemplateGallery pageMeasurement={pageMeasurement} engine={engine} selectedId={previewResume.theme.templateId} resume={previewResume} onSelect={(templateId) => updateAppearance({ theme: { templateId } })} />}
+        {previewResume && <TemplateGallery active={active} pageMeasurement={pageMeasurement} engine={engine} selectedId={previewResume.theme.templateId} resume={previewResume} onSelect={(templateId) => updateAppearance({ theme: { templateId } })} />}
         <div
           className={`template-gallery-resizer ${resizingGallery ? "active" : ""}`}
           role="separator"
@@ -208,7 +209,7 @@ export function StandalonePreview({ resume, engine, saveState, onAppearanceChang
             </div>
           )}
           <div ref={viewportRef} className="standalone-preview-viewport">
-            {previewResume ? <ResumePreview engine={engine} resume={previewResume} zoom={fitWidth ? "fit" : zoom} templateId={previewResume.theme.templateId} onPageCountChange={updatePageCount} /> : (
+            {previewResume ? <ResumePreview active={active} engine={engine} resume={previewResume} zoom={fitWidth ? "fit" : zoom} templateId={previewResume.theme.templateId} onPageCountChange={updatePageCount} /> : (
               <div className="standalone-preview-empty"><strong>正在读取简历…</strong></div>
             )}
           </div>
