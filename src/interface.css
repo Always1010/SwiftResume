@@ -80,18 +80,15 @@
   .topbar-actions { gap: 12px; }
   .export-button { min-height: 38px; padding-inline: 16px; }
 
-  /* Navigation reads as two views; document actions form a separate group. */
-  .workspace-controls { min-height: 58px; gap: 16px; padding: 10px 28px; border-color: var(--ui-border); background: white; }
-  .workspace-mode-switch { display: flex; flex: none; align-items: center; gap: 3px; padding: 3px; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-subtle); }
-  .workspace-mode-current, .workspace-mode-switch .workspace-standalone-preview-entry { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 32px; padding: 6px 12px; border: 0; border-radius: 5px; font-size: 12px; line-height: 1.4; }
-  .workspace-mode-current { color: var(--ui-text); background: white; box-shadow: 0 1px 3px #14192318; font-weight: 650; }
-  .workspace-mode-switch .workspace-standalone-preview-entry { color: var(--ui-muted); background: transparent; font-weight: 500; }
-  .workspace-mode-switch .workspace-standalone-preview-entry:hover { color: var(--ui-text); background: #e9edf3; }
-  .workspace-mode-switch .app-icon { width: 15px; height: 15px; }
-  .workspace-context-tools { display: flex; align-items: center; gap: 12px; margin-left: auto; }
-  .workspace-context-tools .ghost-button { padding-inline: 9px; }
-  .workspace-view-options { margin: 0; }
-  .workspace-controls .document-history-actions { display: flex; gap: 0; padding: 0 12px; border: 0; border-inline: 1px solid var(--ui-border); border-radius: 0; background: transparent; }
+  /* Editing tools follow the left-hand modules; preview actions stay on the right. */
+  .workspace-controls { min-height: 58px; gap: 20px; padding: 10px 28px; border-color: var(--ui-border); background: white; }
+  .workspace-edit-tools, .workspace-preview-tools { display: flex; align-items: center; gap: 12px; }
+  .workspace-preview-tools { margin-left: auto; }
+  .workspace-edit-tools .ghost-button, .workspace-preview-tools .ghost-button { padding-inline: 9px; }
+  .workspace-standalone-preview-entry { color: var(--ui-text); border-color: var(--ui-border-strong); background: white; font-weight: 600; }
+  .workspace-standalone-preview-entry:hover:not(:disabled) { color: var(--ui-text); border-color: #aab2bf; background: var(--ui-subtle); }
+  .workspace-standalone-preview-entry .app-icon:last-child { width: 15px; height: 15px; margin-left: 4px; }
+  .workspace-controls .document-history-actions { display: flex; gap: 0; padding: 0 0 0 12px; border: 0; border-left: 1px solid var(--ui-border); border-radius: 0; background: transparent; }
   .history-actions-label { display: none; }
   .history-action-button.secondary-button { gap: 6px; min-height: 32px; border: 0; padding: 6px 9px; color: var(--ui-muted); background: transparent; box-shadow: none; font-weight: 500; }
   .history-action-button.secondary-button:hover:not(:disabled) { color: var(--ui-text); background: var(--ui-subtle); }
@@ -238,7 +235,9 @@
   /* Template selection remains distinct from the unchanged resume output. */
   .standalone-preview { background: var(--ui-canvas); }
   .standalone-preview-toolbar { min-height: 72px; padding: 14px 28px; border-color: var(--ui-border); background: white; box-shadow: none; }
-  .standalone-preview-brand { gap: 13px; }
+  .standalone-preview-leading { display: flex; align-items: center; min-width: 0; gap: 20px; }
+  .standalone-back-button { flex: none; }
+  .standalone-preview-brand { gap: 13px; padding-left: 20px; border-left: 1px solid var(--ui-border); }
   .standalone-preview-brand strong { color: var(--ui-text); font-size: 15px; font-weight: 650; }
   .standalone-preview-brand div span { margin-top: 3px; color: var(--ui-muted); font-size: 11px; }
   .standalone-preview-brand .page-count-badge { margin-left: 8px; }
