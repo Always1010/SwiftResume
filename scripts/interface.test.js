@@ -22,7 +22,7 @@ it("sizes short native dialogs to their content rather than stretching between m
 
 it("defines screen-only interface colors without overriding resume theme variables", () => {
   const style = readFileSync(new URL("../src/interface.css", import.meta.url), "utf8");
-  const refresh = style.split("/* Calm application surfaces:")[1];
+  const refresh = style;
   expect(refresh).toBeTruthy();
   expect(refresh).not.toMatch(/--resume-[\w-]+\s*:/);
   expect(refresh).not.toMatch(/\.resume-(?:page|header|section|rich-text)\s*[{,]/);
@@ -41,4 +41,37 @@ it("defines screen-only interface colors without overriding resume theme variabl
     expect(contrast(token("muted"), token(background))).toBeGreaterThanOrEqual(4.5);
   }
   expect(contrast("#ffffff", token("accent"))).toBeGreaterThanOrEqual(4.5);
+  expect(contrast("#ffffff", token("ink"))).toBeGreaterThanOrEqual(4.5);
+  expect(contrast("#ffffff", token("ink-hover"))).toBeGreaterThanOrEqual(4.5);
+});
+
+
+it("uses a document mark and one consistent application icon system", () => {
+  const icons = readFileSync(new URL("../src/components/AppIcon.tsx", import.meta.url), "utf8");
+  expect(icons).toContain('name="document"');
+  expect(icons).toContain('aria-hidden="true"');
+  for (const name of ["App.tsx", "components/StandalonePreview.tsx"]) {
+    const source = readFileSync(new URL(`../src/${name}`, import.meta.url), "utf8");
+    expect(source).toContain("<BrandMark />");
+    expect(source).not.toMatch(/brand-mark[^>]*>S</);
+  }
+});
+
+it("removes legacy green application values instead of layering new colors over them", () => {
+  const files = ["workspace.css", "historyActions.css", "interface.css"];
+  for (const file of files) {
+    const css = readFileSync(new URL(`../src/${file}`, import.meta.url), "utf8");
+    expect(css).not.toMatch(/var\(--green(?:-dark)?\)/);
+    expect(css).not.toMatch(/#(?:176b45|245f4c|247352|eef7f1|f0f5f1)\b/i);
+  }
+  const base = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8").split("\n.resume-page {")[0];
+  expect(base).not.toMatch(/var\(--green(?:-dark)?\)/);
+  const richControls = readFileSync(new URL("../src/editorModes.css", import.meta.url), "utf8").split("\n").filter((line) => !line.startsWith(".resume-rich-text")).join("\n");
+  expect(richControls).not.toContain("var(--green)");
+});
+
+it("defines normal, hover, active, focus and disabled states for the new controls", () => {
+  const css = readFileSync(new URL("../src/interface.css", import.meta.url), "utf8");
+  for (const selector of [".primary-button {", ".primary-button:hover:not(:disabled)", ".primary-button:active:not(:disabled)", ".primary-button:disabled", ".secondary-button:active:not(:disabled)", ".ghost-button:hover:not(:disabled)", "focus-visible"]) expect(css).toContain(selector);
+  expect(css).toContain(".settings-navigation button[aria-pressed=\"true\"]");
 });

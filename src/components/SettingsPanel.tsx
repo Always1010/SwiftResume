@@ -1,3 +1,4 @@
+import { AppIcon, type AppIconName } from "./AppIcon";
 import { useState } from "react";
 import { Modal } from "./Modal";
 import { CloseButton } from "./CloseButton";
@@ -82,7 +83,7 @@ export function SettingsPanel({
 
         <nav className="settings-navigation" aria-label="设置分类">
           {([{ id: "files", label: "导入与备份" }, { id: "writing", label: "编辑与导出" }, { id: "advanced", label: "高级设置" }] as const).map((item) => (
-            <button key={item.id} type="button" aria-pressed={section === item.id} aria-controls={`settings-${item.id}`} onClick={() => setSection(item.id)}>{item.label}</button>
+            <button key={item.id} type="button" aria-pressed={section === item.id} aria-controls={`settings-${item.id}`} onClick={() => setSection(item.id)}><AppIcon name={({ files: "archive", writing: "edit", advanced: "settings" } as Record<string, AppIconName>)[item.id]} />{item.label}</button>
           ))}
         </nav>
         <div className="settings-content">

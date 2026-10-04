@@ -1,3 +1,4 @@
+import { AppIcon } from "./AppIcon";
 import { useEffect, useRef, useState } from "react";
 import type { ResumeLibrary, ResumeSummary } from "../storage/resumeStorage";
 import { Modal } from "./Modal";
@@ -42,11 +43,11 @@ export function ResumeLibraryDialog({ library, onClose, onNew, onOpen, onRename,
     <header className="workspace-dialog-header library-header">
       <div><h2 id="resume-library-title">我的简历</h2><p>{library.resumes.length} 份简历</p></div>
       <div className="library-header-actions">
-        <button type="button" className="primary-button" disabled={busy} onClick={onNew}>＋ 新建简历</button>
+        <button type="button" className="primary-button" disabled={busy} onClick={onNew}><AppIcon name="plus" />新建简历</button>
         <CloseButton disabled={busy} onClick={close} label="关闭我的简历" />
       </div>
     </header>
-      <div className="library-search"><input type="search" aria-label="搜索简历" placeholder="搜索简历名称" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button type="button" className="text-button" onClick={() => setQuery("")}>清除搜索</button>}</div>
+      <div className="library-search"><AppIcon name="search" /><input type="search" aria-label="搜索简历" placeholder="搜索简历名称" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button type="button" className="text-button" onClick={() => setQuery("")}>清除搜索</button>}</div>
       <ul className="library-list" aria-label="简历列表">{rows.map((row) => {
         const current = row.id === library.activeResumeId;
         const editingName = renaming?.id === row.id;
@@ -61,12 +62,12 @@ export function ResumeLibraryDialog({ library, onClose, onNew, onOpen, onRename,
             <button type="button" className="secondary-button" disabled={busy} onClick={() => setRenaming(null)}>取消</button>
           </form> : <>
             <button type="button" className="library-row-main" disabled={busy} aria-label={`${current ? "继续编辑" : "打开编辑"}：${row.title || "未命名简历"}`} onClick={() => void run(async () => { await onOpen(row.id); onClose(); })}>
-              <span className="library-row-title"><strong>{row.title || "未命名简历"}</strong>{current && <small>当前</small>}</span>
+              <span className="library-document-icon"><AppIcon name="document" /></span><span className="library-row-title"><strong>{row.title || "未命名简历"}</strong>{current && <small>当前</small>}</span>
               <time dateTime={row.updatedAt}>修改于 {new Date(row.updatedAt).toLocaleString()}</time>
             </button>
             <div className="library-row-actions">
-              <button type="button" className="secondary-button" disabled={busy} aria-label={`创建副本：${row.title}`} onClick={() => void run(async () => { await onCopy(row.id); onClose(); })}>创建副本</button>
-              <button type="button" className="icon-button" disabled={busy} aria-label={`更多操作：${row.title}`} aria-expanded={menuId === row.id} onClick={() => setMenuId(menuId === row.id ? null : row.id)}>···</button>
+              <button type="button" className="secondary-button" disabled={busy} aria-label={`创建副本：${row.title}`} onClick={() => void run(async () => { await onCopy(row.id); onClose(); })}><AppIcon name="copy" />创建副本</button>
+              <button type="button" className="icon-button" disabled={busy} aria-label={`更多操作：${row.title}`} aria-expanded={menuId === row.id} onClick={() => setMenuId(menuId === row.id ? null : row.id)}><AppIcon name="more" /></button>
             </div>
           </>}
           {menuId === row.id && !editingName && <div className="library-row-menu" role="group" aria-label={`${row.title}的更多操作`}>
