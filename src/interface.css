@@ -251,9 +251,7 @@ body { background: #f4f6f4; }
   .pdf-preview-content { background: #e5e8ec; }
   .workspace-dialog-footer { padding: 16px 24px; border-color: var(--ui-border); }
   .workspace-dialog-footer > span { color: var(--ui-muted); font-size: 12px; }
-  .export-content-checks { margin-top: 12px; color: #775b26; font-size: 12px; }
-  .export-content-checks summary { cursor: pointer; }
-  .pdf-export-dialog .workspace-dialog-header > div > details:not(.export-content-checks) { margin-top: 8px; color: var(--ui-muted); font-size: 12px; }
+  .pdf-export-dialog .workspace-dialog-header > div > details { margin-top: 8px; color: var(--ui-muted); font-size: 12px; }
   .pdf-reader-toolbar { color: var(--ui-text); background: var(--ui-subtle); }
   .setting-row select { color: var(--ui-text); border-color: var(--ui-border); background: white; font-size: 12px; }
   .toggle.checked { background: var(--ui-accent); }

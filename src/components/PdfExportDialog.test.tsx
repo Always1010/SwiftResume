@@ -40,6 +40,7 @@ describe("final PDF preview", () => {
   it("previews and downloads the same generated file, releasing its URL on close", async () => {
     const { container } = await render();
     expect(getPdfArtifact).toHaveBeenCalledOnce();
+    expect(container.textContent).not.toMatch(/待检查|内容检查|确认 PDF 后|定位修改|请确认后/);
     expect(createUrl).toHaveBeenCalledExactlyOnceWith(artifact.blob);
     expect(container.querySelector('[aria-label="最终 PDF 预览"]')?.getAttribute("data-size")).toBe(String(artifact.blob.size));
     const download = container.querySelector<HTMLAnchorElement>("a[download]")!;

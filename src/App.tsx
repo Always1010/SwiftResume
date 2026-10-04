@@ -715,7 +715,7 @@ export function App() {
         if (change.photoBackground !== undefined) dispatch({ type: "update-profile", value: { ...resume.profile, photoBackground: change.photoBackground } });
       }} />
     </div>}
-      {pdfResume && <ResumeExportDialog engine={settings.outputEngine} resume={pdfResume} returnLabel={view === "preview" ? "返回模板预览" : "返回编辑"} onLocate={(id) => { setPdfResume(null); navigateWorkspace("editor", activeResumeId, true); setView("editor"); locateResumeBlock(id); }} onClose={() => setPdfResume(null)} />}
+      {pdfResume && <ResumeExportDialog engine={settings.outputEngine} resume={pdfResume} returnLabel={view === "preview" ? "返回模板预览" : "返回编辑"} onClose={() => setPdfResume(null)} />}
     </>
   );
 }
