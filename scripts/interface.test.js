@@ -8,11 +8,15 @@ it("uses visible thin scrollbars globally with hover and forced-color fallback",
   expect(style).not.toContain("scrollbar-width: none");
   expect(style).not.toContain(".resume-page {");
 });
-it("keeps duplicate appearance controls out of the editor toolbar", () => {
+it("shares one appearance and numeric zoom implementation across both preview toolbars", () => {
   const app = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8");
-  expect(app).not.toContain("preview-appearance-controls");
   const templates = readFileSync(new URL("../src/components/StandalonePreview.tsx", import.meta.url), "utf8");
-  expect(templates).toContain("模板预览排版密度"); expect(templates).toContain("模板预览配色");
+  const controls = readFileSync(new URL("../src/components/PreviewControls.tsx", import.meta.url), "utf8");
+  expect(app).toContain("<PreviewControls"); expect(templates).toContain("<PreviewControls");
+  expect(app).not.toContain('<select aria-label="预览缩放"');
+  expect(templates).not.toContain("const [manualZoom");
+  expect(controls).toContain("预览排版密度"); expect(controls).toContain("预览配色");
+  expect(controls).toContain("<PreviewZoomControls");
 });
 
 it("sizes short native dialogs to their content rather than stretching between modal insets", () => {

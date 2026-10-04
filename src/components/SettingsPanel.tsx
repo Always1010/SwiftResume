@@ -1,10 +1,10 @@
+import { PreviewZoomControls } from "./PreviewZoomControls";
 import { AppIcon, type AppIconName } from "./AppIcon";
 import { useState } from "react";
 import { Modal } from "./Modal";
 import { CloseButton } from "./CloseButton";
 import type {
   AppSettings,
-  PreviewZoom,
   SaveDelay,
   SyncDelay,
 } from "../settings/appSettings";
@@ -144,16 +144,10 @@ export function SettingsPanel({
               <div><strong>预览页数</strong><p>在预览工具栏中显示当前简历的实际 A4 页数。</p></div>
               <Toggle label="预览页数" checked={settings.showOverflowWarning} onChange={(value) => update("showOverflowWarning", value)} />
             </div>
-            <label className="setting-row">
-              <div><strong>预览缩放</strong><p>调整编辑时右侧预览的显示大小。</p></div>
-              <select value={settings.previewZoom} onChange={(event) => update("previewZoom", event.target.value === "fit" ? "fit" : Number(event.target.value) as PreviewZoom)}>
-                <option value="fit">适应宽度</option>
-                <option value={70}>70%</option>
-                <option value={80}>80%</option>
-                <option value={90}>90%</option>
-                <option value={100}>100%</option>
-              </select>
-            </label>
+            <div className="setting-row">
+              <div><strong>预览缩放</strong><p>两个预览共用显示比例，不改变打印版式。</p></div>
+              <PreviewZoomControls zoom={settings.previewZoom} onChange={(value) => update("previewZoom", value)} />
+            </div>
           </details>
 
           </section>

@@ -22,6 +22,7 @@ vi.mock("./sync/previewSync", () => ({ usePreviewPublisher: () => undefined }));
 vi.mock("./components/customEditors/ContentBodyEditor", () => ({ ContentBodyEditor: () => null }));
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 let root: ReturnType<typeof createRoot>;
+let resizeObservers: { target: Element; notify: () => void }[] = [];
 
 function doc(title: string, name: string) {
   const resume = createBlankResume(); resume.title = title; resume.profile.name = name;
@@ -67,7 +68,12 @@ beforeEach(() => {
   stored.library = { version: 1, activeResumeId: "A", resumes: [...stored.documents].map(([id, resume]) => createResumeSummary(id, resume)) };
   Object.defineProperty(window, "innerWidth", { configurable: true, value: 1188 });
   vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
-  vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
+  resizeObservers = [];
+  vi.stubGlobal("ResizeObserver", class {
+    constructor(private callback: ResizeObserverCallback) {}
+    observe(target: Element) { resizeObservers.push({ target, notify: () => this.callback([], this as unknown as ResizeObserver) }); }
+    disconnect() {}
+  });
   vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => window.setTimeout(() => callback(performance.now()), 16));
   vi.stubGlobal("cancelAnimationFrame", (id: number) => window.clearTimeout(id));
   Object.defineProperty(document, "fonts", { configurable: true, value: { load: vi.fn(async () => []), ready: Promise.resolve() } });
@@ -215,4 +221,70 @@ it("ignores delayed photo completion for a hidden old preview and renders the ne
   expect(templatePaper().textContent).toContain("After slow photo");
   expect(templatePaper().querySelector("img")?.getAttribute("src")).toBe(stored.documents.get("A")!.profile.photo);
   expect(document.querySelector(".standalone-preview-viewport [role=alert]")).toBeNull();
+});
+
+it("shares numeric zoom and appearance controls both ways without changing print scale", async () => {
+  stored.documents.get("A")!.profile.photo = "data:image/png;base64,iVBORw0KGgo=";
+  await mount();
+  const side = document.querySelector(".preview-toolbar")!;
+  expect(side.querySelector("select")).toBeNull();
+  expect(side.querySelector(".preview-zoom-controls")?.nextElementSibling?.textContent).toContain("排版设置");
+  const initialPages = editorPaper().cloneNode(true);
+  const initialResume = JSON.stringify(stored.documents.get("A"));
+  const sideZoom = side.querySelector<HTMLInputElement>('[aria-label="预览缩放百分比"]')!;
+  act(() => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(sideZoom,"115"); sideZoom.dispatchEvent(new Event("input",{bubbles:true})); });
+  act(() => sideZoom.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true})));
+  expect(document.querySelector<HTMLElement>(".preview-panel .html-canvas-stage")?.style.zoom).toBe("1.15");
+  expect(editorPaper().isEqualNode(initialPages)).toBe(true);
+  expect(JSON.stringify(stored.documents.get("A"))).toBe(initialResume);
+  const changeInput = (container: Element, label: string, value: string) => {
+    const input = container.querySelector<HTMLInputElement>(`[aria-label="${label}"]`)!;
+    act(() => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(input,value); input.dispatchEvent(new Event("input",{bubbles:true})); });
+  };
+  changeInput(side,"预览排版密度","42"); changeInput(side,"预览配色","#223344");
+  act(() => side.querySelector<HTMLButtonElement>(".photo-background-trigger")!.click());
+  act(() => side.querySelector<HTMLButtonElement>('[aria-label="红色背景"]')!.click());
+  await click("打开模板与预览"); await frames();
+  const template = document.querySelector(".standalone-appearance-bar")!;
+  expect(template.querySelector<HTMLInputElement>('[aria-label="预览缩放百分比"]')!.value).toBe("115");
+  expect(template.querySelector<HTMLInputElement>('[aria-label="预览排版密度"]')!.value).toBe("42");
+  expect(template.querySelector<HTMLInputElement>('[aria-label="预览配色"]')!.value).toBe("#223344");
+  expect(template.querySelector<HTMLElement>(".photo-background-current")!.style.backgroundColor).toBe("rgb(217, 65, 65)");
+  act(() => template.querySelector<HTMLButtonElement>(".photo-background-trigger")!.click());
+  act(() => template.querySelector<HTMLButtonElement>('[aria-label="蓝色背景"]')!.click());
+  changeInput(template,"预览排版密度","60"); changeInput(template,"预览配色","#445566");
+  const templateZoom = template.querySelector<HTMLInputElement>('[aria-label="预览缩放百分比"]')!;
+  changeInput(template,"预览缩放百分比","85"); act(() => templateZoom.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true})));
+  await frames();
+  await act(async () => { document.querySelector<HTMLButtonElement>(".standalone-preview-actions .primary-button")!.click(); }); await frames();
+  const exportPages = document.querySelector(".pdf-preview-content .html-resume-pages")!;
+  expect(exportPages.isEqualNode(templatePaper())).toBe(true);
+  expect(exportPages.querySelector<HTMLElement>(".resume-page")!.style.getPropertyValue("--resume-accent")).toBe("#445566");
+  expect(document.querySelector<HTMLElement>(".standalone-preview-viewport .html-canvas-stage")?.style.zoom).toBe("0.85");
+  expect(document.querySelector<HTMLElement>(".pdf-preview-content .html-canvas-stage")?.style.zoom).not.toBe("0.85");
+  await click("返回模板预览"); await view("editor");
+  expect(sideZoom.value).toBe("85");
+  expect(side.querySelector<HTMLElement>(".photo-background-current")!.style.backgroundColor).toBe("rgb(67, 142, 219)");
+  expect(exportPages.querySelector<HTMLElement>(".resume-photo")!.style.backgroundColor).toBe("rgb(67, 142, 219)");
+  expect(side.querySelector<HTMLInputElement>('[aria-label="预览排版密度"]')!.value).toBe("60");
+  expect(side.querySelector<HTMLInputElement>('[aria-label="预览配色"]')!.value).toBe("#445566");
+  act(() => [...side.querySelectorAll("button")].find((node) => node.textContent === "适应宽度")!.click());
+  expect(sideZoom.value).toBe(""); expect(templateZoom.value).toBe("");
+  expect(JSON.parse(localStorage.getItem("swift-resume:settings")!).previewZoom).toBe("fit");
+});
+
+it("automatically fits a changed preview area but keeps a manually entered percentage fixed", async () => {
+  await mount();
+  const viewport = document.querySelector<HTMLElement>(".preview-panel .html-canvas-preview")!;
+  const stage = viewport.querySelector<HTMLElement>(".html-canvas-stage")!;
+  const resize = (width: number) => act(() => {
+    Object.defineProperty(viewport,"clientWidth",{configurable:true,value:width});
+    resizeObservers.find((item) => item.target === viewport)!.notify();
+  });
+  resize(740); const firstFit = Number(stage.style.zoom);
+  resize(700); expect(Number(stage.style.zoom)).toBeLessThan(firstFit);
+  const input = document.querySelector<HTMLInputElement>('.preview-toolbar [aria-label="预览缩放百分比"]')!;
+  act(() => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(input,"115"); input.dispatchEvent(new Event("input",{bubbles:true})); });
+  act(() => input.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true})));
+  resize(740); expect(stage.style.zoom).toBe("1.15"); resize(700); expect(stage.style.zoom).toBe("1.15");
 });

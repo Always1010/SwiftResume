@@ -103,7 +103,7 @@
   .workspace-pane-title { margin: 0; color: var(--ui-text); font-size: 12px; font-weight: 650; line-height: 1.5; white-space: nowrap; }
   .resume-editor-heading > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
   .workspace .resume-editor-canvas { max-width: 850px; border: 1px solid var(--ui-border); border-radius: 8px; padding: 28px; box-shadow: 0 2px 5px #18202e04; }
-  .preview-toolbar { min-height: 56px; padding: 12px 24px; border: 0; background: var(--ui-canvas); }
+  .preview-toolbar { position: relative; z-index: 4; min-height: 56px; padding: 12px 24px; border: 0; background: var(--ui-canvas); }
   .preview-toolbar-leading { width: 100%; gap: 10px; }
   .preview-toolbar-leading select { margin-left: auto; color: var(--ui-text); border-color: var(--ui-border-strong); border-radius: 5px; padding: 6px 9px; font-size: 11px; }
   .page-count-badge { border-radius: 4px; padding: 3px 6px; color: var(--ui-muted); background: #e8ebf0; font-size: 10px; font-weight: 500; }
@@ -318,4 +318,21 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .primary-button, .secondary-button, .ghost-button, .add-item-button, .template-gallery-card, .resume-editable-block, .template-gallery-resizer { transition: none; }
+}
+
+/* One display-control implementation for both mounted preview surfaces. */
+@media screen {
+.preview-display-controls { display: flex; flex: none; align-items: center; gap: 8px; margin-left: auto; }
+.preview-zoom-controls { display: flex; align-items: center; gap: 8px; }
+.preview-zoom-controls .secondary-button { min-height: 32px; padding: 6px 9px; font-size: 11px; white-space: nowrap; }
+.preview-zoom-controls .secondary-button.active { color: var(--ui-text); border-color: var(--ui-border); background: var(--ui-subtle); }
+.preview-zoom-stepper { display: grid; grid-template-columns: 26px 66px 26px; height: 32px; align-items: center; border: 1px solid var(--ui-border); border-radius: 5px; background: white; }
+.preview-zoom-stepper > button { height: 30px; border: 0; background: transparent; color: var(--ui-muted); cursor: pointer; }
+.preview-zoom-stepper > button:hover:not(:disabled) { color: var(--ui-text); background: var(--ui-subtle); }
+.preview-zoom-stepper > button:disabled { opacity: .35; cursor: default; }
+.preview-zoom-value { display: flex; align-items: center; gap: 1px; color: var(--ui-muted); font-size: 11px; }
+.preview-zoom-value input { width: 48px; min-width: 0; padding: 3px 0; text-align: right; border: 0; background: transparent; font: inherit; color: var(--ui-text); appearance: textfield; }
+.preview-zoom-value input::-webkit-inner-spin-button, .preview-zoom-value input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.preview-zoom-value input:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 1px; }
+.preview-display-controls .standalone-appearance-options { white-space: nowrap; }
 }
