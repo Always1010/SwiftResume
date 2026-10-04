@@ -1,3 +1,4 @@
+import { AppIcon } from "./AppIcon";
 import { useState } from "react";
 import {
   duplicateSection,
@@ -43,7 +44,7 @@ export function Sidebar({ resume, selectedId, onSelect, onAdd, onSectionsChange,
         aria-pressed={selectedId === "profile"}
         onClick={() => onSelect("profile")}
       >
-        <span className="drag-handle muted">◆</span>
+        <AppIcon name="user" />
         <span>
           <strong>个人信息</strong>
           <small>{resume.profile.name || "待填写姓名"}</small>
@@ -87,7 +88,7 @@ export function Sidebar({ resume, selectedId, onSelect, onAdd, onSectionsChange,
                   );
                 }}
               >
-                {section.enabled ? "◉" : "○"}
+                <AppIcon name={section.enabled ? "eye" : "eyeOff"} />
               </button>
               <button
                 type="button"
@@ -102,7 +103,7 @@ export function Sidebar({ resume, selectedId, onSelect, onAdd, onSectionsChange,
                   onSelect(copy.id, copy.enabled);
                 }}
               >
-                ⧉
+                <AppIcon name="copy" />
               </button>
               <button
                 type="button"
@@ -114,13 +115,13 @@ export function Sidebar({ resume, selectedId, onSelect, onAdd, onSectionsChange,
                   onDeleteSection(section.id);
                 }}
               >
-                ×
+                <AppIcon name="trash" />
               </button>
             </div>
           </div>
         ))}
         <div className="add-module">
-          <button type="button" className="secondary-button" onClick={() => setAddPurpose("work")}>＋ 添加模块</button>
+          <button type="button" className="secondary-button" onClick={() => setAddPurpose("work")}><AppIcon name="plus" />添加模块</button>
         </div>
         {addPurpose && <AddModuleDialog initialPurpose={addPurpose} onClose={() => setAddPurpose(null)} onAdd={(section) => { onAdd(section); setAddPurpose(null); }} />}
       </div>

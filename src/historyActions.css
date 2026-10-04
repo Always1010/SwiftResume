@@ -3,14 +3,14 @@
   align-items: center;
   gap: 4px;
   padding: 3px;
-  border: 1px solid #dce6df;
+  border: 1px solid var(--ui-border);
   border-radius: 11px;
-  background: #eef4f0;
+  background: var(--ui-border);
 }
 
 .history-actions-label {
   padding: 0 7px;
-  color: #718278;
+  color: var(--ui-muted);
   font-size: 10px;
   font-weight: 750;
   letter-spacing: .06em;
@@ -30,18 +30,18 @@
   padding: 6px 9px;
   border-color: transparent;
   background: #fff;
-  box-shadow: 0 1px 2px #17302310;
+  box-shadow: 0 1px 2px #20283010;
   white-space: nowrap;
 }
 
 .history-action-button.secondary-button:hover:not(:disabled) {
-  border-color: #a9c2b1;
-  background: #fafffb;
-  color: #1f6743;
+  border-color: var(--ui-border-strong);
+  background: var(--ui-subtle);
+  color: var(--ui-text);
 }
 
 .history-action-button.secondary-button:focus-visible {
-  outline: 2px solid #34835b;
+  outline: 2px solid var(--ui-muted);
   outline-offset: 2px;
 }
 

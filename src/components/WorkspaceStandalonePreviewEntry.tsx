@@ -1,3 +1,4 @@
+import { AppIcon } from "./AppIcon";
 export function WorkspaceStandalonePreviewEntry({ disabled, onOpen }: { disabled?: boolean; onOpen: () => void }) {
   return <button
     type="button"
@@ -6,6 +7,6 @@ export function WorkspaceStandalonePreviewEntry({ disabled, onOpen }: { disabled
     disabled={disabled}
     onClick={onOpen}
   >
-    模板与预览
+    <AppIcon name="template" />模板与预览
   </button>;
 }

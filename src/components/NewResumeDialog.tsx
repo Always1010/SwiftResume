@@ -1,3 +1,4 @@
+import { AppIcon } from "./AppIcon";
 import { useRef, useState } from "react";
 import { type ResumeCreationTemplate } from "../model/resume";
 import { Modal } from "./Modal";
@@ -36,12 +37,12 @@ export function NewResumeDialog({ onSelect, onClose }: {
     <div className="scene-options" role="group" aria-label="选择简历起点">
       {OPTIONS.map((option) => <button key={option.id} type="button" disabled={busy} className={`scene-option ${selected === option.id ? "selected" : ""}`} aria-pressed={selected === option.id} onClick={() => setSelected(option.id)}>
         <div className={`scene-thumbnail ${option.id === "blank" ? "scene-blank" : ""}`} aria-hidden="true">{option.id === "blank" ? <span className="blank-resume-sheet" /> : <img src={scenarioPreviewPages(option.id)[0].src} alt="" loading="lazy" decoding="async" />}</div>
-        <span className="scene-label"><strong>{option.title}</strong><span>{option.description}</span></span>
+        <span className="scene-label"><strong>{option.title}<span className="scene-selection" aria-hidden="true">{selected === option.id && <AppIcon name="check" />}</span></strong><span>{option.description}</span></span>
       </button>)}
     </div>
     <footer className="scene-footer">
       {selected !== "blank" ? <label className="restore-choice"><input type="checkbox" disabled={busy} checked={withExamples} onChange={(event) => setWithExamples(event.target.checked)} />带入示例内容</label> : <span className="flow-muted">空白内容，随时添加模块</span>}
-      <button type="button" className="primary-button" disabled={busy} onClick={() => void create()}>{busy ? "正在创建…" : "创建并编辑"}</button>
+      <button type="button" className="primary-button" disabled={busy} onClick={() => void create()}>{busy ? "正在创建…" : "创建并编辑"}<AppIcon name="arrowRight" /></button>
     </footer>
     {error && <p role="alert" className="flow-error">{error}</p>}
   </Modal>;

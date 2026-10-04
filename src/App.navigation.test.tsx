@@ -118,7 +118,7 @@ describe("workspace module navigation", () => {
   it("adds a summary and focuses the visible body after the dialog and directory close", async () => {
     await mount();
     await click("简历模块");
-    await click("＋ 添加模块");
+    await click("添加模块");
     const summaryChoice = document.querySelector<HTMLButtonElement>('.module-picker-options button:nth-child(5)')!;
     await act(async () => { summaryChoice.click(); });
     await click("添加并编辑");
@@ -258,10 +258,10 @@ it("returns from cancelled creation to the same library search, then creates dir
   expect(document.querySelector("#resume-block-profile.editing")).not.toBeNull();
   await act(async () => document.querySelector<HTMLButtonElement>(".document-switcher")!.click());
   type(document.querySelector<HTMLInputElement>('[aria-label="搜索简历"]')!, "未命名");
-  await click("＋ 新建简历");
+  await click("新建简历");
   await click("取消新建");
   expect(document.querySelector<HTMLInputElement>('[aria-label="搜索简历"]')!.value).toBe("未命名");
-  await click("＋ 新建简历"); await click("创建第一份简历"); await flushNavigation();
+  await click("新建简历"); await click("创建第一份简历"); await flushNavigation();
   expect(document.querySelector('[role="dialog"]')).toBeNull();
   expect(document.querySelector("#resume-block-profile.editing")).not.toBeNull();
   expect(document.activeElement).toBe(document.querySelector("#resume-block-profile .field input"));
