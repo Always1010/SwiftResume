@@ -26,7 +26,7 @@ export function PreviewZoomControls({ zoom, onChange }: { zoom: PreviewZoom; onC
     <div className="preview-zoom-stepper">
       <button type="button" aria-label="缩小预览" title="缩小预览 10%" disabled={zoom === MIN_PREVIEW_ZOOM} onClick={() => step(-10)}>−</button>
       <label className="preview-zoom-value">
-        <input type="number" min={MIN_PREVIEW_ZOOM} max={MAX_PREVIEW_ZOOM} step="1" value={draft} placeholder="自动" aria-label="预览缩放百分比" title="50%–140%；适应宽度时自动跟随可用空间，输入数字切换为固定比例" onChange={(event) => setDraft(event.target.value)} onBlur={(event) => commit(event.target.value)} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }} onKeyDown={(event) => {
+        <input type="number" min={MIN_PREVIEW_ZOOM} max={MAX_PREVIEW_ZOOM} step="1" value={draft} style={{ width: draft ? `${Math.min(draft.length, 3)}ch` : "2em" }} placeholder="自动" aria-label="预览缩放百分比" title="50%–140%；适应宽度时自动跟随可用空间，输入数字切换为固定比例" onChange={(event) => setDraft(event.target.value)} onBlur={(event) => commit(event.target.value)} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }} onKeyDown={(event) => {
           if (composing.current || event.nativeEvent.isComposing) return;
           if (event.key === "Enter") { event.preventDefault(); commit(event.currentTarget.value); }
           else if (event.key === "Escape") { event.preventDefault(); setDraft(displayValue(zoom)); }

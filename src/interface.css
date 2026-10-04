@@ -326,13 +326,15 @@
 .preview-zoom-controls { display: flex; align-items: center; gap: 8px; }
 .preview-zoom-controls .secondary-button { min-height: 32px; padding: 6px 9px; font-size: 11px; white-space: nowrap; }
 .preview-zoom-controls .secondary-button.active { color: var(--ui-text); border-color: var(--ui-border); background: var(--ui-subtle); }
-.preview-zoom-stepper { display: grid; grid-template-columns: 26px 66px 26px; height: 32px; align-items: center; border: 1px solid var(--ui-border); border-radius: 5px; background: white; }
-.preview-zoom-stepper > button { height: 30px; border: 0; background: transparent; color: var(--ui-muted); cursor: pointer; }
+.preview-zoom-stepper { display: grid; flex: none; grid-template-columns: 26px 44px 26px; height: 32px; align-items: center; border: 1px solid var(--ui-border); border-radius: 5px; background: white; }
+.preview-zoom-stepper > button { display: grid; place-items: center; width: 26px; height: 30px; padding: 0; border: 0; background: transparent; color: var(--ui-muted); cursor: pointer; }
 .preview-zoom-stepper > button:hover:not(:disabled) { color: var(--ui-text); background: var(--ui-subtle); }
 .preview-zoom-stepper > button:disabled { opacity: .35; cursor: default; }
-.preview-zoom-value { display: flex; align-items: center; gap: 1px; color: var(--ui-muted); font-size: 11px; }
-.preview-zoom-value input { width: 48px; min-width: 0; padding: 3px 0; text-align: right; border: 0; background: transparent; font: inherit; color: var(--ui-text); appearance: textfield; }
+.preview-zoom-value { display: flex; align-items: center; justify-content: center; gap: 1px; height: 30px; border-radius: 3px; color: var(--ui-muted); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Match the field to its digits, so the number and percent stay centered together. */
+.preview-zoom-value input { box-sizing: content-box; flex: none; min-width: 0; padding: 3px 1px; text-align: center; border: 0; background: transparent; font: inherit; color: var(--ui-text); appearance: textfield; }
 .preview-zoom-value input::-webkit-inner-spin-button, .preview-zoom-value input::-webkit-outer-spin-button { appearance: none; margin: 0; }
-.preview-zoom-value input:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 1px; }
+.preview-zoom-value:focus-within { outline: 2px solid var(--ui-accent); outline-offset: -2px; }
+.preview-zoom-value input:focus-visible { outline: none; }
 .preview-display-controls .standalone-appearance-options { white-space: nowrap; }
 }
