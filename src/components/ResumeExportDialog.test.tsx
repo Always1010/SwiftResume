@@ -2,11 +2,11 @@
 import { act, useEffect, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
-import { createDefaultResume } from "../model/resume";
+import { createDefaultResume, createResumeFromTemplate, type ResumeDocument } from "../model/resume";
 import { ResumeExportDialog } from "./ResumeExportDialog";
 
 vi.mock("./Modal", () => ({ Modal: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
-vi.mock("./PdfExportDialog", () => ({ PdfExportDialog: () => <button data-testid="typst-export">下载 PDF</button> }));
+vi.mock("./PdfExportDialog", () => ({ PdfExportDialog: ({ checks }: { checks?: ReactNode }) => <div>{checks}<button data-testid="typst-export">下载 PDF</button></div> }));
 const previewState = vi.hoisted(() => ({ ready: true }));
 vi.mock("./ResumePreview", () => ({ ResumePreview: ({ resume, onPageCountChange, onReadyChange }: { resume: { title: string }; onPageCountChange: (count: number) => void; onReadyChange: (ready: boolean) => void }) => {
   useEffect(() => { onPageCountChange(2); onReadyChange(previewState.ready); }, [onPageCountChange, onReadyChange]);
@@ -15,8 +15,7 @@ vi.mock("./ResumePreview", () => ({ ResumePreview: ({ resume, onPageCountChange,
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 let root: ReturnType<typeof createRoot>;
 afterEach(() => { act(() => root?.unmount()); document.body.innerHTML = ""; previewState.ready = true; vi.restoreAllMocks(); });
-async function render(engine: "html" | "typst") {
-  const resume = createDefaultResume();
+async function render(engine: "html" | "typst", resume: ResumeDocument = createDefaultResume()) {
   const close = vi.fn();
   document.body.innerHTML = '<div id="test"></div>';
   root = createRoot(document.getElementById("test")!);
@@ -56,15 +55,21 @@ it("waits for final pagination even when previous pages remain visible", async (
   await render("html");
   expect(printButton().disabled).toBe(true);
 });
-it("keeps validation destinations but has no sample or writing advice", async () => {
-  const { resume } = await render("html");
+it.each(["html", "typst"] as const)("opens %s export directly for incomplete, unusual and sample content", async (engine) => {
+  const resume = createResumeFromTemplate("experienced", false);
+  resume.profile.name = "";
+  resume.profile.phone = "";
   resume.profile.email = "invalid";
-  const locate = vi.fn();
-  await act(async () => root.render(<ResumeExportDialog engine="html" resume={resume} onClose={() => {}} onLocate={locate} />));
-  expect(document.querySelector(".export-content-checks summary")?.textContent).toContain("项内容待检查");
-  act(() => [...document.querySelectorAll("button")].find((item) => item.textContent === "定位修改")!.click());
-  expect(locate).toHaveBeenCalledWith("profile");
-  expect(document.body.textContent).not.toMatch(/疑似|可能含有示例|写作建议|过长段落/);
+  const before = JSON.stringify(resume);
+  await render(engine, resume);
+  expect(document.querySelector(`[data-testid=${engine}-export]`)).not.toBeNull();
+  expect(document.querySelector(".export-content-checks, .pdf-page-checks")).toBeNull();
+  expect(document.body.textContent).not.toMatch(/待检查|内容检查|请确认后|定位修改|尚未填写|邮箱格式|还没有内容|本次忽略/);
+  if (engine === "html") expect(printButton().disabled).toBe(false);
+  expect(JSON.stringify(resume)).toBe(before);
+
+  await act(async () => root.render(<ResumeExportDialog engine={engine} resume={createDefaultResume()} onClose={() => {}} />));
+  expect(document.body.textContent).not.toMatch(/内容检查|疑似|可能含有示例|写作建议|过长段落/);
 });
 it("cleans up a failed native print and allows another attempt", async () => {
   const print = vi.spyOn(window, "print").mockImplementationOnce(() => { throw new Error("print unavailable"); }).mockImplementation(() => {});

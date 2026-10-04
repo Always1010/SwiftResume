@@ -1,7 +1,6 @@
 import { expect, it } from "vitest";
 import { clearResumeContent, createDefaultResume, createPurposeEntry, createQuickSection, createResumeFromTemplate, DEFAULT_PROFILE_PHOTO, normalizeResumeDocument, type ResumeDocument } from "./resume";
 import { plainText, contentLabels } from "./contentLabels";
-import { checkResume } from "./resumeChecks";
 
 it("creates distinct career examples with the shared default layout", () => {
   const documents = (["graduate", "experienced", "career-change"] as const).map((scene) => createResumeFromTemplate(scene));
@@ -16,7 +15,6 @@ it("creates distinct career examples with the shared default layout", () => {
     expect(resume.profile.email).toContain("@example.com");
     expect(resume.profile.photo).toBe(DEFAULT_PROFILE_PHOTO);
     expect(resume.profile.photoSource).toBe(DEFAULT_PROFILE_PHOTO);
-    expect(checkResume(resume).some((c) => c.id === "profile:sample")).toBe(false);
     for (const section of resume.sections) {
       if (section.type === "content") expect(plainText(section.entries[0].body).length).toBeGreaterThan(40);
       else expect(section.items[0].school).not.toBe("");

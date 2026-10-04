@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getDocument, PDFWorker, type PDFDocumentLoadingTask, type PDFDocumentProxy, type PDFPageProxy, type RenderTask } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import { checkPdfPage } from "../model/resumeChecks";
 
 function PdfPage({ page, width, zoom, thumbnail, viewport, onThumbnailReady }: {
   page: PDFPageProxy; width: number; zoom: number | "fit"; thumbnail: boolean;
@@ -81,8 +80,6 @@ export default function PdfCanvasPreview({ blob, zoom: externalZoom, onPageCount
   const zoom = externalZoom ?? localZoom;
   const [width, setWidth] = useState(600);
   const [error, setError] = useState("");
-  const [pageWarnings, setPageWarnings] = useState<{ page: number; message: string }[]>([]);
-  const [dismissed, setDismissed] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
   const scrollPosition = useRef(0);
 
@@ -93,8 +90,6 @@ export default function PdfCanvasPreview({ blob, zoom: externalZoom, onPageCount
     let worker: PDFWorker | undefined;
     setLoaded(null);
     setError("");
-    setPageWarnings([]);
-    setDismissed(false);
     void blob.arrayBuffer().then(async (data) => {
       if (!active) return;
       // Explicit local worker ports respect the extension's local-script CSP.
@@ -107,20 +102,6 @@ export default function PdfCanvasPreview({ blob, zoom: externalZoom, onPageCount
       const documentPages = await Promise.all(Array.from({ length: thumbnail ? 1 : document.numPages }, (_, index) => document.getPage(index + 1)));
       if (!active) return;
       setLoaded({ blob, pdf: document, pages: documentPages });
-      if (thumbnail) return;
-      const warnings: { page: number; message: string }[] = [];
-      for (const page of documentPages) {
-        if (!active) return;
-        // Pagination hints are optional; text extraction must not hide a valid PDF.
-        const text = await page.getTextContent().catch(() => null);
-        if (!text) continue;
-        const items = text.items.filter((item) => "str" in item);
-        const height = page.getViewport({ scale: 1 }).height;
-        const used = items.length ? (height - Math.min(...items.map((item) => item.transform[5]))) / height : 0;
-        const message = checkPdfPage(items.reduce((n, item) => n + item.str.trim().length, 0), used, page.pageNumber === document.numPages, document.numPages);
-        if (message) warnings.push({ page: page.pageNumber, message });
-      }
-      if (active) setPageWarnings(warnings);
     }).catch((reason: unknown) => {
       if (active) setError(reason instanceof Error ? reason.message : "无法显示 PDF");
     });
@@ -149,14 +130,12 @@ export default function PdfCanvasPreview({ blob, zoom: externalZoom, onPageCount
     if (pdf && viewportRef.current) viewportRef.current.scrollTop = scrollPosition.current;
   }, [pdf]);
 
-  const showWarnings = pdf && !dismissed && pageWarnings.length > 0;
   return <section className="pdf-reader" aria-label="最终 PDF 预览">
-    {!thumbnail && (externalZoom === undefined || showWarnings) && <div className="pdf-reader-toolbar" role="group" aria-label="PDF 预览工具">
-      {externalZoom === undefined && <><span aria-live="polite">{pdf ? `共 ${pdf.numPages} 页` : "正在读取 PDF…"}</span>
-        <select aria-label="PDF 缩放" value={zoom} onChange={(event) => setZoom(event.target.value === "fit" ? "fit" : Number(event.target.value))}>
-          <option value="fit">适应宽度</option><option value="75">75%</option><option value="100">100%</option><option value="125">125%</option>
-        </select></>}
-      {showWarnings && <details className="pdf-page-checks"><summary>分页检查：{pageWarnings.length} 条提示</summary>{pageWarnings.map((warning) => <p key={warning.page}><button type="button" onClick={() => viewportRef.current?.querySelector(`[data-page-number="${warning.page}"]`)?.scrollIntoView({ block: "start" })}>第 {warning.page} 页</button> {warning.message}</p>)}<button type="button" onClick={() => setDismissed(true)}>本次忽略分页提示</button></details>}
+    {!thumbnail && externalZoom === undefined && <div className="pdf-reader-toolbar" role="group" aria-label="PDF 预览工具">
+      <span aria-live="polite">{pdf ? `共 ${pdf.numPages} 页` : "正在读取 PDF…"}</span>
+      <select aria-label="PDF 缩放" value={zoom} onChange={(event) => setZoom(event.target.value === "fit" ? "fit" : Number(event.target.value))}>
+        <option value="fit">适应宽度</option><option value="75">75%</option><option value="100">100%</option><option value="125">125%</option>
+      </select>
     </div>}
     <div ref={viewportRef} className="pdf-page-viewport" aria-busy={!pdf && !error} onScroll={(event) => { if (pdf) scrollPosition.current = event.currentTarget.scrollTop; }}>
       {error && <div className="pdf-reader-error" role="alert">PDF 已生成，暂时无法显示预览。可以下载后打开。<details><summary>查看原因</summary>{error}</details></div>}
