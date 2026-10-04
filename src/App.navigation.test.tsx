@@ -321,3 +321,20 @@ it("separates editing context from the finished preview without replacing the ed
   expect(document.querySelector(".preview-toolbar h2")?.textContent).toBe("成品预览");
   expect(document.querySelector(".resume-editor-scroller")).toBe(editor);
 });
+
+it("places modules and history before preview actions without a misleading tab switch", async () => {
+  await mount();
+  const controls = document.querySelector(".workspace-controls")!;
+  expect(controls.querySelector(".workspace-mode-switch, [role='tab'], [aria-current]")).toBeNull();
+  const left = controls.firstElementChild!;
+  const right = controls.lastElementChild!;
+  expect(left.className).toBe("workspace-edit-tools");
+  expect(left.textContent).toContain("简历模块");
+  expect(left.textContent).toContain("撤销修改");
+  expect(right.className).toBe("workspace-preview-tools");
+  expect(right.lastElementChild?.getAttribute("aria-label")).toBe("打开模板与预览");
+  await click("简历模块");
+  expect(left.querySelector("button")?.getAttribute("aria-controls")).toBe(document.querySelector(".sidebar")?.id);
+  await click("收起模块");
+  expect(left.querySelector("button")?.getAttribute("aria-expanded")).toBe("false");
+});

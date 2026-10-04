@@ -30,7 +30,7 @@ export function Sidebar({ resume, selectedId, onSelect, onAdd, onSectionsChange,
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   return (
-    <aside className="sidebar panel">
+    <aside id="resume-modules" className="sidebar panel">
       <div className="panel-heading">
         <div>
           <h2>简历模块</h2>
