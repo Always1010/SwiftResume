@@ -1,7 +1,7 @@
 /* Workspace layout is independent of the A4 output and print styles. */
 @media screen {
   body { min-width: 320px; }
-  .app-shell { display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); height: 100dvh; min-height: 0; overflow: hidden; }
+  .app-shell { display: grid; grid-template-rows: auto auto minmax(0, 1fr); height: 100dvh; min-height: 0; overflow: hidden; }
   .topbar { position: relative; display: flex; flex-wrap: wrap; gap: 12px 18px; padding: 12px 20px; }
   .brand { flex: none; }
   .document-manager { width: clamp(180px, 22vw, 320px); margin-right: auto; }
@@ -255,21 +255,12 @@
   .preview-appearance-controls > summary { cursor: pointer; font-size: 11px; }
   .preview-appearance-panel { position: absolute; z-index: 20; top: calc(100% + 10px); right: 0; display: grid; width: 306px; gap: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: white; box-shadow: 0 10px 25px #20283020; }
   .preview-appearance-panel .density-control { justify-content: start; }
-  .backup-notice { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 20px; border-bottom: 1px solid var(--ui-border-strong); background: var(--ui-subtle); color: var(--ui-muted); font-size: 12px; }
-  .backup-notice-copy { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 12px; min-width: 0; }
-  .backup-notice-copy > strong { color: var(--ui-text); font-size: 12px; }
-  .backup-notice-actions { display: flex; align-items: center; flex: none; gap: 12px; }
-  .backup-notice-actions button { white-space: nowrap; font-size: 11px; }
-  .backup-notice-details summary { cursor: pointer; color: var(--ui-accent); }
-  .backup-notice-details[open] { flex-basis: 100%; }
-  .backup-notice-details p { max-width: 760px; margin: 6px 0 0; line-height: 1.6; }
   .field-help { margin-bottom: 10px; color: var(--muted); font-size: 11px; }
   .field-help summary { color: var(--ui-accent); cursor: pointer; }
   .field-help p { margin: 7px 0; line-height: 1.7; }
   .workspace .content-entry-editor { border-color: var(--ui-border); border-radius: 7px; }
   .workspace .content-entry-actions { background: var(--ui-subtle); }
 }
-@media print { .workspace-notices { display: none !important; } }
 
 
 .app-shell[hidden], .workspace-preview-screen[hidden] { display: none !important; }
@@ -285,3 +276,7 @@
 
 .blank-resume-sheet { display: block; width: 100%; height: 100%; border: 1px solid var(--ui-border); background: white; }
 .scene-footer .restore-choice { margin: 0; }
+
+.backup-prompt { width: min(540px, calc(100vw - 48px)); }
+.backup-prompt-description { margin: 20px 0 12px; font-size: 14px; line-height: 1.8; }
+.backup-prompt-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }

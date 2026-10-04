@@ -57,6 +57,11 @@ async function mount() {
   document.body.append(container);
   root = createRoot(container);
   await act(async () => { root!.render(<App />); });
+  // Complete the startup reminder before exercising unrelated editor flows.
+  const later = document.querySelector<HTMLButtonElement>(".backup-prompt .secondary-button");
+  if (later) await act(async () => { later.click(); });
+  vi.mocked(HTMLDialogElement.prototype.showModal).mockClear();
+  vi.mocked(HTMLDialogElement.prototype.close).mockClear();
 }
 async function click(label: string) { await act(async () => { button(label).click(); }); }
 async function flushNavigation() { await act(async () => { vi.advanceTimersByTime(40); }); }
