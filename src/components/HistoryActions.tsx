@@ -1,17 +1,9 @@
+import { AppIcon } from "./AppIcon";
 interface HistoryActionsProps {
   undoLabel?: string;
   redoLabel?: string;
   onUndo: () => void;
   onRedo: () => void;
-}
-
-function HistoryArrowIcon({ direction }: { direction: "undo" | "redo" }) {
-  return (
-    <svg className={`history-action-icon ${direction === "redo" ? "redo" : ""}`} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M9 7 4 12l5 5" />
-      <path d="M4 12h10.5a5.5 5.5 0 0 1 0 11H11" />
-    </svg>
-  );
 }
 
 export function HistoryActions({ undoLabel, redoLabel, onUndo, onRedo }: HistoryActionsProps) {
@@ -33,7 +25,7 @@ export function HistoryActions({ undoLabel, redoLabel, onUndo, onRedo }: History
           aria-label={undoHint}
           onClick={onUndo}
         >
-          <HistoryArrowIcon direction="undo" />
+          <AppIcon name="undo" />
           <span>撤销修改</span>
         </button>
       </span>
@@ -45,7 +37,7 @@ export function HistoryActions({ undoLabel, redoLabel, onUndo, onRedo }: History
           aria-label={redoHint}
           onClick={onRedo}
         >
-          <HistoryArrowIcon direction="redo" />
+          <AppIcon name="undo" className="redo" />
           <span>恢复修改</span>
         </button>
       </span>

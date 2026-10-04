@@ -29,8 +29,8 @@ it("searches document names without hiding existing job copies", () => {
 });
 it("puts New in the heading and document actions in their own rows", async () => {
   await render();
-  expect(button("＋ 新建简历").closest("header")).not.toBeNull();
-  expect(button("＋ 新建简历").closest(".library-search")).toBeNull();
+  expect(button("新建简历").closest("header")).not.toBeNull();
+  expect(button("新建简历").closest(".library-search")).toBeNull();
   expect(document.querySelector(".library-detail")).toBeNull();
   expect(document.querySelectorAll(".library-row")).toHaveLength(2);
   expect(button("创建副本：已有岗位副本").closest(".library-row")?.textContent).toContain("已有岗位副本");
@@ -84,7 +84,7 @@ it("ignores repeated requests while an operation is pending", async () => {
   let finish!: () => void;
   props.onCopy.mockReturnValueOnce(new Promise<void>((resolve) => { finish = resolve; }));
   await click("创建副本：已有岗位副本");
-  expect(button("＋ 新建简历").disabled).toBe(true);
+  expect(button("新建简历").disabled).toBe(true);
   await click("创建副本：已有岗位副本");
   expect(props.onCopy).toHaveBeenCalledOnce();
   await act(async () => finish());

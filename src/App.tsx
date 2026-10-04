@@ -1,3 +1,4 @@
+import { AppIcon, BrandMark } from "./components/AppIcon";
 import { usePdfPrintShortcut } from "./export/usePdfPrintShortcut";
 import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from "react";
 import { BackupSetupPrompt } from "./components/BackupSetupPrompt";
@@ -609,24 +610,29 @@ export function App() {
       onFocusCapture={(event) => { if (event.target.matches('input, textarea, [contenteditable="true"]')) editorFocus.current = event.target; }}
       onScrollCapture={(event) => { if (view === "editor" && (event.target as HTMLElement).classList.contains("resume-editor-scroller")) editorScroll.current = (event.target as HTMLElement).scrollTop; }}>
       <header className="topbar workspace-topbar">
-        <div className="brand"><span className="brand-mark">S</span><strong>SwiftResume</strong></div>
+        <div className="brand"><BrandMark /><strong>SwiftResume</strong></div>
         <div className="current-document">
-          <button type="button" className="document-switcher" data-testid="resume-library-trigger" aria-label="我的简历" aria-describedby="current-resume-name" aria-controls="resume-library-title-dialog" title="打开我的简历" aria-haspopup="dialog" aria-expanded={libraryOpen} disabled={!library} onClick={() => setLibraryOpen(true)}><span id="current-resume-name">{resume.title || "未命名简历"}</span><span aria-hidden="true">⌄</span></button>
-          <span role="status" className={`save-status ${saveState}`}>{saveState === "saved" ? "● 已自动保存" : saveState === "saving" ? "● 保存中" : "● 保存失败"}</span>
+          <button type="button" className="document-switcher" data-testid="resume-library-trigger" aria-label="我的简历" aria-describedby="current-resume-name" aria-controls="resume-library-title-dialog" title="打开我的简历" aria-haspopup="dialog" aria-expanded={libraryOpen} disabled={!library} onClick={() => setLibraryOpen(true)}><span id="current-resume-name">{resume.title || "未命名简历"}</span><AppIcon name="chevron" /></button>
+          <span role="status" className={`save-status ${saveState}`}>{saveState === "saved" && <AppIcon name="check" />}{saveState === "saved" ? "已自动保存" : saveState === "saving" ? "保存中" : "保存失败"}</span>
         </div>
         <div className="topbar-actions">
-          <button type="button" className="secondary-button" onClick={() => setSettingsOpen(true)}>设置与备份</button>
-          <button type="button" className="primary-button export-button" disabled={!ready} onClick={() => setPdfResume(resume)}>{settings.outputEngine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
+          <button type="button" className="ghost-button" onClick={() => setSettingsOpen(true)}><AppIcon name="settings" />设置与备份</button>
+          <button type="button" className="primary-button export-button" disabled={!ready} onClick={() => setPdfResume(resume)}><AppIcon name="download" />{settings.outputEngine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
         </div>
       </header>
       <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => { void importFile(event.target.files?.[0]); event.target.value = ""; }} />
       <nav className="workspace-controls" aria-label="简历编辑工具">
-        <button type="button" className="secondary-button" aria-expanded={modulesOpen} onClick={() => setModulesOpen(!modulesOpen)}>{modulesOpen ? "收起模块" : "简历模块"}</button>
-        <HistoryActions undoLabel={undoLabel} redoLabel={redoLabel} onUndo={() => changeHistory("undo")} onRedo={() => changeHistory("redo")} />
-        <div className="workspace-view-options">
-          <button type="button" className={`secondary-button ${previewVisible ? "active" : ""}`} aria-pressed={previewVisible} onClick={() => { setMobilePreview(!previewVisible); setSettings((current) => ({ ...current, previewOpen: !previewVisible })); }}>{previewVisible ? "收起预览" : "显示预览"}</button>
+        <div className="workspace-mode-switch" aria-label="工作区视图">
+          <span className="workspace-mode-current" aria-current="page"><AppIcon name="edit" />内容编辑</span>
+          <WorkspaceStandalonePreviewEntry disabled={!activeResumeId} onOpen={() => openStandalonePreview()} />
         </div>
-        <WorkspaceStandalonePreviewEntry disabled={!activeResumeId} onOpen={() => openStandalonePreview()} />
+        <div className="workspace-context-tools">
+          <button type="button" className="ghost-button" aria-expanded={modulesOpen} onClick={() => setModulesOpen(!modulesOpen)}><AppIcon name="panels" />{modulesOpen ? "收起模块" : "简历模块"}</button>
+          <HistoryActions undoLabel={undoLabel} redoLabel={redoLabel} onUndo={() => changeHistory("undo")} onRedo={() => changeHistory("redo")} />
+          <div className="workspace-view-options">
+            <button type="button" className={`ghost-button ${previewVisible ? "active" : ""}`} aria-pressed={previewVisible} onClick={() => { setMobilePreview(!previewVisible); setSettings((current) => ({ ...current, previewOpen: !previewVisible })); }}><AppIcon name="eye" />{previewVisible ? "收起预览" : "显示预览"}</button>
+          </div>
+        </div>
       </nav>
       <div className="workspace-notices">
         {backupPromptOpen && settings.diskBackupEnabled && !newResumeOpen && backupNeedsAttention && dismissedBackupNotice !== backupNoticeKey && <BackupSetupPrompt

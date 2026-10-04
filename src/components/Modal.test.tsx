@@ -21,7 +21,7 @@ it("uses native modal behavior, exposes a named cross and restores prior focus w
   expect(dialog.open).toBe(true);
   expect(dialog.id).toBe("title-dialog");
   const cross = document.querySelector<HTMLButtonElement>('[aria-label="关闭测试"]')!;
-  expect(cross.title).toBe("关闭测试"); expect(cross.textContent).toBe("×");
+  expect(cross.title).toBe("关闭测试"); expect(cross.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
   act(() => cross.click()); expect(close).toHaveBeenCalledOnce();
   const cancel = new Event("cancel", { cancelable: true }); act(() => dialog.dispatchEvent(cancel));
   expect(cancel.defaultPrevented).toBe(true); expect(close).toHaveBeenCalledTimes(2);

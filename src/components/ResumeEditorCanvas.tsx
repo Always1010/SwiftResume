@@ -1,3 +1,4 @@
+import { AppIcon } from "./AppIcon";
 import { useEffect, type CSSProperties, type KeyboardEvent, type MouseEvent } from "react";
 import { getDensityLayout, type ResumeDocument, type ResumeProfile, type ResumeSection } from "../model/resume";
 import { EditorPanel } from "./EditorPanel";
@@ -60,7 +61,7 @@ export function ResumeEditorCanvas({
     <div className="inline-editor-shell" onClick={(event) => event.stopPropagation()}>
       <div className="inline-editor-toolbar">
         <span>编辑中</span>
-        <button type="button" className="primary-button" onClick={onCloseEditor}>完成编辑</button>
+        <button type="button" className="secondary-button" onClick={onCloseEditor}><AppIcon name="check" />完成编辑</button>
       </div>
       <EditorPanel
         resume={resume}
