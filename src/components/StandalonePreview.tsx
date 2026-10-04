@@ -1,3 +1,4 @@
+import { shortcut } from "../keyboardShortcuts";
 import { AppIcon, BrandMark } from "./AppIcon";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { ResumeDocument } from "../model/resume";
@@ -141,7 +142,7 @@ export function StandalonePreview({ active = true, resume, engine, saveState, on
         </div>
         <div className="standalone-preview-actions">
           <span role="status" className={`standalone-sync-status ${saveState === "error" ? "error" : ""}`}>{saveState === "saving" ? "保存中…" : saveState === "error" ? "保存失败，请返回编辑重试" : "已自动保存"}</span>
-          <button type="button" className="primary-button" disabled={!previewResume} onClick={onExport}><AppIcon name="download" />{engine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
+          <button type="button" className="primary-button" title={`打开导出预览（${shortcut("Mod+P").label}）`} aria-keyshortcuts={shortcut("Mod+P").aria} disabled={!previewResume} onClick={onExport}><AppIcon name="download" />{engine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
         </div>
       </header>
       <div
@@ -159,7 +160,8 @@ export function StandalonePreview({ active = true, resume, engine, saveState, on
           aria-valuemax={Math.round(galleryMaxWidth)}
           aria-valuenow={Math.round(galleryWidth)}
           tabIndex={0}
-          title="拖动调整模板中心宽度，双击恢复默认宽度"
+          title="拖动调整模板中心宽度，双击恢复默认宽度；聚焦后按 ← / → 调整，Shift + ← / → 大幅调整，Home / End 最小 / 最大宽度"
+          aria-keyshortcuts="ArrowLeft ArrowRight Shift+ArrowLeft Shift+ArrowRight Home End"
           onPointerDown={(event) => {
             event.preventDefault();
             setResizingGallery(true);
