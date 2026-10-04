@@ -1,3 +1,4 @@
+import { PreviewControls, type AppearanceChange } from "./components/PreviewControls";
 import { shortcut } from "./keyboardShortcuts";
 import { useHistoryShortcuts } from "./useHistoryShortcuts";
 import { AppIcon, BrandMark } from "./components/AppIcon";
@@ -572,6 +573,12 @@ export function App() {
   });
   usePreviewPublisher(activeResumeId, resume, ready, applyRemoteResume);
 
+  const updatePreviewZoom = (previewZoom: AppSettings["previewZoom"]) => setSettings((current) => ({ ...current, previewZoom }));
+  const updateResumeAppearance = (change: AppearanceChange) => {
+    if (change.theme) dispatch({ type: "update-theme", value: change.theme });
+    if (change.photoBackground !== undefined) dispatch({ type: "update-profile", value: { ...resume.profile, photoBackground: change.photoBackground } });
+  };
+
   const openStandalonePreview = () => {
     if (!activeResumeId || view === "preview") return;
     const scroller = editorShell.current?.querySelector<HTMLElement>(".resume-editor-scroller");
@@ -650,13 +657,7 @@ export function App() {
               <div className="preview-toolbar-leading">
                 <h2 className="workspace-pane-title">成品预览</h2>
                 {settings.showOverflowWarning && <span className="page-count-badge">共 {pageCount} 页</span>}
-                <select aria-label="预览缩放" value={settings.previewZoom} onChange={(event) => {
-                  const previewZoom = event.target.value === "fit" ? "fit" : Number(event.target.value) as 70 | 80 | 90 | 100;
-                  setSettings((current) => ({ ...current, previewZoom }));
-                }}>
-                  <option value="fit">适应宽度</option>
-                  {[70, 80, 90, 100].map((value) => <option key={value} value={value}>{value}%</option>)}
-                </select>
+                <PreviewControls resume={resume} zoom={settings.previewZoom} onZoomChange={updatePreviewZoom} onAppearanceChange={updateResumeAppearance} />
               </div>
 
             </div>
@@ -701,10 +702,7 @@ export function App() {
 
     </div>
     {previewVisited && <div className="workspace-preview-screen" hidden={view !== "preview"}>
-      <StandalonePreview active={view === "preview"} resume={resume} engine={settings.outputEngine} saveState={saveState} onBack={returnToEditor} onExport={() => setPdfResume(resume)} onAppearanceChange={(change) => {
-        if (change.theme) dispatch({ type: "update-theme", value: change.theme });
-        if (change.photoBackground !== undefined) dispatch({ type: "update-profile", value: { ...resume.profile, photoBackground: change.photoBackground } });
-      }} />
+      <StandalonePreview zoom={settings.previewZoom} onZoomChange={updatePreviewZoom} active={view === "preview"} resume={resume} engine={settings.outputEngine} saveState={saveState} onBack={returnToEditor} onExport={() => setPdfResume(resume)} onAppearanceChange={updateResumeAppearance} />
     </div>}
       {pdfResume && <ResumeExportDialog engine={settings.outputEngine} resume={pdfResume} returnLabel={view === "preview" ? "返回模板预览" : "返回编辑"} onClose={() => setPdfResume(null)} />}
     </>

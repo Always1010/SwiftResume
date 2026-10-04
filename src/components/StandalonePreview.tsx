@@ -3,24 +3,17 @@ import { AppIcon, BrandMark } from "./AppIcon";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { ResumeDocument } from "../model/resume";
 import { getResumeTemplate } from "../templates/registry";
-import { PhotoBackgroundPicker } from "./PhotoBackgroundPicker";
+import { PreviewControls, type AppearanceChange } from "./PreviewControls";
+import type { PreviewZoom } from "../settings/appSettings";
 import { ResumePreview } from "./ResumePreview";
 import { TemplateGallery } from "./TemplateGallery";
 import { templatePageCountContentKey, type TemplatePageMeasurement } from "../templates/pageMeasurements";
 
-const PAPER_WIDTH_PX = 794;
-const MIN_ZOOM = 50;
-const MAX_ZOOM = 140;
 export const MIN_TEMPLATE_GALLERY_WIDTH = 220;
 export const DEFAULT_TEMPLATE_GALLERY_WIDTH = 340;
 export const MAX_TEMPLATE_GALLERY_WIDTH = 860;
 const TEMPLATE_GALLERY_WIDTH_KEY = "swift-resume-template-gallery-width";
 
-
-export interface AppearanceChange {
-  theme?: Partial<ResumeDocument["theme"]>;
-  photoBackground?: string;
-}
 
 export const clampTemplateGalleryWidth = (width: number, availableWidth = MAX_TEMPLATE_GALLERY_WIDTH) =>
   Math.min(Math.max(MIN_TEMPLATE_GALLERY_WIDTH, availableWidth), Math.max(MIN_TEMPLATE_GALLERY_WIDTH, Math.min(MAX_TEMPLATE_GALLERY_WIDTH, width)));
@@ -35,8 +28,10 @@ function readTemplateGalleryWidth() {
   }
 }
 
-export function StandalonePreview({ active = true, resume, engine, saveState, onAppearanceChange, onExport, onBack }: {
+export function StandalonePreview({ active = true, resume, zoom, onZoomChange, engine, saveState, onAppearanceChange, onExport, onBack }: {
   active?: boolean;
+  zoom: PreviewZoom;
+  onZoomChange: (zoom: PreviewZoom) => void;
   resume: ResumeDocument;
   engine: import("../settings/appSettings").OutputEngine;
   saveState: "saving" | "saved" | "error";
@@ -45,27 +40,10 @@ export function StandalonePreview({ active = true, resume, engine, saveState, on
   onBack: () => void;
 }) {
   const [pageMeasurement, setPageMeasurement] = useState<TemplatePageMeasurement | null>(null);
-  const [fitWidth, setFitWidth] = useState(true);
-  const [manualZoom, setManualZoom] = useState(100);
-  const [fitZoom, setFitZoom] = useState(100);
   const [galleryWidth, setGalleryWidth] = useState(readTemplateGalleryWidth);
   const [galleryMaxWidth, setGalleryMaxWidth] = useState(MAX_TEMPLATE_GALLERY_WIDTH);
   const [resizingGallery, setResizingGallery] = useState(false);
-  const viewportRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-    const update = () => {
-      const availableWidth = Math.max(360, viewport.clientWidth - 72);
-      setFitZoom(Math.max(MIN_ZOOM, Math.min(100, Math.floor(availableWidth / PAPER_WIDTH_PX * 100))));
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(viewport);
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     const workspace = workspaceRef.current;
@@ -110,15 +88,10 @@ export function StandalonePreview({ active = true, resume, engine, saveState, on
     };
   }, [galleryMaxWidth, resizingGallery]);
 
-  const zoom = fitWidth ? fitZoom : manualZoom;
   const title = useMemo(() => resume.title || "模板与预览", [resume.title]);
   const previewResume = resume;
   const selectedTemplate = resume ? getResumeTemplate(resume.theme.templateId) : null;
 
-  const adjustZoom = (delta: number) => {
-    setFitWidth(false);
-    setManualZoom((current) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, current + delta)));
-  };
   const contentKey = previewResume ? templatePageCountContentKey(previewResume) : "";
   const templateId = previewResume?.theme.templateId;
   const currentPageCount = pageMeasurement?.contentKey === contentKey && pageMeasurement.templateId === templateId && pageMeasurement.engine === engine ? pageMeasurement.pageCount : null;
@@ -185,35 +158,11 @@ export function StandalonePreview({ active = true, resume, engine, saveState, on
           {previewResume && (
             <div className="standalone-appearance-bar">
               <div className="standalone-template-summary"><small>当前模板</small><strong>{selectedTemplate?.name}</strong><span>{selectedTemplate?.description}</span></div>
-              <div className="standalone-preview-zoom">
-          <button type="button" className={`secondary-button ${fitWidth ? "active" : ""}`} onClick={() => setFitWidth(true)}>适应宽度</button>
-          <div className="standalone-zoom-control" aria-label="预览缩放">
-            <button type="button" aria-label="缩小预览" onClick={() => adjustZoom(-10)}>−</button>
-            <output>{zoom}%</output>
-            <button type="button" aria-label="放大预览" onClick={() => adjustZoom(10)}>＋</button>
-          </div>
-              </div>
-              <details className="standalone-appearance-options"><summary><AppIcon name="settings" />排版设置<AppIcon name="chevron" /></summary>
-                <div className="standalone-appearance-fields">
-              <label className="density-control">
-                <span>紧凑</span>
-                <input aria-label="模板预览排版密度" type="range" min="0" max="100" step="1" value={previewResume.theme.density} onChange={(event) => updateAppearance({ theme: { density: Number(event.target.value) } })} />
-                <span>宽松</span>
-                <output>{previewResume.theme.density}</output>
-              </label>
-              <label className="accent-picker" title="强调色"><span>配色</span><input aria-label="模板预览配色" type="color" value={previewResume.theme.accent} onChange={(event) => updateAppearance({ theme: { accent: event.target.value } })} /></label>
-              <PhotoBackgroundPicker
-                compact
-                value={previewResume.profile.photoBackground}
-                disabled={!resume?.profile.photo}
-                onChange={(photoBackground) => updateAppearance({ photoBackground })}
-              />
-                </div>
-              </details>
+              <PreviewControls resume={resume} zoom={zoom} onZoomChange={onZoomChange} onAppearanceChange={updateAppearance} />
             </div>
           )}
-          <div ref={viewportRef} className="standalone-preview-viewport">
-            {previewResume ? <ResumePreview active={active} engine={engine} resume={previewResume} zoom={fitWidth ? "fit" : zoom} templateId={previewResume.theme.templateId} onPageCountChange={updatePageCount} /> : (
+          <div className="standalone-preview-viewport">
+            {previewResume ? <ResumePreview active={active} engine={engine} resume={previewResume} zoom={zoom} templateId={previewResume.theme.templateId} onPageCountChange={updatePageCount} /> : (
               <div className="standalone-preview-empty"><strong>正在读取简历…</strong></div>
             )}
           </div>
