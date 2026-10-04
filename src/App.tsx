@@ -1,3 +1,5 @@
+import { shortcut } from "./keyboardShortcuts";
+import { useHistoryShortcuts } from "./useHistoryShortcuts";
 import { AppIcon, BrandMark } from "./components/AppIcon";
 import { usePdfPrintShortcut } from "./export/usePdfPrintShortcut";
 import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from "react";
@@ -108,22 +110,8 @@ export function App() {
     dispatchHistory({ type, time: Date.now() });
   }, []);
 
-  useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.isComposing || event.defaultPrevented || !(event.ctrlKey || event.metaKey)) return;
-      if (document.querySelector('dialog[open], [aria-modal="true"]')) return;
-      const target = event.target;
-      const typing = target instanceof HTMLElement && (target.isContentEditable || Boolean(target.closest("input, textarea, select, [contenteditable]")));
-      if (typing && !event.altKey) return;
-      const key = event.key.toLowerCase();
-      const type = key === "z" ? event.shiftKey ? "redo" : "undo" : key === "y" ? "redo" : null;
-      if (!type) return;
-      event.preventDefault();
-      if (type === "undo" ? undoLabel : redoLabel) changeHistory(type);
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [changeHistory, undoLabel, redoLabel]);
+  useHistoryShortcuts({ canUndo: Boolean(undoLabel), canRedo: Boolean(redoLabel), onChange: changeHistory });
+
 
   useEffect(() => {
     let active = true;
@@ -617,7 +605,7 @@ export function App() {
         </div>
         <div className="topbar-actions">
           <button type="button" className="ghost-button" onClick={() => setSettingsOpen(true)}><AppIcon name="settings" />设置与备份</button>
-          <button type="button" className="primary-button export-button" disabled={!ready} onClick={() => setPdfResume(resume)}><AppIcon name="download" />{settings.outputEngine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
+          <button type="button" className="primary-button export-button" title={`打开导出预览（${shortcut("Mod+P").label}）`} aria-keyshortcuts={shortcut("Mod+P").aria} disabled={!ready} onClick={() => setPdfResume(resume)}><AppIcon name="download" />{settings.outputEngine === "html" ? "打印 / 保存 PDF" : "下载 PDF"}</button>
         </div>
       </header>
       <input ref={importRef} hidden type="file" accept=".json" onChange={(event) => { void importFile(event.target.files?.[0]); event.target.value = ""; }} />
