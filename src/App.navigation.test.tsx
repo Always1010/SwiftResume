@@ -338,3 +338,25 @@ it("places modules and history before preview actions without a misleading tab s
   await click("收起模块");
   expect(left.querySelector("button")?.getAttribute("aria-expanded")).toBe("false");
 });
+
+it("keeps typing undo native and wires document undo/redo to the displayed shortcuts", async () => {
+  await mount();
+  await act(async () => document.getElementById("resume-block-profile")!.click());
+  const field = document.querySelector<HTMLInputElement>("#resume-block-profile .field input")!;
+  const original = field.value;
+  type(field, "Document shortcut edit");
+  const nativeUndo = new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true, cancelable: true });
+  act(() => { field.dispatchEvent(nativeUndo); });
+  expect(nativeUndo.defaultPrevented).toBe(false);
+  expect(field.value).toBe("Document shortcut edit");
+  const undo = new KeyboardEvent("keydown", { key: "z", code: "KeyZ", ctrlKey: true, altKey: true, bubbles: true, cancelable: true });
+  act(() => { field.dispatchEvent(undo); });
+  expect(undo.defaultPrevented).toBe(true);
+  expect(button("恢复修改").disabled).toBe(false);
+  expect(button("撤销修改").disabled).toBe(true);
+  act(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, altKey: true, shiftKey: true, cancelable: true })));
+  expect(button("恢复修改").disabled).toBe(true);
+  await act(async () => document.getElementById("resume-block-profile")!.click());
+  expect(document.querySelector<HTMLInputElement>("#resume-block-profile .field input")!.value).toBe("Document shortcut edit");
+  expect(original).not.toBe("Document shortcut edit");
+});
