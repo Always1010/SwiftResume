@@ -32,5 +32,5 @@ export function AppIcon({ name, className = "", style }: { name: AppIconName; cl
 }
 
 export function BrandMark() {
-  return <span className="brand-mark" aria-hidden="true"><AppIcon name="document" /></span>;
+  return <img className="brand-mark" src="./icons/icon128.png" width="36" height="36" alt="" aria-hidden="true" draggable={false} />;
 }
