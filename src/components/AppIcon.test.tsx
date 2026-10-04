@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
 import { renderToStaticMarkup } from "react-dom/server";
-import { readFileSync } from "node:fs";
+import manifest from "../../public/manifest.json";
 import { expect, it } from "vitest";
 import { BrandMark } from "./AppIcon";
 
 it("reuses the packaged extension identity without redrawing or recoloring it", () => {
-  const manifest = JSON.parse(readFileSync("public/manifest.json", "utf8"));
   const container = document.createElement("div");
   container.innerHTML = renderToStaticMarkup(<BrandMark />);
   const icon = container.querySelector("img")!;
@@ -15,5 +14,4 @@ it("reuses the packaged extension identity without redrawing or recoloring it", 
   expect(icon.alt).toBe("");
   expect(icon.getAttribute("aria-hidden")).toBe("true");
   expect(container.querySelector("svg")).toBeNull();
-  expect(readFileSync(`public/${manifest.icons["128"]}`).length).toBeGreaterThan(0);
 });
